@@ -11,3 +11,6 @@
 {"table":"章の管理","col":11,"conditions":{"true":["章:出題範囲として選ばれている"]},"actions":{"true":["削除を確定する"]},"results":{"true":["出題対象:その章のキーワードを除く"]},"unit":["collectCandidates: 削除された章を除く"]}
 {"table":"章の管理","col":12,"conditions":{"true":["章:並び順を変えた"]},"actions":{"true":["出現順で出題する"]},"results":{"true":["出題:新しい並び順に従う"]},"unit":["pickNext: 章の並び順の変更が出題順に効く"]}
 {"table":"章の管理","col":13,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["並べ替える"]},"results":{"true":["画面:失敗した旨を表示する","ツリー:元の並びに戻す"],"false":["chapters:sort_order を更新する"]},"e2e":["chapter.spec: 並べ替えに失敗したら元に戻る"]}
+{"table":"章の管理","col":14,"conditions":{"true":["URL:教材が見つからない"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["画面:見つからない旨を表示する","画面:科目一覧へ戻る導線を出す"],"false":["画面:章ツリーを表示する"]},"e2e":["chapter.spec: 無い教材の編集画面は戻る導線を出す"],"note":"他人の教材は RLS で0件になるため同じ扱いになる"}
+{"table":"章の管理","col":15,"conditions":{"true":["章:0件"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["画面:章が無い旨と追加を促す案内を出す"],"false":["画面:読み込み中を表示する"]},"e2e":["chapter.spec: 章が0件なら追加を促す"]}
+{"table":"章の管理","col":16,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["画面:失敗した旨を表示する","操作:再試行できる"]},"e2e":["chapter.spec: 読み込みに失敗したら再試行できる"]}
