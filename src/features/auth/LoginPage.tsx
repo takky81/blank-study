@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isValidEmail, canSubmitLogin } from './validation';
 
 /**
  * ログイン画面。決定表「認証」 spec/tables/01-auth.jsonl に対応する。
@@ -12,6 +13,7 @@ import { supabase } from '@/lib/supabase';
  */
 const MESSAGE_INVALID = 'メールアドレスまたはパスワードが違います';
 const MESSAGE_NETWORK = '通信に失敗しました。しばらくしてからもう一度お試しください';
+const MESSAGE_EMAIL_FORMAT = 'メールアドレスの形式が正しくありません';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,12 +21,18 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // 列7: メールの形式が不正、列8: 空欄
-  const canSubmit = email.trim() !== '' && password !== '' && !busy;
+  // 列8: 空欄なら押せない
+  const canSubmit = canSubmitLogin(email, password) && !busy;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!canSubmit) return;
+
+    // 列7: 形式が不正なら認証を要求せず、入力エラーとして伝える
+    if (!isValidEmail(email)) {
+      setError(MESSAGE_EMAIL_FORMAT);
+      return;
+    }
 
     setBusy(true);
     setError('');
