@@ -20,3 +20,15 @@ export function isValidEmail(value: string): boolean {
 export function canSubmitLogin(email: string, password: string): boolean {
   return email.trim() !== '' && password !== '';
 }
+
+/**
+ * 認証の失敗が「サーバーに届かなかった」ものかを見る（決定表「認証」列9）。
+ * 通信の失敗は投げられることも、エラーとして返ることもある。
+ * 返ってきた場合に資格情報の誤りと同じ文言を出すと、原因を取り違えるため区別する。
+ */
+export function isNetworkFailure(error: unknown): boolean {
+  if (error === null || typeof error !== 'object') return false;
+  const { name, status } = error as { name?: string; status?: number };
+  // status 0 はサーバーの応答が無かったことを表す
+  return name === 'AuthRetryableFetchError' || name === 'TypeError' || status === 0;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isValidEmail, canSubmitLogin } from './validation';
+import { isValidEmail, canSubmitLogin, isNetworkFailure } from './validation';
 
 // 決定表「認証」 spec/tables/01-auth.jsonl
 describe('ログインフォームの検査', () => {
@@ -24,5 +24,22 @@ describe('ログインフォームの検査', () => {
 
   it('列8 形式が不正でも入力が揃っていれば押せる（押した先で形式を伝える）', () => {
     expect(canSubmitLogin('not-an-email', 'password')).toBe(true);
+  });
+});
+
+// 決定表「認証」列9: 通信の失敗は資格情報の誤りと区別する
+describe('認証エラーの区別', () => {
+  it('列9 通信に届かなかった失敗は通信の失敗として扱う', () => {
+    expect(isNetworkFailure({ name: 'AuthRetryableFetchError', status: 0 })).toBe(true);
+    expect(isNetworkFailure({ name: 'AuthRetryableFetchError' })).toBe(true);
+    expect(isNetworkFailure({ name: 'TypeError', message: 'Failed to fetch' })).toBe(true);
+    expect(isNetworkFailure({ name: 'AuthApiError', status: 0 })).toBe(true);
+  });
+
+  it('列2・列3 サーバーが返した資格情報の誤りは通信の失敗ではない', () => {
+    expect(isNetworkFailure({ name: 'AuthApiError', status: 400 })).toBe(false);
+    expect(isNetworkFailure({ name: 'AuthApiError', status: 401 })).toBe(false);
+    expect(isNetworkFailure(null)).toBe(false);
+    expect(isNetworkFailure(undefined)).toBe(false);
   });
 });

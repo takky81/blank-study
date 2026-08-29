@@ -209,7 +209,7 @@ export function MaterialsPage() {
               onDragStart={() => setDraggingIndex(index)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => void handleDrop(index)}
-              className="flex flex-wrap items-center gap-3 card p-4"
+              className="card card-act flex flex-wrap items-center gap-3 p-4"
             >
               {editingId === material.id ? (
                 <form
