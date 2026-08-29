@@ -37,3 +37,6 @@ desktop.ini
 /playwright-report/
 /blob-report/
 .playwright/
+
+# 教材
+/materials/
