@@ -36,7 +36,7 @@ const SOURCES: Record<string, string[]> = {
   解答形式の決定: ['src/features/study/question.test.ts', 'e2e/study.spec.ts'],
   選択肢の生成: ['src/features/study/question.test.ts', 'e2e/study.spec.ts'],
   表示範囲内のキーワードの表示: ['src/features/study/range.test.ts', 'e2e/study.spec.ts'],
-  正誤判定: ['src/lib/answer.test.ts', 'e2e/study.spec.ts'],
+  正誤判定: ['src/lib/answer.test.ts', 'e2e/study.spec.ts', 'src/features/study/score.test.ts'],
   別解の登録: ['src/features/study/alt.test.ts', 'e2e/study.spec.ts'],
   'SRS の更新': ['src/features/study/srs.test.ts', 'e2e/study.spec.ts'],
   学習履歴の集計: ['src/features/history/aggregate.test.ts', 'e2e/history.spec.ts'],
