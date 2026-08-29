@@ -24,7 +24,14 @@ import {
 } from '@/lib/body';
 import type { ParsedKeyword } from '@/lib/keyword';
 import type { Blank } from '@/lib/markdown';
-import { listKeywords, saveChapter, type KeywordRow } from './api';
+import {
+  listKeywords,
+  prepareSave,
+  commitSave,
+  type KeywordRow,
+  type SavePreparation,
+} from './api';
+import { ConflictDialog } from '@/components/ConflictDialog';
 import { BodyEditor } from './BodyEditor';
 import { Preview } from './Preview';
 import { KeywordDialog, type KeywordDraft } from './KeywordDialog';
@@ -81,6 +88,11 @@ export function EditorPage() {
   const [selection, setSelection] = useState<{ start: number; end: number } | null>(null);
   const [draft, setDraft] = useState<KeywordDraft | null>(null);
   const [leaving, setLeaving] = useState<{ to: string } | null>(null);
+  /** 保存の確認待ち。差分確認で選んでから書き込む（決定表「保存時の上書き確認」） */
+  const [pending, setPending] = useState<SavePreparation | null>(null);
+  const [resolutions, setResolutions] = useState<Record<string, boolean>>({});
+  /** ダイアログで内容を変えたキーワード。確認を挟まない（列1） */
+  const [trusted, setTrusted] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<Tab>('chapters');
   const [narrow, setNarrow] = useState(false);
 
@@ -197,15 +209,28 @@ export function EditorPage() {
     setBusy(true);
     setError('');
     try {
-      const withIds = await saveChapter(materialId, selectedId, body);
-      setBody(withIds);
-      setSavedBody(withIds);
-      setKeywords(await listKeywords(materialId));
+      const preparation = await prepareSave(materialId, body, trusted);
+      if (preparation.conflicts.length > 0) {
+        // 既定は登録済みを残す。上書きは明示の操作にする（列5）
+        setResolutions(Object.fromEntries(preparation.conflicts.map((c) => [c.docId, false])));
+        setPending(preparation);
+        return;
+      }
+      await commit(preparation, []);
     } catch (e) {
       setError(e instanceof Error ? e.message : '保存に失敗しました');
     } finally {
       setBusy(false);
     }
+  }
+
+  async function commit(preparation: SavePreparation, overwrite: string[]) {
+    if (!selectedId) return;
+    const saved = await commitSave(materialId, selectedId, preparation, overwrite);
+    setBody(saved);
+    setSavedBody(saved);
+    setTrusted(new Set());
+    setKeywords(await listKeywords(materialId));
   }
 
   /** 並べ替えとネスト変更。先に画面を動かし、保存できなければ元に戻す（章の管理 列13）。 */
@@ -259,6 +284,8 @@ export function EditorPage() {
 
   function confirmKeyword(keyword: ParsedKeyword) {
     if (!draft) return;
+    // ダイアログで決めた内容は保存時に確認しない（決定表「保存時の上書き確認」列1）
+    if (keyword.docId !== null) setTrusted((prev) => new Set(prev).add(keyword.docId as string));
     setBody(applyKeywordToBody(body, draft.start, draft.end, keyword));
     setDraft(null);
     setSelection(null);
@@ -546,6 +573,30 @@ export function EditorPage() {
           onConfirm={confirmKeyword}
           onRelease={releaseKeyword}
           onCancel={() => setDraft(null)}
+        />
+      )}
+
+      {pending && (
+        <ConflictDialog
+          conflicts={pending.conflicts}
+          resolutions={resolutions}
+          onChange={(docId, overwrite) => setResolutions((r) => ({ ...r, [docId]: overwrite }))}
+          busy={busy}
+          description="登録済みの内容と食い違うキーワードがあります。どちらを残すか選んでください。"
+          onCancel={() => setPending(null)}
+          onApply={() => {
+            const preparation = pending;
+            const overwrite = Object.entries(resolutions)
+              .filter(([, value]) => value)
+              .map(([docId]) => docId);
+            setPending(null);
+            setBusy(true);
+            void commit(preparation, overwrite)
+              .catch((e: unknown) =>
+                setError(e instanceof Error ? e.message : '保存に失敗しました'),
+              )
+              .finally(() => setBusy(false));
+          }}
         />
       )}
 

@@ -415,3 +415,139 @@ test.describe('保存と正規化', () => {
     expect(prevented).toBe(true);
   });
 });
+
+test.describe('保存時の上書き確認', () => {
+  /** 教材・章・キーワードを1組用意して編集画面で章を開く。 */
+  async function openWithKeyword(page: Page, body: string, answers = ['光合成']) {
+    const ownerId = await ensureTestUser();
+    const subjectId = await seedSubject(ownerId, '生物');
+    const db = adminClient();
+    const material = await db
+      .from('materials')
+      .insert({ name: '細胞と代謝', subject_id: subjectId, owner_id: ownerId })
+      .select('id')
+      .single();
+    if (material.error) throw material.error;
+    const chapter = await db
+      .from('chapters')
+      .insert({
+        material_id: material.data.id,
+        owner_id: ownerId,
+        title: '光合成',
+        sort_order: 0,
+        body,
+      })
+      .select('id')
+      .single();
+    if (chapter.error) throw chapter.error;
+    const keyword = await db
+      .from('keywords')
+      .insert({
+        material_id: material.data.id,
+        chapter_id: chapter.data.id,
+        owner_id: ownerId,
+        doc_id: 'a3f9k2',
+        answers,
+      })
+      .select('id')
+      .single();
+    if (keyword.error) throw keyword.error;
+
+    await page.goto(`/materials/${material.data.id}/edit`);
+    await page.getByRole('treeitem', { name: '光合成' }).click();
+    await expect(page.getByLabel('本文')).toBeVisible();
+    return { keywordId: keyword.data.id as string, chapterId: chapter.data.id as string };
+  }
+
+  test('列1 ダイアログで正答を変えても確認は出ない', async ({ signedIn: page }) => {
+    const { keywordId } = await openWithKeyword(page, '植物は {{id=a3f9k2}} を行う。');
+
+    await page.getByTestId('preview').getByTestId('blank-a3f9k2').click();
+    await page.getByLabel('正答').fill('まったく別の語');
+    await page.getByRole('button', { name: '確定' }).click();
+    await page.getByRole('button', { name: '保存' }).click();
+
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    const keyword = await adminClient()
+      .from('keywords')
+      .select('answers')
+      .eq('id', keywordId)
+      .single();
+    expect(keyword.data?.answers).toEqual(['まったく別の語']);
+  });
+
+  test('列2 正答が1つ残る直しなら確認は出ない', async ({ signedIn: page }) => {
+    const { keywordId } = await openWithKeyword(page, '植物は {{id=a3f9k2}} を行う。', [
+      '光合成',
+      '炭酸同化',
+    ]);
+
+    await page.getByLabel('本文').fill('植物は {{光合成,同化作用|id=a3f9k2}} を行う。');
+    await page.getByRole('button', { name: '保存' }).click();
+
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    const keyword = await adminClient()
+      .from('keywords')
+      .select('answers')
+      .eq('id', keywordId)
+      .single();
+    expect(keyword.data?.answers).toEqual(['光合成', '同化作用']);
+  });
+
+  test('列3・列4 一致しない内容を貼ると確認が出て、上書きを選べる', async ({ signedIn: page }) => {
+    const { keywordId } = await openWithKeyword(page, '植物は {{id=a3f9k2}} を行う。');
+
+    await page.getByLabel('本文').fill('細胞は {{呼吸|id=a3f9k2}} を行う。');
+    await page.getByRole('button', { name: '保存' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('光合成');
+    await expect(dialog).toContainText('呼吸');
+    await dialog.getByRole('button', { name: '取り込んだ内容にする' }).click();
+    await dialog.getByRole('button', { name: '適用' }).click();
+
+    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    const keyword = await adminClient()
+      .from('keywords')
+      .select('answers')
+      .eq('id', keywordId)
+      .single();
+    expect(keyword.data?.answers).toEqual(['呼吸']);
+  });
+
+  test('列5 登録済みを残すと本文が DB の内容に戻る', async ({ signedIn: page }) => {
+    const { keywordId } = await openWithKeyword(page, '植物は {{id=a3f9k2}} を行う。');
+
+    await page.getByLabel('本文').fill('細胞は {{呼吸|id=a3f9k2}} を行う。');
+    await page.getByRole('button', { name: '保存' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: '登録済みを残す' }).click();
+    await dialog.getByRole('button', { name: '適用' }).click();
+
+    await expect(page.getByLabel('本文')).toHaveValue('細胞は {{光合成|id=a3f9k2}} を行う。');
+    const keyword = await adminClient()
+      .from('keywords')
+      .select('answers')
+      .eq('id', keywordId)
+      .single();
+    expect(keyword.data?.answers).toEqual(['光合成']);
+  });
+
+  test('列7 確認をキャンセルすると保存しない', async ({ signedIn: page }) => {
+    const { keywordId, chapterId } = await openWithKeyword(page, '植物は {{id=a3f9k2}} を行う。');
+
+    await page.getByLabel('本文').fill('細胞は {{呼吸|id=a3f9k2}} を行う。');
+    await page.getByRole('button', { name: '保存' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'やめる' }).click();
+
+    await expect(page.getByText('未保存の変更があります')).toBeVisible();
+    const db = adminClient();
+    const keyword = await db.from('keywords').select('answers').eq('id', keywordId).single();
+    expect(keyword.data?.answers).toEqual(['光合成']);
+    const chapter = await db.from('chapters').select('body').eq('id', chapterId).single();
+    expect(chapter.data?.body).toBe('植物は {{id=a3f9k2}} を行う。');
+  });
+});
