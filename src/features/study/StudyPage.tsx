@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTrail } from '@/components/Trail';
+import { keywordScore, type Score } from './score';
 import { MarkdownView } from '@/components/MarkdownView';
 import { buildTree, flatten, type ChapterRow } from '@/features/chapters/tree';
 import { isAnswerable, judge } from '@/lib/answer';
@@ -57,6 +58,8 @@ export function StudyPage() {
   const [input, setInput] = useState('');
   const [choice, setChoice] = useState('');
   const [correct, setCorrect] = useState(false);
+  /** 判定と一緒に見せるその問題の成績。記録できなかったときは出さない（列19） */
+  const [score, setScore] = useState<Score | null>(null);
   const [level, setLevel] = useState(0);
   const [expandedUsed, setExpandedUsed] = useState(false);
   const [answered, setAnswered] = useState<string[]>([]);
@@ -252,6 +255,7 @@ export function StudyPage() {
     }
     setAnswered((list) => [...list, current.keyword.id]);
     setElapsed(Date.now() - startedAt);
+    setScore(null);
 
     try {
       const request = recordAnswer({
@@ -264,6 +268,8 @@ export function StudyPage() {
       });
       recording.current = request;
       const next = await request;
+      // 記録前の回数に今回の分を足す（列17・列18）
+      setScore(keywordScore(current.keyword.stats, isCorrect));
       updateLocalStats(current.keyword.id, isCorrect, next.dueAt);
     } catch (e) {
       // 判定はそのまま見せ、記録できなかったことだけ知らせる（決定表「正誤判定」列16）
@@ -577,9 +583,15 @@ export function StudyPage() {
             {correct ? '正解' : '不正解'}
           </span>
           <span className="text-[13px] text-muted">
-            {format === 'choice' ? '選択肢形式' : '記述形式'} ・ この問題は出題{' '}
-            {(current.keyword.stats?.totalCount ?? 0) + (phase === 'judged' ? 0 : 1)} 回
+            {format === 'choice' ? '選択肢形式' : '記述形式'}
           </span>
+          {/* 列17: この問題をこれまでどれだけ当てられているか */}
+          {score !== null && (
+            <span data-testid="keyword-score" className="text-[13px] text-muted">
+              この問題 正答 {score.correctCount} / 出題 {score.totalCount} ・ 正答率{' '}
+              {Math.round(score.rate * 100)}%
+            </span>
+          )}
           <span className="grow" />
           {!correct && (
             <>
