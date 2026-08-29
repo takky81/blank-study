@@ -165,8 +165,12 @@ a {
     @apply rounded-md border-2 border-ink bg-panel;
   }
 
-  /* 行そのものが押せるカード */
-  .card-act:hover {
+  /*
+   * 行そのものが押せるカード。
+   * 行の中のボタンに乗っている間は、そのボタンだけが反応すればよいので
+   * カード側のホバーは外す。行の主役（名前）はボタンの体裁を持たないため残る。
+   */
+  .card-act:hover:not(:has(.btn:hover, .btn-p:hover, .btn-s:hover, .btn-warn:hover)) {
     background: var(--c-hover);
   }
 
