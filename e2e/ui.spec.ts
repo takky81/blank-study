@@ -164,7 +164,7 @@ test.describe('表示設定と共通の振る舞い', () => {
     const { materialId } = await seedOne(page);
 
     await page.goto(`/materials/${materialId}/study`);
-    await page.getByRole('radio', { name: '記述' }).check();
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
     await page.getByRole('button', { name: '開始する' }).click();
     await page.getByLabel('解答').fill('光合成');
     await page.getByRole('button', { name: '解答する' }).click();

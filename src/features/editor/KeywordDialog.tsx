@@ -63,39 +63,42 @@ export function KeywordDialog({
       role="dialog"
       aria-modal="true"
       aria-label="キーワードの編集"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 sm:items-center sm:p-6"
     >
-      <div className="flex max-h-dvh w-full max-w-lg flex-col gap-3 overflow-y-auto rounded-t-lg border-2 border-stone-900 bg-white p-5 sm:rounded-lg dark:border-stone-100 dark:bg-stone-900">
-        <h2 className="text-lg">キーワードの編集</h2>
+      <div className="flex max-h-dvh w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-md border-2 border-ink bg-panel p-6 sm:rounded-md">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-[17px]">キーワードの編集</h2>
+          <span className="font-mono text-[12px] text-muted">id = {draft.docId}</span>
+        </div>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-[13px] text-ink-soft">
           正答
-          <span className="text-xs text-stone-500">1行に1件。どれを書いても正解にする</span>
+          <span className="text-[12px] text-muted">1行に1件。どれを書いても正解にする</span>
           <textarea
             aria-label="正答"
             value={answers}
             rows={3}
             autoFocus
             onChange={(e) => setAnswers(e.target.value)}
-            className="rounded border-2 border-stone-900 p-2 dark:border-stone-100 dark:bg-stone-800"
+            className="field h-auto py-2"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-[13px] text-ink-soft">
           タグ
-          <span className="text-xs text-stone-500">1行に1件。誤答選択肢の自動生成に使う</span>
+          <span className="text-[12px] text-muted">1行に1件。誤答選択肢の自動生成に使う</span>
           <textarea
             aria-label="タグ"
             value={tags}
             rows={2}
             onChange={(e) => setTags(e.target.value)}
-            className="rounded border-2 border-stone-900 p-2 dark:border-stone-100 dark:bg-stone-800"
+            className="field h-auto py-2"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-[13px] text-ink-soft">
           誤答選択肢
-          <span className="text-xs text-stone-500">
+          <span className="text-[12px] text-muted">
             1行に1件。空にすると同じタグから自動で集める
           </span>
           <textarea
@@ -103,36 +106,28 @@ export function KeywordDialog({
             value={wrong}
             rows={2}
             onChange={(e) => setWrong(e.target.value)}
-            className="rounded border-2 border-stone-900 p-2 dark:border-stone-100 dark:bg-stone-800"
+            className="field h-auto py-2"
           />
         </label>
 
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {draft.existing && (
+            <button type="button" onClick={onRelease} className="btn-s">
+              キーワードを解除
+            </button>
+          )}
+          <span className="grow" />
+          <button ref={cancelRef} type="button" onClick={onCancel} className="btn">
+            キャンセル
+          </button>
           <button
             type="button"
             onClick={() => onConfirm(keyword)}
             disabled={!canConfirmKeyword(keyword)}
-            className="h-11 grow rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+            className="btn-p"
           >
             確定
           </button>
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={onCancel}
-            className="h-11 rounded border-2 border-stone-900 px-4 dark:border-stone-100"
-          >
-            キャンセル
-          </button>
-          {draft.existing && (
-            <button
-              type="button"
-              onClick={onRelease}
-              className="h-11 rounded border border-stone-400 px-4 text-sm text-stone-600 dark:text-stone-300"
-            >
-              キーワードを解除
-            </button>
-          )}
         </div>
       </div>
     </div>

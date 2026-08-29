@@ -54,11 +54,7 @@ export async function resetData(ownerId: string): Promise<void> {
 }
 
 /** 科目を1件作る。テストの前準備用。 */
-export async function seedSubject(
-  ownerId: string,
-  name: string,
-  sortOrder = 0,
-): Promise<string> {
+export async function seedSubject(ownerId: string, name: string, sortOrder = 0): Promise<string> {
   const { data, error } = await adminClient()
     .from('subjects')
     .insert({ name, owner_id: ownerId, sort_order: sortOrder })

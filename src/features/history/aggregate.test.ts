@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  classify,
-  aggregate,
-  weakKeywords,
-  dailyVolume,
-  type StatRow,
-} from './aggregate';
+import { classify, aggregate, weakKeywords, dailyVolume, type StatRow } from './aggregate';
 
 // 端末の時刻で日と週を区切るので、ローカル時刻で組み立てる（2026-08-26 は水曜日）
 const now = new Date(2026, 7, 26, 12, 0, 0);
@@ -108,8 +102,14 @@ describe('aggregate（決定表「学習履歴の集計」列5-列12）', () => 
       row({ keywordId: 'b', chapterId: 'c2', totalCount: 2, correctCount: 0 }),
     ];
     const parent = aggregate(rows, now);
-    const left = aggregate(rows.filter((r) => r.chapterId === 'c1'), now);
-    const right = aggregate(rows.filter((r) => r.chapterId === 'c2'), now);
+    const left = aggregate(
+      rows.filter((r) => r.chapterId === 'c1'),
+      now,
+    );
+    const right = aggregate(
+      rows.filter((r) => r.chapterId === 'c2'),
+      now,
+    );
     expect(parent.total).toBe(left.total + right.total);
     expect(parent.settled).toBe(left.settled + right.settled);
   });

@@ -18,7 +18,7 @@ test.describe('教材の管理', () => {
     await openSubject(page);
     for (const name of ['テクノロジ系', 'マネジメント系']) {
       await page.getByLabel('教材名').fill(name);
-      await page.getByRole('button', { name: '＋ 追加' }).click();
+      await page.getByRole('button', { name: '＋ 教材を追加' }).click();
       await expect(page.getByText(name, { exact: true })).toBeVisible();
     }
     await expect(rows(page)).toHaveCount(2);
@@ -27,16 +27,16 @@ test.describe('教材の管理', () => {
 
   test('列2 空の名前は追加できない', async ({ signedIn: page }) => {
     await openSubject(page);
-    await expect(page.getByRole('button', { name: '＋ 追加' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '＋ 教材を追加' })).toBeDisabled();
     await page.getByLabel('教材名').fill('   ');
-    await expect(page.getByRole('button', { name: '＋ 追加' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '＋ 教材を追加' })).toBeDisabled();
   });
 
   test('列3 同じ名前の教材を作れる', async ({ signedIn: page }) => {
     await openSubject(page);
     for (let i = 0; i < 2; i += 1) {
       await page.getByLabel('教材名').fill('テクノロジ系');
-      await page.getByRole('button', { name: '＋ 追加' }).click();
+      await page.getByRole('button', { name: '＋ 教材を追加' }).click();
       await expect(rows(page)).toHaveCount(i + 1);
     }
   });
@@ -46,7 +46,7 @@ test.describe('教材の管理', () => {
     await openSubject(page);
 
     await page.getByLabel('教材名').fill('テクノロジ系');
-    await page.getByRole('button', { name: '＋ 追加' }).click();
+    await page.getByRole('button', { name: '＋ 教材を追加' }).click();
     await expect(rows(page)).toHaveCount(1);
 
     expect(await countRows('chapters', ownerId)).toBe(1);

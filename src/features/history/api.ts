@@ -25,7 +25,10 @@ export async function loadHistory(): Promise<HistoryData> {
   const [subjects, materials, chapters, keywords, logs] = await Promise.all([
     supabase.from('subjects').select('id, name, sort_order').order('sort_order'),
     supabase.from('materials').select('id, name, subject_id, sort_order').order('sort_order'),
-    supabase.from('chapters').select('id, title, material_id, parent_id, sort_order').order('sort_order'),
+    supabase
+      .from('chapters')
+      .select('id, title, material_id, parent_id, sort_order')
+      .order('sort_order'),
     supabase
       .from('keywords')
       .select(
