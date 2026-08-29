@@ -11,7 +11,7 @@ function inlinesOf(blocks: Block[]) {
 describe('parseMarkdown ブロック（決定表「編集画面の操作」列1）', () => {
   it('見出しの深さを読む', () => {
     expect(parseMarkdown('### 光合成')).toEqual([
-      { type: 'heading', level: 3, children: [{ type: 'text', text: '光合成' }] },
+      { type: 'heading', level: 3, children: [{ type: 'text', text: '光合成', start: 4 }] },
     ]);
   });
 
@@ -22,7 +22,7 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
 
   it('段落の中の改行は保つ', () => {
     expect(inlinesOf(parseMarkdown('1行目\n2行目'))).toEqual([
-      { type: 'text', text: '1行目\n2行目' },
+      { type: 'text', text: '1行目\n2行目', start: 0 },
     ]);
   });
 
@@ -32,7 +32,10 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
       {
         type: 'list',
         ordered: false,
-        items: [[{ type: 'text', text: '光合成' }], [{ type: 'text', text: '呼吸' }]],
+        items: [
+          [{ type: 'text', text: '光合成', start: 2 }],
+          [{ type: 'text', text: '呼吸', start: 8 }],
+        ],
       },
     ]);
   });
@@ -44,7 +47,7 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
 
   it('引用を読む', () => {
     expect(parseMarkdown('> 引用文')).toEqual([
-      { type: 'quote', children: [{ type: 'text', text: '引用文' }] },
+      { type: 'quote', children: [{ type: 'text', text: '引用文', start: 2 }] },
     ]);
   });
 
@@ -62,9 +65,9 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
 describe('parseMarkdown インライン（決定表「編集画面の操作」列1・列14）', () => {
   it('強調と傍点を読む', () => {
     expect(inlinesOf(parseMarkdown('**強い**と*弱い*'))).toEqual([
-      { type: 'strong', children: [{ type: 'text', text: '強い' }] },
-      { type: 'text', text: 'と' },
-      { type: 'em', children: [{ type: 'text', text: '弱い' }] },
+      { type: 'strong', children: [{ type: 'text', text: '強い', start: 2 }] },
+      { type: 'text', text: 'と', start: 6 },
+      { type: 'em', children: [{ type: 'text', text: '弱い', start: 8 }] },
     ]);
   });
 
@@ -76,19 +79,19 @@ describe('parseMarkdown インライン（決定表「編集画面の操作」�
 
   it('リンクを読む', () => {
     expect(inlinesOf(parseMarkdown('[説明](https://example.com)'))).toEqual([
-      { type: 'link', href: 'https://example.com', children: [{ type: 'text', text: '説明' }] },
+      { type: 'link', href: 'https://example.com', children: [{ type: 'text', text: '説明', start: 1 }] },
     ]);
   });
 
   it('列14 画像の記述は描画せず文字のまま残す', () => {
     expect(inlinesOf(parseMarkdown('![図](photo.png)'))).toEqual([
-      { type: 'text', text: '![図](photo.png)' },
+      { type: 'text', text: '![図](photo.png)', start: 0 },
     ]);
   });
 
   it('キーワードの記述を空欄にする', () => {
     expect(inlinesOf(parseMarkdown('植物は {{光合成|id=a3f9k2|tags=生物}} を行う。'))).toEqual([
-      { type: 'text', text: '植物は ' },
+      { type: 'text', text: '植物は ', start: 0 },
       {
         type: 'blank',
         start: 4,
@@ -98,7 +101,7 @@ describe('parseMarkdown インライン（決定表「編集画面の操作」�
         tags: ['生物'],
         wrongChoices: [],
       },
-      { type: 'text', text: ' を行う。' },
+      { type: 'text', text: ' を行う。', start: 29 },
     ]);
   });
 
@@ -110,7 +113,7 @@ describe('parseMarkdown インライン（決定表「編集画面の操作」�
 
   it('キーワードとして読めない記述は文字のまま残す', () => {
     expect(inlinesOf(parseMarkdown('{{}} と {{光合成'))).toEqual([
-      { type: 'text', text: '{{}} と {{光合成' },
+      { type: 'text', text: '{{}} と {{光合成', start: 0 },
     ]);
   });
 

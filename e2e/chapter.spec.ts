@@ -48,7 +48,7 @@ test.describe('章の管理', () => {
     await page.getByRole('treeitem', { name: '基礎理論' }).click();
     await page.getByRole('button', { name: '＋ 章' }).click();
     await page.getByLabel('章タイトル').fill('2進数');
-    await page.getByRole('button', { name: '作成' }).click();
+    await page.getByRole('button', { name: '作成', exact: true }).click();
 
     await expect(treeItems(page)).toHaveCount(2);
     const child = page.getByRole('treeitem', { name: '2進数' });
@@ -60,7 +60,7 @@ test.describe('章の管理', () => {
 
     await page.getByRole('button', { name: '＋ 章' }).click();
     await page.getByLabel('章タイトル').fill('アルゴリズム');
-    await page.getByRole('button', { name: '作成' }).click();
+    await page.getByRole('button', { name: '作成', exact: true }).click();
 
     const added = page.getByRole('treeitem', { name: 'アルゴリズム' });
     await expect(added).toHaveAttribute('aria-level', '1');
@@ -70,9 +70,9 @@ test.describe('章の管理', () => {
     await openEditor(page, [{ id: id(1), parentId: null, title: '基礎理論', sortOrder: 0 }]);
 
     await page.getByRole('button', { name: '＋ 章' }).click();
-    await expect(page.getByRole('button', { name: '作成' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '作成', exact: true })).toBeDisabled();
     await page.getByLabel('章タイトル').fill('   ');
-    await expect(page.getByRole('button', { name: '作成' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '作成', exact: true })).toBeDisabled();
   });
 
   test('列4 章名を変更できる', async ({ signedIn: page }) => {

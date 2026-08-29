@@ -8,6 +8,7 @@ export function ConfirmDialog({
   title,
   children,
   confirmLabel,
+  cancelLabel = 'キャンセル',
   destructive = false,
   busy = false,
   onConfirm,
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   destructive?: boolean;
   busy?: boolean;
   onConfirm: () => void;
@@ -50,7 +52,7 @@ export function ConfirmDialog({
             disabled={busy}
             className="h-11 rounded border-2 border-stone-900 px-4 disabled:opacity-40 dark:border-stone-100"
           >
-            キャンセル
+            {cancelLabel}
           </button>
           <button
             type="button"

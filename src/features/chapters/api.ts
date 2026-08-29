@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeName } from '@/features/subjects/validation';
-import { scanKeywordTokens, parseKeywordToken } from '@/lib/keyword';
+import { syncActiveKeywords } from '@/features/editor/api';
 import { isDescendant, type ChapterRow } from './tree';
 
 export type ChapterImpact = {
@@ -99,42 +99,13 @@ export async function countChapterImpact(
 }
 
 /**
- * 教材内のキーワードの is_active を本文から数え直す（仕様書 §6.4）。
- * どの本文にも出現しないキーワードは出題対象から外し、レコードと履歴は残す。
- */
-export async function recomputeActiveKeywords(materialId: string): Promise<void> {
-  const [chapters, keywords] = await Promise.all([
-    supabase.from('chapters').select('body').eq('material_id', materialId),
-    supabase.from('keywords').select('id, doc_id, is_active').eq('material_id', materialId),
-  ]);
-  if (chapters.error) fail('本文の取得に失敗しました', chapters.error);
-  if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
-
-  const present = new Set<string>();
-  for (const chapter of chapters.data ?? []) {
-    for (const token of scanKeywordTokens(chapter.body ?? '')) {
-      const parsed = parseKeywordToken(token.inner);
-      if (parsed?.docId) present.add(parsed.docId);
-    }
-  }
-
-  const updates = (keywords.data ?? [])
-    .map((k) => ({ id: k.id, next: present.has(k.doc_id), current: k.is_active }))
-    .filter((k) => k.next !== k.current);
-
-  await Promise.all(
-    updates.map((u) => supabase.from('keywords').update({ is_active: u.next }).eq('id', u.id)),
-  );
-}
-
-/**
  * 章を消す。配下の章もまとめて消える（列6）。
  * キーワードは chapter_id が null になって残り、本文から消えるので出題対象から外れる。
  */
 export async function deleteChapter(materialId: string, chapterId: string): Promise<void> {
   const { error } = await supabase.from('chapters').delete().eq('id', chapterId);
   if (error) fail('章の削除に失敗しました', error);
-  await recomputeActiveKeywords(materialId);
+  await syncActiveKeywords(materialId);
 }
 
 /** 並べ替えとネスト変更を保存する（列7・列8）。変わった行だけ更新する。 */
