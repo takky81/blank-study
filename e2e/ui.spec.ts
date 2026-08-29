@@ -229,4 +229,38 @@ test.describe('表示設定と共通の振る舞い', () => {
     await row.getByRole('button', { name: '解答', exact: true }).hover();
     await background().toBe('rgb(255,255,255)');
   });
+  test('列21 押せるものはカーソルを乗せると見た目が変わる', async ({ signedIn: page }) => {
+    await seedOne(page);
+    await expect(page.getByRole('button', { name: '解答', exact: true })).toBeVisible();
+
+    // ボタンの体裁を持つものを総なめにする（ファイルを選ぶラベルも押せるものとして扱う）
+    const targets = page
+      .locator('button:not([disabled])')
+      .or(page.locator('a[class*="btn"]'))
+      .or(page.locator('label').filter({ has: page.locator('input[type="file"]') }));
+    const count = await targets.count();
+    expect(count).toBeGreaterThan(5);
+
+    for (let i = 0; i < count; i += 1) {
+      const target = targets.nth(i);
+      if (!(await target.isVisible())) continue;
+
+      const name = (await target.textContent())?.trim() ?? `${i}`;
+      const before = await target.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+      await target.hover();
+      await expect
+        .poll(
+          async () => {
+            const after = await target.evaluate((el) => getComputedStyle(el).backgroundColor);
+            return after === before ? `変わらない: ${name}` : `変わった: ${name}`;
+          },
+          { timeout: 2000 },
+        )
+        .toBe(`変わった: ${name}`);
+
+      // 次の要素を測る前に、カーソルを外して色を戻す
+      await page.mouse.move(0, 0);
+    }
+  });
 });

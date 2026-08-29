@@ -68,7 +68,7 @@ export function ImportControl({
 
   return (
     <>
-      <label className="inline-flex h-11 cursor-pointer items-center rounded border border-edge px-3 text-[13px] text-ink-soft">
+      <label className="btn-s cursor-pointer">
         {label}
         <input
           ref={inputRef}
