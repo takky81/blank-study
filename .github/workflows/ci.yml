@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  spec:
+    name: 決定表
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      # jsonl がすべて読めること、決定表として矛盾がないことを確かめる。
+      # 列番号の重複や同じ列での行の重複があれば build が落ちる。
+      - name: 決定表を生成する
+        working-directory: spec
+        run: npm run build
