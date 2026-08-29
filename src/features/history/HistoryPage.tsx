@@ -87,7 +87,7 @@ export function HistoryPage() {
           }
           disabled={node.children.length === 0}
           style={{ paddingLeft: `${18 + depth * 18}px` }}
-          className="flex w-full flex-wrap items-center gap-3 py-2 pr-4 text-left text-[14px] disabled:cursor-default"
+          className="flex w-full flex-wrap items-center gap-3 py-2 pr-4 text-left text-[14px] enabled:hover:bg-hover disabled:cursor-default"
         >
           <span aria-hidden className="w-4 shrink-0 text-[12px] text-muted">
             {node.children.length > 0 ? (expanded ? '▾' : '▸') : ''}

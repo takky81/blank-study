@@ -60,7 +60,6 @@ export function App() {
             </Link>
             <Trail />
             <span className="grow" />
-            <span className="hidden text-[12px] text-muted lg:inline">{session.user.email}</span>
             <Link to="/history" className="btn-s no-underline">
               学習履歴
             </Link>

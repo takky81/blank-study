@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
-import { isValidEmail, canSubmitLogin } from './validation';
+import { isValidEmail, canSubmitLogin, isNetworkFailure } from './validation';
 
 /**
  * ログイン画面。決定表「認証」 spec/tables/01-auth.jsonl に対応する。
@@ -41,8 +41,10 @@ export function LoginPage() {
         email: email.trim(),
         password,
       });
+      // 列9: 通信の失敗は投げられるとは限らず、エラーとして返ることもある
+      if (isNetworkFailure(signInError)) setError(MESSAGE_NETWORK);
       // 列2・列3: 資格情報の誤りは同じ文言でログイン画面にとどまる
-      if (signInError) setError(MESSAGE_INVALID);
+      else if (signInError) setError(MESSAGE_INVALID);
     } catch {
       // 列9: 通信の失敗は資格情報の誤りとは別の文言にする
       setError(MESSAGE_NETWORK);

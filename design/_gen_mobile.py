@@ -11,10 +11,10 @@ HEAD = """<!doctype html>
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    body { margin: 0; font-family: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif; background: #faf9f5; color: #26251f; }
     a { color: #8a6d1f; } a:hover { color: #5f4a12; }
     .top { height: 52px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 14px; gap: 10px; background: #fff; flex-shrink: 0; }
     .ttl { font-size: 16px; flex-grow: 1; }
