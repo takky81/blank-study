@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { ImportControl } from '@/features/transfer/ImportControl';
+import { exportMaterial } from '@/features/transfer/api';
+import { saveFile } from '@/features/transfer/download';
 import { isValidName, reorder } from '@/features/subjects/validation';
 import {
   getSubjectName,
@@ -105,6 +108,14 @@ export function MaterialsPage() {
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl">{subjectName}</h1>
         <span className="grow" />
+        {/* 決定表「インポートの単位」列1: zip 1つを教材まるごととして取り込む */}
+        <ImportControl
+          label="zip を取り込む"
+          testId="import-material"
+          target={(fileName) => ({ kind: 'material', subjectId, name: fileName })}
+          onDone={() => void load()}
+          onError={setError}
+        />
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -240,6 +251,18 @@ export function MaterialsPage() {
                     className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
                   >
                     編集
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void run(async () => {
+                        const { fileName, bytes } = await exportMaterial(material.id);
+                        saveFile(fileName, bytes);
+                      })
+                    }
+                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
+                  >
+                    書き出す
                   </button>
                   <button
                     type="button"

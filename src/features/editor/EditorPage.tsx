@@ -28,6 +28,7 @@ import { listKeywords, saveChapter, type KeywordRow } from './api';
 import { BodyEditor } from './BodyEditor';
 import { Preview } from './Preview';
 import { KeywordDialog, type KeywordDraft } from './KeywordDialog';
+import { ImportControl } from '@/features/transfer/ImportControl';
 
 type Tab = 'chapters' | 'edit' | 'preview';
 
@@ -370,6 +371,15 @@ export function EditorPage() {
                 ＋ 章
               </button>
             </div>
+
+            {/* 決定表「インポートの単位」列2: 選んでいる章の下に取り込む */}
+            <ImportControl
+              label="章を取り込む"
+              testId="import-chapter"
+              target={() => ({ kind: 'chapter', materialId, parentId: selectedId })}
+              onDone={() => void load()}
+              onError={setError}
+            />
 
             {creating && (
               <form
