@@ -430,6 +430,51 @@ test.describe('出題', () => {
     await expect(page.getByRole('alert')).toContainText('記録');
   });
 
+  test('判定 列17 判定のあとにその問題の成績を出す', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+    ]);
+
+    await start(page, materialId);
+    // 初めての出題なので、今回の解答だけで数える（列18）
+    await page.getByLabel('解答').fill('違う');
+    await page.getByRole('button', { name: '解答する' }).click();
+
+    const score = page.getByTestId('keyword-score');
+    await expect(score).toContainText('正答 0 / 出題 1');
+    await expect(score).toContainText('0%');
+
+    // 2回目。前回の分を含めて数える（列17）
+    await page.getByRole('button', { name: '次の問題へ' }).click();
+    await page.getByLabel('解答').fill('光合成');
+    await page.getByRole('button', { name: '解答する' }).click();
+
+    await expect(score).toContainText('正答 1 / 出題 2');
+    await expect(score).toContainText('50%');
+  });
+
+  test('判定 列19 記録できなかったときは成績を出さない', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+    ]);
+
+    await start(page, materialId);
+    await page.route('**/rest/v1/answer_logs**', (route) => route.abort('failed'));
+    await page.getByLabel('解答').fill('光合成');
+    await page.getByRole('button', { name: '解答する' }).click();
+
+    await expect(page.getByText('正解', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('keyword-score')).toHaveCount(0);
+  });
+
   test('表示 列16 表を含む本文が崩れずに出る', async ({ signedIn: page }) => {
     const { materialId } = await seedMaterial([
       {
