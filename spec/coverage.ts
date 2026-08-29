@@ -40,7 +40,12 @@ const SOURCES: Record<string, string[]> = {
   別解の登録: ['src/features/study/alt.test.ts', 'e2e/study.spec.ts'],
   'SRS の更新': ['src/features/study/srs.test.ts', 'e2e/study.spec.ts'],
   学習履歴の集計: ['src/features/history/aggregate.test.ts', 'e2e/history.spec.ts'],
-  表示設定と共通の振る舞い: ['e2e/ui.spec.ts', 'src/lib/theme.test.ts', 'src/lib/submitGuard.test.ts'],
+  表示設定と共通の振る舞い: [
+    'e2e/ui.spec.ts',
+    'src/lib/theme.test.ts',
+    'src/lib/submitGuard.test.ts',
+    'src/lib/contrast.test.ts',
+  ],
 };
 
 type Column = { table: string; col: number };

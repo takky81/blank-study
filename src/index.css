@@ -9,57 +9,55 @@
  * 書かずに済ませ、見た目のずれが1か所に集まるようにする。
  */
 :root {
-  --c-paper: #faf9f5; /* 画面の地 */
+  --c-paper: #f5f8fc; /* 画面の地 */
   --c-panel: #ffffff; /* カード・ペインの地 */
-  --c-subtle: #f2f1ea; /* ペイン見出しの帯 */
-  --c-accent-panel: #eeebe0; /* まとめて解答するカード */
-  --c-ink: #26251f; /* 文字と主要な枠線 */
-  --c-ink-soft: #6b6a62; /* 補助の文字 */
-  --c-muted: #8a887d; /* 注記 */
-  --c-line: #c9c7bd; /* 細い区切り線 */
-  --c-edge: #a8a69c; /* 副ボタンの枠線 */
-  --c-link: #8a6d1f;
+  --c-subtle: #e8eef7; /* ペイン見出しの帯 */
+  --c-accent-panel: #dde7f5; /* まとめて解答するカード */
+  --c-hover: #d3e0f2; /* 白抜きボタンにカーソルを乗せたとき */
+  --c-ink: #132a45; /* 文字と主要な枠線・主ボタンの地 */
+  --c-ink-hover: #0d1e33; /* 主ボタンにカーソルを乗せたとき */
+  --c-ink-soft: #42566e; /* 補助の文字 */
+  --c-muted: #566779; /* 注記 */
+  --c-line: #c2cfdf; /* 細い区切り線 */
+  --c-edge: #7a8da5; /* 副ボタンの枠線 */
+  --c-link: #14559c;
 
-  --c-warn: #c2410c; /* 不正解・危険な操作 */
-  --c-warn-panel: #fff7ed;
-  --c-blank: #fde68a; /* 出題中の空欄 */
-  --c-blank-edge: #d9a441;
-  --c-kw: #fef3c7; /* 記述のハイライト */
-  --c-mask: #d9d7cd; /* 伏せた語 */
-  --c-mask-edge: #a8a69c;
-  --c-wrong: #f0b39a; /* 答えた語が入る位置・苦手 */
-  --c-wrong-edge: #c2410c;
-  --c-untouched: #e8e6dd; /* 未出題 */
-
-  --c-ink-hover: #3c3a31; /* 主ボタンにカーソルを乗せたとき */
-  --c-hover: #f0eee4; /* 地の上の要素にカーソルを乗せたとき */
+  --c-warn: #b42318; /* 不正解・危険な操作 */
+  --c-warn-panel: #fef3f2;
+  --c-blank: #bfdbfe; /* 出題中の空欄 */
+  --c-blank-edge: #3f76b8;
+  --c-kw: #dbeafe; /* 記述のハイライト */
+  --c-mask: #ccd6e3; /* 伏せた語 */
+  --c-mask-edge: #7a8da5;
+  --c-wrong: #f3c4b6; /* 答えた語が入る位置・苦手 */
+  --c-wrong-edge: #b42318;
+  --c-untouched: #dde4ed; /* 未出題 */
 }
 
 .dark {
-  --c-paper: #1b1a16;
-  --c-panel: #24231e;
-  --c-subtle: #2c2b25;
-  --c-accent-panel: #33312a;
-  --c-ink: #f2f0e8;
-  --c-ink-soft: #b8b5a8;
-  --c-muted: #97948a;
-  --c-line: #4a4840;
-  --c-edge: #6b6a62;
-  --c-link: #d8bd6c;
+  --c-paper: #0f1823;
+  --c-panel: #17212e;
+  --c-subtle: #1e2a39;
+  --c-accent-panel: #243346;
+  --c-hover: #28374a;
+  --c-ink: #e9eff7;
+  --c-ink-hover: #ffffff;
+  --c-ink-soft: #adbccf;
+  --c-muted: #8d9db1;
+  --c-line: #33455a;
+  --c-edge: #5d7288;
+  --c-link: #8ab8f0;
 
-  --c-warn: #f08a4b;
-  --c-warn-panel: #3a2418;
-  --c-blank: #d9a441;
-  --c-blank-edge: #f5cf7a;
-  --c-kw: #4a3c1c;
-  --c-mask: #46443c;
-  --c-mask-edge: #6b6a62;
-  --c-wrong: #8a4324;
-  --c-wrong-edge: #f0b39a;
-  --c-untouched: #3a382f;
-
-  --c-ink-hover: #dedbd0;
-  --c-hover: #302e28;
+  --c-warn: #ff9478;
+  --c-warn-panel: #3a1c16;
+  --c-blank: #2c4f7c;
+  --c-blank-edge: #7fb0e8;
+  --c-kw: #223a5c;
+  --c-mask: #2b3a4c;
+  --c-mask-edge: #5d7288;
+  --c-wrong: #7d3323;
+  --c-wrong-edge: #f3a68f;
+  --c-untouched: #293747;
 }
 
 @theme inline {

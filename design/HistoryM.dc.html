@@ -10,36 +10,36 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif; background: #faf9f5; color: #26251f; }
-    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
-    .top { height: 52px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 14px; gap: 10px; background: #fff; flex-shrink: 0; }
+    body { margin: 0; font-family: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif; background: #f5f8fc; color: #132a45; }
+    a { color: #14559c; } a:hover { color: #0d3d75; }
+    .top { height: 52px; border-bottom: 2px solid #132a45; display: flex; align-items: center; padding: 0 14px; gap: 10px; background: #fff; flex-shrink: 0; }
     .ttl { font-size: 16px; flex-grow: 1; }
-    .ico { font-size: 19px; color: #6b6a62; width: 24px; text-align: center; flex-shrink: 0; }
+    .ico { font-size: 19px; color: #42566e; width: 24px; text-align: center; flex-shrink: 0; }
     .body { flex-grow: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-    .card { border: 2px solid #26251f; border-radius: 6px; background: #fff; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
-    .btn { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #fff; }
-    .btn-p { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #26251f; color: #faf9f5; }
-    .btn-s { border: 1.5px solid #a8a69c; border-radius: 5px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
-    .fld { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; padding: 0 12px; font-size: 15px; background: #fff; }
-    .lbl { font-size: 12px; color: #6b6a62; }
-    .muted { color: #8a887d; font-size: 12px; }
-    .nav { height: 60px; border-top: 2px solid #26251f; display: flex; background: #fff; flex-shrink: 0; }
-    .nav-i { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #8a887d; }
-    .sec-hd { padding: 9px 14px; border-bottom: 1.5px solid #c9c7bd; font-size: 12px; color: #6b6a62; background: #f2f1ea; }
-    .cb { width: 20px; height: 20px; border: 2px solid #26251f; border-radius: 3px; flex-shrink: 0; }
-    .cb-on { width: 20px; height: 20px; border: 2px solid #26251f; border-radius: 3px; background: #26251f; flex-shrink: 0; }
-    .rd { width: 19px; height: 19px; border: 2px solid #26251f; border-radius: 50%; flex-shrink: 0; }
-    .rd-on { width: 19px; height: 19px; border: 5.5px solid #26251f; border-radius: 50%; background: #fff; flex-shrink: 0; }
+    .card { border: 2px solid #132a45; border-radius: 6px; background: #fff; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .btn { border: 2px solid #132a45; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #fff; }
+    .btn-p { border: 2px solid #132a45; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #132a45; color: #f5f8fc; }
+    .btn-s { border: 1.5px solid #7a8da5; border-radius: 5px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 12px; font-size: 13px; color: #42566e; background: #fff; }
+    .fld { border: 2px solid #132a45; border-radius: 5px; min-height: 46px; display: flex; align-items: center; padding: 0 12px; font-size: 15px; background: #fff; }
+    .lbl { font-size: 12px; color: #42566e; }
+    .muted { color: #566779; font-size: 12px; }
+    .nav { height: 60px; border-top: 2px solid #132a45; display: flex; background: #fff; flex-shrink: 0; }
+    .nav-i { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #566779; }
+    .sec-hd { padding: 9px 14px; border-bottom: 1.5px solid #c2cfdf; font-size: 12px; color: #42566e; background: #e8eef7; }
+    .cb { width: 20px; height: 20px; border: 2px solid #132a45; border-radius: 3px; flex-shrink: 0; }
+    .cb-on { width: 20px; height: 20px; border: 2px solid #132a45; border-radius: 3px; background: #132a45; flex-shrink: 0; }
+    .rd { width: 19px; height: 19px; border: 2px solid #132a45; border-radius: 50%; flex-shrink: 0; }
+    .rd-on { width: 19px; height: 19px; border: 5.5px solid #132a45; border-radius: 50%; background: #fff; flex-shrink: 0; }
     .opt { display: flex; align-items: center; gap: 11px; font-size: 15px; min-height: 46px; }
-    .kw-blank { background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; min-width: 84px; padding: 0 9px; }
-    .kw-wrong { background: #f0b39a; border: 2px solid #c2410c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
-    .kw-mask { background: #d9d7cd; border: 2px solid #a8a69c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
+    .kw-blank { background: #bfdbfe; border: 2px solid #3f76b8; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; min-width: 84px; padding: 0 9px; }
+    .kw-wrong { background: #f3c4b6; border: 2px solid #b42318; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
+    .kw-mask { background: #ccd6e3; border: 2px solid #7a8da5; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
     .lg { display: flex; align-items: center; gap: 6px; }
     .lg-c { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
   </style>
 </helmet>
 
-<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #faf9f5;">
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #f5f8fc;">
 
   <div class="top">
     <div class="ttl">学習履歴</div>
@@ -56,46 +56,46 @@
       </div>
     </div>
 
-    <div style="border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; flex-direction: column;">
+    <div style="border: 2px solid #132a45; border-radius: 6px; background: #fff; display: flex; flex-direction: column;">
       <div class="sec-hd">科目 ・ 教材 ・ 章</div>
       <div style="padding: 6px 0;">
         <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px;">
-          <span style="color: #8a887d; width: 12px;">▾</span>
+          <span style="color: #566779; width: 12px;">▾</span>
           <span style="flex-grow: 1; font-size: 14px;">基本情報技術者</span>
-          <span style="width: 62px; height: 10px; border: 1.5px solid #26251f; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 46%; background: #26251f;"></span><span style="width: 22%; background: #f0b39a;"></span><span style="width: 32%; background: #e8e6dd;"></span></span>
+          <span style="width: 62px; height: 10px; border: 1.5px solid #132a45; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 46%; background: #132a45;"></span><span style="width: 22%; background: #f3c4b6;"></span><span style="width: 32%; background: #dde4ed;"></span></span>
           <span class="muted" style="width: 34px; text-align: right;">78%</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 36px;">
-          <span style="color: #8a887d; width: 12px;">▾</span>
+          <span style="color: #566779; width: 12px;">▾</span>
           <span style="flex-grow: 1; font-size: 14px;">テクノロジ系</span>
-          <span style="width: 62px; height: 10px; border: 1.5px solid #26251f; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 62%; background: #26251f;"></span><span style="width: 14%; background: #f0b39a;"></span><span style="width: 24%; background: #e8e6dd;"></span></span>
+          <span style="width: 62px; height: 10px; border: 1.5px solid #132a45; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 62%; background: #132a45;"></span><span style="width: 14%; background: #f3c4b6;"></span><span style="width: 24%; background: #dde4ed;"></span></span>
           <span class="muted" style="width: 34px; text-align: right;">85%</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 60px;">
           <span style="flex-grow: 1; font-size: 14px;">基礎理論</span>
-          <span style="width: 62px; height: 10px; border: 1.5px solid #26251f; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 78%; background: #26251f;"></span><span style="width: 8%; background: #f0b39a;"></span><span style="width: 14%; background: #e8e6dd;"></span></span>
+          <span style="width: 62px; height: 10px; border: 1.5px solid #132a45; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 78%; background: #132a45;"></span><span style="width: 8%; background: #f3c4b6;"></span><span style="width: 14%; background: #dde4ed;"></span></span>
           <span class="muted" style="width: 34px; text-align: right;">91%</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 60px;">
           <span style="flex-grow: 1; font-size: 14px;">アルゴリズム</span>
-          <span style="width: 62px; height: 10px; border: 1.5px solid #26251f; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 24%; background: #26251f;"></span><span style="width: 44%; background: #f0b39a;"></span><span style="width: 32%; background: #e8e6dd;"></span></span>
+          <span style="width: 62px; height: 10px; border: 1.5px solid #132a45; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 24%; background: #132a45;"></span><span style="width: 44%; background: #f3c4b6;"></span><span style="width: 32%; background: #dde4ed;"></span></span>
           <span class="muted" style="width: 34px; text-align: right;">52%</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px;">
-          <span style="color: #8a887d; width: 12px;">▸</span>
+          <span style="color: #566779; width: 12px;">▸</span>
           <span style="flex-grow: 1; font-size: 14px;">生物基礎</span>
-          <span style="width: 62px; height: 10px; border: 1.5px solid #26251f; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 30%; background: #26251f;"></span><span style="width: 18%; background: #f0b39a;"></span><span style="width: 52%; background: #e8e6dd;"></span></span>
+          <span style="width: 62px; height: 10px; border: 1.5px solid #132a45; border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0;"><span style="width: 30%; background: #132a45;"></span><span style="width: 18%; background: #f3c4b6;"></span><span style="width: 52%; background: #dde4ed;"></span></span>
           <span class="muted" style="width: 34px; text-align: right;">64%</span>
         </div>
       </div>
-      <div style="padding: 9px 14px; border-top: 1.5px solid #c9c7bd; display: flex; gap: 12px;">
-        <div class="lg"><span class="lg-c" style="background: #26251f;"></span><span class="muted">定着</span></div>
-        <div class="lg"><span class="lg-c" style="background: #f0b39a; border: 1.5px solid #c2410c;"></span><span class="muted">苦手</span></div>
-        <div class="lg"><span class="lg-c" style="background: #e8e6dd; border: 1.5px solid #a8a69c;"></span><span class="muted">未出題</span></div>
+      <div style="padding: 9px 14px; border-top: 1.5px solid #c2cfdf; display: flex; gap: 12px;">
+        <div class="lg"><span class="lg-c" style="background: #132a45;"></span><span class="muted">定着</span></div>
+        <div class="lg"><span class="lg-c" style="background: #f3c4b6; border: 1.5px solid #b42318;"></span><span class="muted">苦手</span></div>
+        <div class="lg"><span class="lg-c" style="background: #dde4ed; border: 1.5px solid #7a8da5;"></span><span class="muted">未出題</span></div>
       </div>
     </div>
 
-    <div style="border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
+    <div style="border: 2px solid #132a45; border-radius: 6px; background: #fff; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
       <div class="sec-hd">苦手キーワード</div>
       <div style="padding: 4px 0;">
         <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px;"><span style="flex-grow: 1; font-size: 14px;">スタック</span><span class="muted">31%</span></div>
@@ -103,13 +103,13 @@
         <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px;"><span style="flex-grow: 1; font-size: 14px;">スループット</span><span class="muted">44%</span></div>
       </div>
       <div style="flex-grow: 1;"></div>
-      <div style="padding: 9px 14px; border-top: 1.5px solid #c9c7bd;" class="muted">日別の学習量は ⋯ から</div>
+      <div style="padding: 9px 14px; border-top: 1.5px solid #c2cfdf;" class="muted">日別の学習量は ⋯ から</div>
     </div>
 
   </div>
   <div class="nav">
     <div class="nav-i"><div style="font-size: 17px;">▤</div><div>学習</div></div>
-    <div class="nav-i" style="color: #26251f;"><div style="font-size: 17px;">▧</div><div>履歴</div></div>
+    <div class="nav-i" style="color: #132a45;"><div style="font-size: 17px;">▧</div><div>履歴</div></div>
   </div>
 </div>
 </x-dc>

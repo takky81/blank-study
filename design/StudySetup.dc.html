@@ -10,28 +10,28 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif; background: #faf9f5; color: #26251f; }
-    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
-    .hd { height: 56px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
-    .btn-p { border: 2px solid #26251f; border-radius: 4px; height: 42px; display: flex; align-items: center; padding: 0 24px; font-size: 16px; background: #26251f; color: #faf9f5; }
-    .btn-s { border: 1.5px solid #a8a69c; border-radius: 4px; height: 30px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
-    .sec { border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; flex-direction: column; }
-    .sec-hd { padding: 12px 18px; border-bottom: 1.5px solid #c9c7bd; font-size: 14px; color: #6b6a62; display: flex; align-items: center; gap: 10px; }
-    .cb { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 3px; flex-shrink: 0; }
-    .cb-on { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 3px; background: #26251f; flex-shrink: 0; }
-    .rd { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 50%; flex-shrink: 0; }
-    .rd-on { width: 17px; height: 17px; border: 5px solid #26251f; border-radius: 50%; background: #fff; flex-shrink: 0; }
+    body { margin: 0; font-family: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif; background: #f5f8fc; color: #132a45; }
+    a { color: #14559c; } a:hover { color: #0d3d75; }
+    .hd { height: 56px; border-bottom: 2px solid #132a45; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
+    .btn-p { border: 2px solid #132a45; border-radius: 4px; height: 42px; display: flex; align-items: center; padding: 0 24px; font-size: 16px; background: #132a45; color: #f5f8fc; }
+    .btn-s { border: 1.5px solid #7a8da5; border-radius: 4px; height: 30px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #42566e; background: #fff; }
+    .sec { border: 2px solid #132a45; border-radius: 6px; background: #fff; display: flex; flex-direction: column; }
+    .sec-hd { padding: 12px 18px; border-bottom: 1.5px solid #c2cfdf; font-size: 14px; color: #42566e; display: flex; align-items: center; gap: 10px; }
+    .cb { width: 17px; height: 17px; border: 2px solid #132a45; border-radius: 3px; flex-shrink: 0; }
+    .cb-on { width: 17px; height: 17px; border: 2px solid #132a45; border-radius: 3px; background: #132a45; flex-shrink: 0; }
+    .rd { width: 17px; height: 17px; border: 2px solid #132a45; border-radius: 50%; flex-shrink: 0; }
+    .rd-on { width: 17px; height: 17px; border: 5px solid #132a45; border-radius: 50%; background: #fff; flex-shrink: 0; }
     .opt { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 9px 0; }
-    .muted { color: #8a887d; font-size: 12px; }
+    .muted { color: #566779; font-size: 12px; }
   </style>
 </helmet>
 
-<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #f5f8fc;">
 
   <div class="hd">
     <div style="font-size: 17px;">穴埋め学習</div>
-    <div style="font-size: 13px; color: #6b6a62; display: flex; align-items: center; gap: 8px;">
-      <span>／</span><span>基本情報技術者</span><span>／</span><span style="color: #26251f;">出題設定</span>
+    <div style="font-size: 13px; color: #42566e; display: flex; align-items: center; gap: 8px;">
+      <span>／</span><span>基本情報技術者</span><span>／</span><span style="color: #132a45;">出題設定</span>
     </div>
     <div style="flex-grow: 1;"></div>
     <div class="btn-s">キャンセル</div>
@@ -42,13 +42,13 @@
     <div class="sec" style="flex-grow: 1.4; flex-basis: 0; min-width: 0;">
       <div class="sec-hd"><span style="flex-grow: 1;">出題範囲</span><span class="btn-s">すべて選択</span><span class="btn-s">すべて解除</span></div>
       <div style="flex-grow: 1; padding: 12px 18px; display: flex; flex-direction: column; gap: 1px; overflow: hidden;">
-        <div class="opt"><span style="color: #8a887d; width: 12px;">▾</span><span class="cb-on"></span><span>基本情報技術者</span><span class="muted">412 問</span></div>
-        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▾</span><span class="cb-on"></span><span>テクノロジ系</span><span class="muted">210 問</span></div>
+        <div class="opt"><span style="color: #566779; width: 12px;">▾</span><span class="cb-on"></span><span>基本情報技術者</span><span class="muted">412 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #566779; width: 12px;">▾</span><span class="cb-on"></span><span>テクノロジ系</span><span class="muted">210 問</span></div>
         <div class="opt" style="padding-left: 64px;"><span class="cb-on"></span><span>基礎理論</span><span class="muted">64 問</span></div>
         <div class="opt" style="padding-left: 64px;"><span class="cb-on"></span><span>アルゴリズム</span><span class="muted">58 問</span></div>
-        <div class="opt" style="padding-left: 64px;"><span class="cb"></span><span style="color: #8a887d;">コンピュータ構成要素</span><span class="muted">88 問</span></div>
-        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▸</span><span class="cb"></span><span style="color: #8a887d;">マネジメント系</span><span class="muted">88 問</span></div>
-        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▸</span><span class="cb"></span><span style="color: #8a887d;">ストラテジ系</span><span class="muted">114 問</span></div>
+        <div class="opt" style="padding-left: 64px;"><span class="cb"></span><span style="color: #566779;">コンピュータ構成要素</span><span class="muted">88 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #566779; width: 12px;">▸</span><span class="cb"></span><span style="color: #566779;">マネジメント系</span><span class="muted">88 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #566779; width: 12px;">▸</span><span class="cb"></span><span style="color: #566779;">ストラテジ系</span><span class="muted">114 問</span></div>
       </div>
     </div>
 
