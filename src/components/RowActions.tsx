@@ -6,7 +6,16 @@ import { useNarrow } from '@/lib/useNarrow';
  * 狭い画面では主要な操作だけを残し、残りをメニューに畳む
  * （決定表「表示設定と共通の振る舞い」列8）。
  */
-export function RowActions({ primary, children }: { primary: ReactNode; children: ReactNode }) {
+export function RowActions({
+  primary = null,
+  label = 'メニュー',
+  children,
+}: {
+  primary?: ReactNode;
+  /** 畳んだときのボタンの呼び名。同じ画面に複数あるときに区別する */
+  label?: string;
+  children: ReactNode;
+}) {
   const narrow = useNarrow();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -41,7 +50,7 @@ export function RowActions({ primary, children }: { primary: ReactNode; children
       {primary}
       <button
         type="button"
-        aria-label="メニュー"
+        aria-label={label}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="btn-s w-11 text-lg"
