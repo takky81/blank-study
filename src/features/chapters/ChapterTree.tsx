@@ -48,15 +48,13 @@ export function ChapterTree({
             style={{ paddingLeft: `${8 + node.depth * 18}px` }}
             className={
               node.id === selectedId
-                ? 'cursor-pointer rounded bg-stone-900 py-2 pr-2 text-sm text-stone-50 dark:bg-stone-100 dark:text-stone-900'
-                : 'cursor-pointer rounded py-2 pr-2 text-sm hover:bg-stone-100 dark:hover:bg-stone-800'
+                ? 'cursor-pointer rounded bg-ink py-2 pr-2 text-[14px] text-paper'
+                : 'cursor-pointer rounded py-2 pr-2 text-sm hover:bg-subtle'
             }
           >
             {node.title}
           </div>
-          {node.children.length > 0 && (
-            <ul role="group">{renderLevel(node.children, node.id)}</ul>
-          )}
+          {node.children.length > 0 && <ul role="group">{renderLevel(node.children, node.id)}</ul>}
         </li>
       ))}
       <Gap parentId={parentId} index={nodes.length} onDropInGap={onDropInGap} />
@@ -87,7 +85,7 @@ function Gap({
         e.stopPropagation();
         onDropInGap(parentId, index);
       }}
-      className="h-1.5 rounded transition-colors hover:bg-stone-300"
+      className="h-1.5 rounded transition-colors hover:bg-untouched"
     />
   );
 }

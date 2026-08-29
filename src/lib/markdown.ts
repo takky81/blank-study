@@ -221,10 +221,7 @@ function parseInline(span: Span): Inline[] {
     });
   }
 
-  const push = (
-    pattern: RegExp,
-    build: (matched: RegExpExecArray, at: number) => Inline,
-  ): void => {
+  const push = (pattern: RegExp, build: (matched: RegExpExecArray, at: number) => Inline): void => {
     const matched = pattern.exec(span.text);
     if (!matched) return;
     candidates.push({

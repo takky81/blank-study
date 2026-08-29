@@ -52,48 +52,45 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-stone-50 p-6 dark:bg-stone-950">
+    <div className="flex min-h-dvh items-center justify-center bg-paper p-6">
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="flex w-full max-w-sm flex-col gap-6 rounded-lg border-2 border-stone-900 bg-white p-8 dark:border-stone-100 dark:bg-stone-900"
+        className="flex w-full max-w-[420px] flex-col gap-5 rounded-md border-2 border-ink bg-panel p-8"
       >
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl">穴埋め学習</h1>
-          <p className="text-sm text-stone-500">ログインしてください</p>
+          <h1 className="text-[26px]">穴埋め学習</h1>
+          <p className="text-[13px] text-muted">ログインしてください</p>
         </div>
 
         <label className="flex flex-col gap-2">
-          <span className="text-xs text-stone-500">メールアドレス</span>
+          <span className="text-[13px] text-ink-soft">メールアドレス</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username"
-            className="h-11 rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+            placeholder="you@example.com"
+            className="field h-[46px]"
           />
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="text-xs text-stone-500">パスワード</span>
+          <span className="text-[13px] text-ink-soft">パスワード</span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            className="h-11 rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+            className="field h-[46px]"
           />
         </label>
 
         <div className="flex flex-col gap-2">
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="h-11 rounded border-2 border-stone-900 bg-stone-900 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
+          <button type="submit" disabled={!canSubmit} className="btn-p h-[46px] text-[16px]">
             {busy ? '確認しています…' : 'ログイン'}
           </button>
-          <p role="alert" className="min-h-5 text-sm text-orange-700">
+          <p role="alert" className="min-h-5 text-[13px] text-warn">
             {error}
           </p>
         </div>

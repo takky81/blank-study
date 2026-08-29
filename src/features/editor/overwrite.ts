@@ -36,7 +36,11 @@ export function planSave(
   return {
     apply: [
       ...apply,
-      ...trustedConflicts.map((c) => ({ kind: 'overwrite' as const, docId: c.docId, fields: c.incoming })),
+      ...trustedConflicts.map((c) => ({
+        kind: 'overwrite' as const,
+        docId: c.docId,
+        fields: c.incoming,
+      })),
     ],
     // 確認するのは一致しなかったものだけ（列8）
     conflicts: conflicts.filter((c) => !trusted.has(c.docId)),

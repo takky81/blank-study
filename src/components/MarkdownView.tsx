@@ -32,7 +32,7 @@ export function MarkdownView({
           );
         case 'code':
           return (
-            <code key={i} className="rounded bg-stone-100 px-1 dark:bg-stone-800">
+            <code key={i} className="rounded bg-subtle px-1 ">
               {node.text}
             </code>
           );
@@ -72,7 +72,7 @@ export function MarkdownView({
         return (
           <blockquote
             key={i}
-            className="my-2 border-l-4 border-stone-300 pl-3 whitespace-pre-wrap text-stone-600 dark:text-stone-400"
+            className="my-2 border-l-4 border-line pl-3 whitespace-pre-wrap text-ink-soft"
           >
             {inline(node.children)}
           </blockquote>
@@ -96,10 +96,7 @@ export function MarkdownView({
               <thead>
                 <tr>
                   {node.head.map((cell, j) => (
-                    <th
-                      key={j}
-                      className="border-2 border-stone-900 bg-stone-100 px-3 py-2 text-left dark:border-stone-100 dark:bg-stone-800"
-                    >
+                    <th key={j} className="border-2 border-ink bg-subtle px-3 py-2 text-left ">
                       {inline(cell)}
                     </th>
                   ))}
@@ -109,10 +106,7 @@ export function MarkdownView({
                 {node.rows.map((row, j) => (
                   <tr key={j}>
                     {row.map((cell, k) => (
-                      <td
-                        key={k}
-                        className="border-2 border-stone-900 px-3 py-2 dark:border-stone-100"
-                      >
+                      <td key={k} className="border-2 border-ink px-3 py-2">
                         {inline(cell)}
                       </td>
                     ))}
@@ -124,10 +118,7 @@ export function MarkdownView({
         );
       case 'code':
         return (
-          <pre
-            key={i}
-            className="my-2 overflow-x-auto rounded bg-stone-100 p-3 text-sm dark:bg-stone-800"
-          >
+          <pre key={i} className="my-2 overflow-x-auto rounded bg-subtle p-3 text-[13px] ">
             {node.text}
           </pre>
         );
@@ -138,13 +129,9 @@ export function MarkdownView({
     <div
       data-testid={testId}
       hidden={hidden}
-      className="grow overflow-y-auto rounded-md border-2 border-stone-900 bg-white p-4 dark:border-stone-100 dark:bg-stone-900"
+      className="grow overflow-y-auto bg-panel px-5 py-4 text-[14px] leading-[2.1]"
     >
-      {body.trim() === '' ? (
-        <p className="text-sm text-stone-400">{empty}</p>
-      ) : (
-        blocks.map(block)
-      )}
+      {body.trim() === '' ? <p className="text-[13px] text-muted">{empty}</p> : blocks.map(block)}
     </div>
   );
 }

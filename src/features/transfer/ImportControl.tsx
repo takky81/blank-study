@@ -68,7 +68,7 @@ export function ImportControl({
 
   return (
     <>
-      <label className="inline-flex h-11 cursor-pointer items-center rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300">
+      <label className="inline-flex h-11 cursor-pointer items-center rounded border border-edge px-3 text-[13px] text-ink-soft">
         {label}
         <input
           ref={inputRef}

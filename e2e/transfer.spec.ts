@@ -106,9 +106,9 @@ test.describe('インポート', () => {
     await page.goto(`/materials/${materialId}/edit`);
     await page.getByRole('treeitem', { name: '基礎理論' }).click();
     await expect(page.getByLabel('本文')).toBeVisible();
-    await page.getByTestId('import-chapter').setInputFiles(
-      zipFile('追加分.zip', { '010_論理演算.md': '論理演算の本文' }),
-    );
+    await page
+      .getByTestId('import-chapter')
+      .setInputFiles(zipFile('追加分.zip', { '010_論理演算.md': '論理演算の本文' }));
 
     await expect(page.getByRole('treeitem', { name: '論理演算' })).toHaveAttribute(
       'aria-level',
@@ -122,9 +122,7 @@ test.describe('インポート', () => {
     expect(chapters.data?.map((c) => c.title).sort()).toEqual(['基礎理論', '論理演算']);
   });
 
-  test('突合列3・列10 正答が重なるキーワードは確認なしで更新される', async ({
-    signedIn: page,
-  }) => {
+  test('突合列3・列10 正答が重なるキーワードは確認なしで更新される', async ({ signedIn: page }) => {
     const { ownerId, subjectId } = await seedOnlySubject(page);
     const { materialId, keywordId } = await seedMaterial(ownerId, subjectId);
 
@@ -157,9 +155,9 @@ test.describe('インポート', () => {
     await page.goto(`/materials/${materialId}/edit`);
     await page.getByRole('treeitem', { name: '基礎理論' }).click();
     await expect(page.getByLabel('本文')).toBeVisible();
-    await page.getByTestId('import-chapter').setInputFiles(
-      zipFile('追加分.zip', { '010_呼吸.md': '{{呼吸|id=a3f9k2}} の話。' }),
-    );
+    await page
+      .getByTestId('import-chapter')
+      .setInputFiles(zipFile('追加分.zip', { '010_呼吸.md': '{{呼吸|id=a3f9k2}} の話。' }));
 
     const dialog = page.getByRole('dialog');
     await expect(dialog).toContainText('光合成');
@@ -184,9 +182,9 @@ test.describe('インポート', () => {
     await page.goto(`/materials/${materialId}/edit`);
     await page.getByRole('treeitem', { name: '基礎理論' }).click();
     await expect(page.getByLabel('本文')).toBeVisible();
-    await page.getByTestId('import-chapter').setInputFiles(
-      zipFile('追加分.zip', { '010_呼吸.md': '{{呼吸|id=a3f9k2}} の話。' }),
-    );
+    await page
+      .getByTestId('import-chapter')
+      .setInputFiles(zipFile('追加分.zip', { '010_呼吸.md': '{{呼吸|id=a3f9k2}} の話。' }));
 
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: '登録済みを残す' }).click();
@@ -205,9 +203,9 @@ test.describe('インポート', () => {
     const { subjectId } = await seedOnlySubject(page);
 
     await page.route('**/rest/v1/rpc/import_material', (route) => route.abort('failed'));
-    await page.getByTestId('import-material').setInputFiles(
-      zipFile('テクノロジ系.zip', { '010_基礎理論.md': '{{ビット}} の話。' }),
-    );
+    await page
+      .getByTestId('import-material')
+      .setInputFiles(zipFile('テクノロジ系.zip', { '010_基礎理論.md': '{{ビット}} の話。' }));
 
     await expect(page.getByRole('alert')).toBeVisible();
 
@@ -250,7 +248,7 @@ test.describe('エクスポート', () => {
 
     const download = await Promise.all([
       page.waitForEvent('download'),
-      page.getByRole('button', { name: '書き出す' }).click(),
+      page.getByRole('button', { name: 'エクスポート' }).click(),
     ]).then(([d]) => d);
 
     expect(download.suggestedFilename()).toBe('テクノロジ系.zip');
@@ -271,7 +269,7 @@ test.describe('エクスポート', () => {
 
     const download = await Promise.all([
       page.waitForEvent('download'),
-      page.getByRole('button', { name: '書き出す' }).click(),
+      page.getByRole('button', { name: 'エクスポート' }).click(),
     ]).then(([d]) => d);
     const stream = await download.createReadStream();
     const chunks: Buffer[] = [];

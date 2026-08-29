@@ -39,19 +39,13 @@ export function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 sm:items-center sm:p-6"
     >
-      <div className="flex max-h-full w-full flex-col gap-4 overflow-auto border-2 border-stone-900 bg-stone-50 p-6 sm:max-w-md sm:rounded-lg dark:border-stone-100 dark:bg-stone-900">
-        <h2 className="text-lg">{title}</h2>
-        <div className="text-sm leading-relaxed text-stone-600 dark:text-stone-300">{children}</div>
+      <div className="flex max-h-full w-full flex-col gap-4 overflow-auto border-2 border-ink bg-panel p-6 sm:max-w-lg sm:rounded-md">
+        <h2 className="text-[17px]">{title}</h2>
+        <div className="text-[13px] leading-[1.9] text-ink-soft">{children}</div>
         <div className="flex justify-end gap-3 pt-2">
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={onCancel}
-            disabled={busy}
-            className="h-11 rounded border-2 border-stone-900 px-4 disabled:opacity-40 dark:border-stone-100"
-          >
+          <button ref={cancelRef} type="button" onClick={onCancel} disabled={busy} className="btn">
             {cancelLabel}
           </button>
           <button
@@ -60,8 +54,8 @@ export function ConfirmDialog({
             disabled={busy}
             className={
               destructive
-                ? 'h-11 rounded border-2 border-orange-700 bg-orange-700 px-4 text-stone-50 disabled:opacity-40'
-                : 'h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900'
+                ? 'flex h-11 items-center justify-center rounded border-2 border-warn bg-warn px-5 text-[15px] text-paper disabled:opacity-40'
+                : 'btn-p'
             }
           >
             {busy ? '処理しています…' : confirmLabel}

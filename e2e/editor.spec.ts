@@ -74,12 +74,15 @@ test.describe('編集画面', () => {
 
   /** 編集領域の一部を選択する。 */
   async function selectInEditor(page: Page, start: number, end: number) {
-    await editor(page).evaluate((el, range) => {
-      const area = el as HTMLTextAreaElement;
-      area.focus();
-      area.setSelectionRange(range.start, range.end);
-      area.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
-    }, { start, end });
+    await editor(page).evaluate(
+      (el, range) => {
+        const area = el as HTMLTextAreaElement;
+        area.focus();
+        area.setSelectionRange(range.start, range.end);
+        area.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+      },
+      { start, end },
+    );
   }
 
   /** プレビューの中の文字を選択する。 */
@@ -149,7 +152,7 @@ test.describe('編集画面', () => {
 
     await editor(page).fill('# 新しい見出し');
     await expect(preview(page).getByRole('heading', { name: '新しい見出し' })).toBeVisible();
-    await expect(page.getByText('未保存の変更があります')).toBeVisible();
+    await expect(page.getByText('未保存の変更あり')).toBeVisible();
   });
 
   test('列3 プレビューで選んだ語をキーワードにする', async ({ signedIn: page }) => {
@@ -217,7 +220,7 @@ test.describe('編集画面', () => {
     await page.getByRole('button', { name: 'キーワードを解除' }).click();
 
     await expect(editor(page)).toHaveValue('植物は 光合成 を行う。');
-    await expect(page.getByText('未保存の変更があります')).toBeVisible();
+    await expect(page.getByText('未保存の変更あり')).toBeVisible();
   });
 
   test('列12 編集領域で記述が色分けされる', async ({ signedIn: page }) => {
@@ -290,14 +293,18 @@ test.describe('保存と正規化', () => {
     await page.goto(`/materials/${material.data.id}/edit`);
     await page.getByRole('treeitem', { name: '光合成' }).click();
     await expect(page.getByLabel('本文')).toBeVisible();
-    return { ownerId, materialId: material.data.id as string, chapterId: chapter.data.id as string };
+    return {
+      ownerId,
+      materialId: material.data.id as string,
+      chapterId: chapter.data.id as string,
+    };
   }
 
   test('列1 保存すると本文が id のみになり、id が採番される', async ({ signedIn: page }) => {
     const { materialId, chapterId } = await openChapter(page, '');
     await page.getByLabel('本文').fill('植物は {{光合成,炭酸同化|tags=生物}} を行う。');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
 
     const db = adminClient();
     const chapter = await db.from('chapters').select('body').eq('id', chapterId).single();
@@ -321,10 +328,13 @@ test.describe('保存と正規化', () => {
     ]);
     await page.getByLabel('本文').fill('植物は光合成を行う。');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
 
     const db = adminClient();
-    const keywords = await db.from('keywords').select('doc_id, is_active').eq('material_id', materialId);
+    const keywords = await db
+      .from('keywords')
+      .select('doc_id, is_active')
+      .eq('material_id', materialId);
     expect(keywords.data).toHaveLength(1);
     expect(keywords.data?.[0]?.is_active).toBe(false);
   });
@@ -337,13 +347,16 @@ test.describe('保存と正規化', () => {
 
     await page.getByLabel('本文').fill('植物は光合成を行う。');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
 
     await page.getByLabel('本文').fill('植物は {{id=a3f9k2}} を行う。');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
 
-    const keywords = await db.from('keywords').select('doc_id, is_active').eq('material_id', materialId);
+    const keywords = await db
+      .from('keywords')
+      .select('doc_id, is_active')
+      .eq('material_id', materialId);
     expect(keywords.data).toHaveLength(1);
     expect(keywords.data?.[0]?.is_active).toBe(true);
   });
@@ -352,7 +365,7 @@ test.describe('保存と正規化', () => {
     await openChapter(page, '');
     await page.getByLabel('本文').fill('{{光合成|id=a3f9k2|tags=生物}} と {{id=a3f9k2}}');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
 
     await page.reload();
     await page.getByRole('treeitem', { name: '光合成' }).click();
@@ -373,7 +386,7 @@ test.describe('保存と正規化', () => {
 
     await expect(page.getByRole('alert')).toBeVisible();
     await expect(page.getByLabel('本文')).toHaveValue('新しい本文');
-    await expect(page.getByText('未保存の変更があります')).toBeVisible();
+    await expect(page.getByText('未保存の変更あり')).toBeVisible();
   });
 
   test('列8 変更が無ければ保存を押せない', async ({ signedIn: page }) => {
@@ -385,10 +398,14 @@ test.describe('保存と正規化', () => {
     const { chapterId } = await openChapter(page, '本文');
     await page.getByLabel('本文').fill('');
     await page.getByRole('button', { name: '保存' }).click();
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
     await expect(page.getByRole('alert')).toHaveCount(0);
 
-    const chapter = await adminClient().from('chapters').select('body').eq('id', chapterId).single();
+    const chapter = await adminClient()
+      .from('chapters')
+      .select('body')
+      .eq('id', chapterId)
+      .single();
     expect(chapter.data?.body).toBe('');
   });
 
@@ -468,7 +485,7 @@ test.describe('保存時の上書き確認', () => {
     await page.getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
     const keyword = await adminClient()
       .from('keywords')
       .select('answers')
@@ -487,7 +504,7 @@ test.describe('保存時の上書き確認', () => {
     await page.getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
     const keyword = await adminClient()
       .from('keywords')
       .select('answers')
@@ -508,7 +525,7 @@ test.describe('保存時の上書き確認', () => {
     await dialog.getByRole('button', { name: '取り込んだ内容にする' }).click();
     await dialog.getByRole('button', { name: '適用' }).click();
 
-    await expect(page.getByText('未保存の変更があります')).toHaveCount(0);
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
     const keyword = await adminClient()
       .from('keywords')
       .select('answers')
@@ -543,7 +560,7 @@ test.describe('保存時の上書き確認', () => {
     await page.getByRole('button', { name: '保存' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'やめる' }).click();
 
-    await expect(page.getByText('未保存の変更があります')).toBeVisible();
+    await expect(page.getByText('未保存の変更あり')).toBeVisible();
     const db = adminClient();
     const keyword = await db.from('keywords').select('answers').eq('id', keywordId).single();
     expect(keyword.data?.answers).toEqual(['光合成']);

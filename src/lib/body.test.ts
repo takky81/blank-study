@@ -42,9 +42,9 @@ describe('formatKeyword（決定表「編集画面の操作」列7・列11）', 
   });
 
   it('クォートを含む値は連続クォートにする', () => {
-    expect(
-      formatKeyword({ answers: ['say "hi"'], docId: null, tags: [], wrongChoices: [] }),
-    ).toBe('{{"say ""hi"""}}');
+    expect(formatKeyword({ answers: ['say "hi"'], docId: null, tags: [], wrongChoices: [] })).toBe(
+      '{{"say ""hi"""}}',
+    );
   });
 
   it('id のみの形を作れる', () => {
@@ -78,7 +78,11 @@ describe('assignDocIds（決定表「キーワードIDの採番」）', () => {
   });
 
   it('列4 同じ本文の中でも採番した id は重ならない', () => {
-    const result = assignDocIds('{{光合成}} と {{呼吸}}', [], fixedIds('k71m2p', 'k71m2p', 'w4d8x1'));
+    const result = assignDocIds(
+      '{{光合成}} と {{呼吸}}',
+      [],
+      fixedIds('k71m2p', 'k71m2p', 'w4d8x1'),
+    );
     expect(result.keywords.map((k) => k.docId)).toEqual(['k71m2p', 'w4d8x1']);
   });
 
@@ -170,9 +174,9 @@ describe('canCreateKeyword（決定表「編集画面の操作」列4・列5）'
 describe('キーワード編集ダイアログの反映（決定表「編集画面の操作」列7・列8・列10）', () => {
   it('列8 正答が0件なら確定できない', () => {
     expect(canConfirmKeyword({ answers: [], docId: null, tags: [], wrongChoices: [] })).toBe(false);
-    expect(canConfirmKeyword({ answers: ['光合成'], docId: null, tags: [], wrongChoices: [] })).toBe(
-      true,
-    );
+    expect(
+      canConfirmKeyword({ answers: ['光合成'], docId: null, tags: [], wrongChoices: [] }),
+    ).toBe(true);
   });
 
   it('列7 選択範囲を記述に置き換える', () => {

@@ -24,7 +24,10 @@ export function SubjectsPage() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [deleting, setDeleting] = useState<{ subject: Subject; impact: SubjectImpact } | null>(null);
+  const [deleting, setDeleting] = useState<{
+    subject: Subject;
+    impact: SubjectImpact;
+  } | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -80,13 +83,13 @@ export function SubjectsPage() {
   }
 
   if (loading) {
-    return <p className="p-10 text-sm text-stone-500">読み込んでいます…</p>;
+    return <p className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-6 sm:p-10">
+    <div className="mx-auto flex max-w-4xl flex-col gap-5 p-6 sm:px-10 sm:py-8">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl">科目</h1>
+        <h1 className="text-[22px]">科目</h1>
         <span className="grow" />
         <form
           className="flex gap-2"
@@ -104,14 +107,10 @@ export function SubjectsPage() {
             onChange={(e) => setNewName(e.target.value)}
             placeholder="科目名"
             aria-label="科目名"
-            className="h-11 rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+            className="field"
           />
-          <button
-            type="submit"
-            disabled={!canAdd}
-            className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
-            ＋ 追加
+          <button type="submit" disabled={!canAdd} className="btn-p">
+            ＋ 科目を追加
           </button>
         </form>
       </div>
@@ -119,14 +118,10 @@ export function SubjectsPage() {
       {error !== '' && (
         <div
           role="alert"
-          className="flex items-center gap-3 rounded border-2 border-orange-700 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-950/40"
+          className="flex items-center gap-3 rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn"
         >
           <span className="grow">{error}</span>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="h-11 rounded border border-orange-700 px-3"
-          >
+          <button type="button" onClick={() => void load()} className="btn-s border-warn text-warn">
             再試行
           </button>
         </div>
@@ -134,7 +129,7 @@ export function SubjectsPage() {
 
       {/* 列11: 1件も無いときは案内を出す */}
       {subjects.length === 0 ? (
-        <p className="rounded border-2 border-dashed border-stone-300 p-10 text-center text-sm text-stone-500">
+        <p className="rounded border-2 border-dashed border-line p-10 text-center text-[13px] text-muted">
           科目がまだありません。上の欄から追加してください。
         </p>
       ) : (
@@ -146,7 +141,7 @@ export function SubjectsPage() {
               onDragStart={() => setDraggingIndex(index)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => void handleDrop(index)}
-              className="flex flex-wrap items-center gap-3 rounded-md border-2 border-stone-900 bg-white p-4 dark:border-stone-100 dark:bg-stone-900"
+              className="flex flex-wrap items-center gap-3 card p-4"
             >
               {editingId === subject.id ? (
                 <form
@@ -165,20 +160,16 @@ export function SubjectsPage() {
                     onChange={(e) => setEditingName(e.target.value)}
                     aria-label="新しい科目名"
                     autoFocus
-                    className="h-11 grow rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+                    className="field grow"
                   />
                   <button
                     type="submit"
                     disabled={!isValidName(editingName) || busy}
-                    className="h-11 rounded border-2 border-stone-900 px-4 disabled:opacity-40 dark:border-stone-100"
+                    className="btn"
                   >
                     確定
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                    className="h-11 rounded border border-stone-400 px-4 text-stone-600 dark:text-stone-300"
-                  >
+                  <button type="button" onClick={() => setEditingId(null)} className="btn-s">
                     やめる
                   </button>
                 </form>
@@ -189,9 +180,9 @@ export function SubjectsPage() {
                     onClick={() => navigate(`/subjects/${subject.id}`)}
                     className="flex grow flex-col items-start gap-1 text-left"
                   >
-                    <span className="text-lg">{subject.name}</span>
-                    <span className="text-xs text-stone-500">
-                      教材 {subject.materialCount} ・ キーワード {subject.keywordCount}
+                    <span className="text-[17px]">{subject.name}</span>
+                    <span className="text-[13px] text-muted">
+                      教材 {subject.materialCount} 件 ・ キーワード {subject.keywordCount} 件
                     </span>
                   </button>
                   <button
@@ -200,7 +191,7 @@ export function SubjectsPage() {
                       setEditingId(subject.id);
                       setEditingName(subject.name);
                     }}
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
+                    className="btn-s"
                   >
                     名前を変更
                   </button>
@@ -212,7 +203,7 @@ export function SubjectsPage() {
                         setDeleting({ subject, impact });
                       })
                     }
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
+                    className="btn-s"
                   >
                     削除
                   </button>
@@ -224,7 +215,7 @@ export function SubjectsPage() {
       )}
 
       {subjects.length > 1 && (
-        <p className="text-center text-xs text-stone-400">行をドラッグして並べ替え</p>
+        <p className="text-center text-[12px] text-muted">行をドラッグして並べ替え</p>
       )}
 
       {/* 列6〜列9: 消えるものの件数を見せてから確認する */}

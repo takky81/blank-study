@@ -8,6 +8,10 @@ export type Material = {
   chapterCount: number;
   /** 出題対象のキーワード数 */
   keywordCount: number;
+  /** 正答回数 ÷ 出題回数。1度も解いていなければ null */
+  correctRate: number | null;
+  /** 今日中に復習するもの。未出題も含める */
+  dueToday: number;
 };
 
 export type MaterialImpact = {
@@ -44,7 +48,11 @@ export async function listMaterials(subjectId: string): Promise<Material[]> {
 
   const [chapters, keywords] = await Promise.all([
     supabase.from('chapters').select('material_id').in('material_id', ids),
-    supabase.from('keywords').select('material_id').in('material_id', ids).eq('is_active', true),
+    supabase
+      .from('keywords')
+      .select('material_id, keyword_stats(total_count, correct_count, due_at)')
+      .in('material_id', ids)
+      .eq('is_active', true),
   ]);
   if (chapters.error) fail('章の取得に失敗しました', chapters.error);
   if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
@@ -57,13 +65,32 @@ export async function listMaterials(subjectId: string): Promise<Material[]> {
   const chapterCounts = count(chapters.data);
   const keywordCounts = count(keywords.data);
 
-  return (materials.data ?? []).map((m) => ({
-    id: m.id,
-    name: m.name,
-    sortOrder: m.sort_order,
-    chapterCount: chapterCounts.get(m.id) ?? 0,
-    keywordCount: keywordCounts.get(m.id) ?? 0,
-  }));
+  // 一覧に出す正答率と今日の復習数（ワイヤーフレーム Materials の行）
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const answers = new Map<string, { total: number; correct: number; due: number }>();
+  for (const row of keywords.data ?? []) {
+    const stats = Array.isArray(row.keyword_stats) ? row.keyword_stats[0] : row.keyword_stats;
+    const found = answers.get(row.material_id) ?? { total: 0, correct: 0, due: 0 };
+    found.total += stats?.total_count ?? 0;
+    found.correct += stats?.correct_count ?? 0;
+    // 未出題は期限切れと同じ扱いで数える
+    if (!stats?.due_at || new Date(stats.due_at) <= endOfDay) found.due += 1;
+    answers.set(row.material_id, found);
+  }
+
+  return (materials.data ?? []).map((m) => {
+    const stats = answers.get(m.id);
+    return {
+      id: m.id,
+      name: m.name,
+      sortOrder: m.sort_order,
+      chapterCount: chapterCounts.get(m.id) ?? 0,
+      keywordCount: keywordCounts.get(m.id) ?? 0,
+      correctRate: stats && stats.total > 0 ? stats.correct / stats.total : null,
+      dueToday: stats?.due ?? 0,
+    };
+  });
 }
 
 /**

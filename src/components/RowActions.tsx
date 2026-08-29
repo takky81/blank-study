@@ -44,14 +44,14 @@ export function RowActions({ primary, children }: { primary: ReactNode; children
         aria-label="メニュー"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="h-11 w-11 rounded border border-stone-400 text-lg text-stone-600 dark:text-stone-300"
+        className="btn-s w-11 text-lg"
       >
         ⋯
       </button>
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="absolute top-12 right-0 z-10 flex min-w-40 flex-col gap-2 rounded border-2 border-stone-900 bg-white p-2 dark:border-stone-100 dark:bg-stone-900"
+          className="absolute top-12 right-0 z-10 flex min-w-40 flex-col gap-2 card p-2"
         >
           {children}
         </div>
