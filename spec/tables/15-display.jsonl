@@ -14,3 +14,4 @@
 {"table":"表示範囲内のキーワードの表示","col":14,"conditions":{"true":["表示範囲:広げた"]},"actions":{"true":["表示範囲を描画する"]},"results":{"true":["伏せ字:広げた範囲にも同じ規則を適用する"]},"unit":["renderRange: 拡張後も伏せ字を掛け直す"],"e2e":["study.spec: 範囲を広げても答えが見えない"]}
 {"table":"表示範囲内のキーワードの表示","col":15,"conditions":{"true":["局面:正誤判定後","判定:不正解","入力:表示範囲のどのキーワードとも一致しない"]},"actions":{"true":["表示範囲を描画する"]},"results":{"false":["背景色:橙"]},"unit":["renderRange: 該当が無ければ橙を使わない"]}
 {"table":"表示範囲内のキーワードの表示","col":16,"conditions":{"true":["本文:Markdown の表や見出しを含む"]},"actions":{"true":["表示範囲を描画する"]},"results":{"true":["表示:Markdown をレンダリングする"]},"e2e":["study.spec: 表を含む本文が崩れずに出る"]}
+{"table":"表示範囲内のキーワードの表示","col":17,"conditions":{"true":["本文:Markdown の表","セル:キーワードのフル形式を含む"]},"actions":{"true":["表示する"]},"results":{"true":["表示:記述の中の | をセルの区切りにしない","表示:そのセルを空欄として出す"]},"unit":["parseMarkdown: 記述の中の | でセルを分けない"],"e2e":["study.spec: 表のセルの空欄が崩れない"],"note":"{{ }} の中に | が入るため"}

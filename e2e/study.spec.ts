@@ -475,6 +475,27 @@ test.describe('出題', () => {
     await expect(page.getByTestId('keyword-score')).toHaveCount(0);
   });
 
+  test('表示 列17 表のセルの空欄が崩れない', async ({ signedIn: page }) => {
+    // フル形式の記述はセルの中に | を持つ。表の区切りと取り違えると列がずれる
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: [
+          '| 語 | 説明 |',
+          '| --- | --- |',
+          '| {{光合成|id=aaaaaa|tags=生物}} | 葉緑体で行う |',
+        ].join('\n'),
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'], tags: ['生物'] }],
+      },
+    ]);
+
+    await start(page, materialId);
+    const row = body(page).locator('tbody tr').first();
+    await expect(row.locator('td')).toHaveCount(2);
+    await expect(row.locator('td').nth(1)).toContainText('葉緑体で行う');
+    await expect(page.getByLabel('解答')).toBeVisible();
+  });
+
   test('表示 列16 表を含む本文が崩れずに出る', async ({ signedIn: page }) => {
     const { materialId } = await seedMaterial([
       {

@@ -176,12 +176,38 @@ export function parseMarkdown(body: string): Block[] {
   return blocks;
 }
 
+/**
+ * 表の行を | で分ける。ただし {{ }} の中の | は記述の区切りなので数えない
+ * （決定表「表示範囲内のキーワードの表示」列17）。
+ * 閉じていない {{ は行末までを1つのセルとして扱い、行を落とさない。
+ */
+function splitCells(inner: string): string[] {
+  const cells: string[] = [];
+  let cell = '';
+  let inKeyword = false;
+  for (let i = 0; i < inner.length; i += 1) {
+    const two = inner.slice(i, i + 2);
+    if (!inKeyword && two === '{{') inKeyword = true;
+    else if (inKeyword && two === '}}') inKeyword = false;
+
+    const char = inner[i] as string;
+    if (char === '|' && !inKeyword) {
+      cells.push(cell);
+      cell = '';
+      continue;
+    }
+    cell += char;
+  }
+  cells.push(cell);
+  return cells;
+}
+
 /** 表の1行をセルに分ける。位置を保ったまま切り出す。 */
 function tableCells(line: Span): Inline[][] {
   const inner = TABLE_ROW.exec(line.text)?.[1] ?? '';
   const cells: Inline[][] = [];
   let at = line.text.indexOf('|') + 1;
-  for (const cell of inner.split('|')) {
+  for (const cell of splitCells(inner)) {
     const lead = cell.length - cell.trimStart().length;
     cells.push(parseInline({ text: cell.trim(), offset: line.offset + at + lead }));
     at += cell.length + 1;
