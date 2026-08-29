@@ -22,7 +22,8 @@ export type Blank = {
 };
 
 export type Inline =
-  | { type: 'text'; text: string }
+  /** start は本文の先頭からの位置。プレビューでの選択範囲を本文に対応づけるため */
+  | { type: 'text'; text: string; start: number }
   | { type: 'code'; text: string }
   | { type: 'strong'; children: Inline[] }
   | { type: 'em'; children: Inline[] }
@@ -213,14 +214,14 @@ function parseInline(span: Span): Inline[] {
     children: parseInline({ text: m[1] as string, offset: span.offset + m.index + 1 }),
   }));
   // 画像は記述のまま残す（列14）。リンクの記法に食われないよう先に押さえる
-  push(IMAGE, (m) => ({ type: 'text', text: m[0] }));
+  push(IMAGE, (m) => ({ type: 'text', text: m[0], start: span.offset + m.index }));
   push(LINK, (m) => ({
     type: 'link',
     href: m[2] as string,
     children: parseInline({ text: m[1] as string, offset: span.offset + m.index + 1 }),
   }));
 
-  if (candidates.length === 0) return [{ type: 'text', text: span.text }];
+  if (candidates.length === 0) return [{ type: 'text', text: span.text, start: span.offset }];
 
   // 同じ位置で始まるものは長い方を採る（** が * に食われないようにする）
   candidates.sort((a, b) => a.at - b.at || b.length - a.length);
