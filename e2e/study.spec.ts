@@ -478,3 +478,64 @@ test.describe('出題', () => {
     await expect(page.getByRole('radio', { name: '光合成' })).toBeVisible();
   });
 });
+
+test.describe('章の管理が出題に効く', () => {
+  test('章の管理 列11 削除した章のキーワードは出題されない', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+      {
+        title: '呼吸',
+        body: '細胞は {{id=bbbbbb}} を行う。',
+        keywords: [{ docId: 'bbbbbb', answers: ['呼吸'] }],
+      },
+    ]);
+
+    await page.goto(`/materials/${materialId}/edit`);
+    await page.getByRole('treeitem', { name: '光合成' }).click();
+    await expect(page.getByLabel('本文')).toBeVisible();
+    await page.getByRole('button', { name: '章を削除' }).click();
+    await page.getByRole('button', { name: '削除する' }).click();
+    await expect(page.getByRole('treeitem', { name: '光合成' })).toHaveCount(0);
+
+    await start(page, materialId, { order: '出現順' });
+    await expect(body(page)).toContainText('細胞は');
+    await page.getByLabel('解答').fill('呼吸');
+    await page.getByRole('button', { name: '解答する' }).click();
+    await page.getByRole('button', { name: '次の問題へ' }).click();
+    // 消した章のキーワードは候補に残らないので、ここで一周が終わる
+    await expect(page.getByText('おつかれさまでした')).toBeVisible();
+  });
+
+  test('章の管理 列12 章の並び順を変えると出現順の出題も変わる', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+      {
+        title: '呼吸',
+        body: '細胞は {{id=bbbbbb}} を行う。',
+        keywords: [{ docId: 'bbbbbb', answers: ['呼吸'] }],
+      },
+    ]);
+
+    await start(page, materialId, { order: '出現順' });
+    await expect(body(page)).toContainText('植物は');
+
+    await page.goto(`/materials/${materialId}/edit`);
+    const second = page.getByRole('treeitem', { name: '呼吸' });
+    await second.dispatchEvent('dragstart');
+    const gap = page.getByTestId('chapter-gap-root-0');
+    await gap.dispatchEvent('dragover');
+    await gap.dispatchEvent('drop');
+    await expect(page.getByRole('treeitem').nth(0)).toContainText('呼吸');
+
+    await start(page, materialId, { order: '出現順' });
+    await expect(body(page)).toContainText('細胞は');
+  });
+});
