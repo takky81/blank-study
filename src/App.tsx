@@ -7,6 +7,7 @@ import { SubjectsPage } from '@/features/subjects/SubjectsPage';
 import { MaterialsPage } from '@/features/materials/MaterialsPage';
 import { EditorPage } from '@/features/editor/EditorPage';
 import { StudyPage } from '@/features/study/StudyPage';
+import { HistoryPage } from '@/features/history/HistoryPage';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -44,6 +45,9 @@ export function App() {
           <Link to="/" className="text-lg">
             穴埋め学習
           </Link>
+          <Link to="/history" className="text-sm text-stone-600 dark:text-stone-300">
+            学習履歴
+          </Link>
           <span className="grow" />
           <span className="hidden text-xs text-stone-500 sm:inline">{session.user.email}</span>
           <button
@@ -61,6 +65,7 @@ export function App() {
             <Route path="/materials/:materialId/edit" element={<EditorPage />} />
             <Route path="/materials/:materialId/study" element={<StudyPage />} />
             <Route path="/subjects/:subjectId/study" element={<StudyPage />} />
+            <Route path="/history" element={<HistoryPage />} />
             {/* 列13: 存在しない URL は一覧へ戻す */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
