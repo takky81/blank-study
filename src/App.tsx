@@ -6,6 +6,7 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { SubjectsPage } from '@/features/subjects/SubjectsPage';
 import { MaterialsPage } from '@/features/materials/MaterialsPage';
 import { EditorPage } from '@/features/editor/EditorPage';
+import { StudyPage } from '@/features/study/StudyPage';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -58,6 +59,8 @@ export function App() {
             <Route path="/" element={<SubjectsPage />} />
             <Route path="/subjects/:subjectId" element={<MaterialsPage />} />
             <Route path="/materials/:materialId/edit" element={<EditorPage />} />
+            <Route path="/materials/:materialId/study" element={<StudyPage />} />
+            <Route path="/subjects/:subjectId/study" element={<StudyPage />} />
             {/* 列13: 存在しない URL は一覧へ戻す */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -35,6 +35,7 @@ export type Block =
   | { type: 'paragraph'; children: Inline[] }
   | { type: 'quote'; children: Inline[] }
   | { type: 'list'; ordered: boolean; items: Inline[][] }
+  | { type: 'table'; head: Inline[][]; rows: Inline[][][] }
   | { type: 'code'; text: string };
 
 /** 本文の中の1区間。位置を保ったまま切り出すために持ち回る。 */
@@ -45,6 +46,8 @@ const UNORDERED = /^[-*]\s+(.*)$/;
 const ORDERED = /^\d+[.)]\s+(.*)$/;
 const QUOTE = /^>\s?(.*)$/;
 const FENCE = /^```/;
+const TABLE_ROW = /^\|(.*)\|\s*$/;
+const TABLE_RULE = /^\|[\s:|-]+\|\s*$/;
 
 /** 行に切り分ける。位置を保つため、行ごとの開始位置も持たせる。 */
 function toLines(body: string): Span[] {
@@ -85,6 +88,20 @@ export function parseMarkdown(body: string): Block[] {
       const inner = lines.slice(start, end).map((l) => l.text);
       blocks.push({ type: 'code', text: inner.join('\n') });
       i = end + 1;
+      continue;
+    }
+
+    // 表（決定表「表示範囲内のキーワードの表示」列16）。2行目が区切りのときだけ表として読む
+    const ruleLine = lines[i + 1];
+    if (TABLE_ROW.test(line.text) && ruleLine && TABLE_RULE.test(ruleLine.text)) {
+      const head = tableCells(line);
+      const rows: Inline[][][] = [];
+      i += 2;
+      while (i < lines.length && TABLE_ROW.test((lines[i] as Span).text)) {
+        rows.push(tableCells(lines[i] as Span));
+        i += 1;
+      }
+      blocks.push({ type: 'table', head, rows });
       continue;
     }
 
@@ -157,6 +174,19 @@ export function parseMarkdown(body: string): Block[] {
   }
 
   return blocks;
+}
+
+/** 表の1行をセルに分ける。位置を保ったまま切り出す。 */
+function tableCells(line: Span): Inline[][] {
+  const inner = TABLE_ROW.exec(line.text)?.[1] ?? '';
+  const cells: Inline[][] = [];
+  let at = line.text.indexOf('|') + 1;
+  for (const cell of inner.split('|')) {
+    const lead = cell.length - cell.trimStart().length;
+    cells.push(parseInline({ text: cell.trim(), offset: line.offset + at + lead }));
+    at += cell.length + 1;
+  }
+  return cells;
 }
 
 const CODE = /`([^`]+)`/;
