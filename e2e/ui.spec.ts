@@ -211,4 +211,22 @@ test.describe('表示設定と共通の振る舞い', () => {
       expect(text.h).toBeLessThanOrEqual(Math.ceil(box?.height ?? 0));
     }
   });
+  test('列20 カード内のボタンに乗せている間はカードのホバーを外す', async ({ signedIn: page }) => {
+    await seedOne(page);
+
+    const row = page.getByRole('listitem').filter({ hasText: 'テクノロジ系' });
+    // 色は 120ms かけて変わるので、変わりきるまで待つ
+    const background = () =>
+      expect.poll(() =>
+        row.evaluate((el) => getComputedStyle(el).backgroundColor.replace(/\s/g, '')),
+      );
+
+    // 行の余白に乗せるとカードが反応する
+    await row.hover({ position: { x: 5, y: 5 } });
+    await background().toBe('rgb(211,224,242)');
+
+    // 行の中のボタンに乗せている間は、カードは元の地に戻る
+    await row.getByRole('button', { name: '解答', exact: true }).hover();
+    await background().toBe('rgb(255,255,255)');
+  });
 });
