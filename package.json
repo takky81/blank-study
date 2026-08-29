@@ -1,0 +1,20 @@
+{
+  "name": "blank-study",
+  "private": true,
+  "type": "module",
+  "description": "ドキュメントの穴埋めで学習するアプリ",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:migration": "supabase migration new",
+    "spec": "npm --prefix spec run build"
+  },
+  "devDependencies": {
+    "supabase": "2.116.0"
+  }
+}

@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
       # jsonl がすべて読めること、決定表として矛盾がないことを確かめる。
       # 列番号の重複や同じ列での行の重複があれば build が落ちる。
       - name: 決定表を生成する
