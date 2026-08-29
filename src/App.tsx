@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { SubjectsPage } from '@/features/subjects/SubjectsPage';
+import { MaterialsPage } from '@/features/materials/MaterialsPage';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -54,14 +55,7 @@ export function App() {
         <main>
           <Routes>
             <Route path="/" element={<SubjectsPage />} />
-            <Route
-              path="/subjects/:subjectId"
-              element={
-                <p className="p-10 text-sm text-stone-500">
-                  教材一覧はこれから作る。決定表「教材の管理」に対応させる。
-                </p>
-              }
-            />
+            <Route path="/subjects/:subjectId" element={<MaterialsPage />} />
             {/* 列13: 存在しない URL は一覧へ戻す */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

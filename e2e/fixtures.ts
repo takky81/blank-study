@@ -22,3 +22,4 @@ export const test = base.extend<{ signedIn: Page }>({
 });
 
 export { expect };
+export type { Page };
