@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase';
-import { assignDocIds, collapseBody, type KeywordFields } from '@/lib/body';
+import { assignDocIds, collapseBody, formatKeyword, type KeywordFields } from '@/lib/body';
+import { planSave } from './overwrite';
+import type { Conflict } from '@/features/transfer/match';
+import { scanKeywordTokens, parseKeywordToken } from '@/lib/keyword';
 
 export type KeywordRow = KeywordFields & { docId: string; isActive: boolean };
 
@@ -24,29 +27,98 @@ export async function listKeywords(materialId: string): Promise<KeywordRow[]> {
 }
 
 /**
- * 章を保存する。決定表「保存と正規化」列1・列2・列3・列4・列9 に対応する。
+ * 章の保存は2段に分ける。決定表「保存と正規化」「保存時の上書き確認」に対応する。
  *
- * 1. 記述にIDを行き渡らせる（決定表「キーワードIDの採番」）
- * 2. フル形式で書かれた内容を keywords に反映する
- * 3. chapters.body は保存形式（IDのみ）にして持つ
- * 4. 教材の中で本文に出てこなくなったキーワードを非活性にする
- *
- * 戻り値はIDを書き足したあとの展開形式。画面はこれに差し替える。
+ * 1. prepareSave  記述にIDを配り、上書きしてよいものと確認が要るものに分ける
+ * 2. commitSave   keywords に反映し、chapters.body は保存形式にして持つ
+ *                 そのあと教材の中で本文に出てこなくなったキーワードを非活性にする
  */
-export async function saveChapter(
+export type SavePreparation = {
+  /** IDを配ったあとの展開形式 */
+  body: string;
+  apply: { docId: string; fields: KeywordFields }[];
+  conflicts: Conflict[];
+  existing: Map<string, KeywordFields>;
+};
+
+/**
+ * 保存する内容を調べる。書き込みはまだしない。
+ * 登録済みと食い違うキーワードは確認に回す（決定表「保存時の上書き確認」）。
+ */
+export async function prepareSave(
+  materialId: string,
+  expandedBody: string,
+  trusted: ReadonlySet<string>,
+): Promise<SavePreparation> {
+  const rows = await listKeywords(materialId);
+  const existing = new Map<string, KeywordFields>(
+    rows.map((k) => [k.docId, { answers: k.answers, tags: k.tags, wrongChoices: k.wrongChoices }]),
+  );
+
+  const { body, keywords } = assignDocIds(
+    expandedBody,
+    rows.map((k) => k.docId),
+  );
+  const plan = planSave(keywords, existing, trusted);
+
+  return {
+    body,
+    apply: plan.apply
+      .filter((p): p is typeof p & { docId: string } => p.docId !== null)
+      .map((p) => ({ docId: p.docId, fields: p.fields })),
+    conflicts: plan.conflicts,
+    existing,
+  };
+}
+
+/**
+ * 確認で「登録済みを残す」を選んだキーワードの記述を、DB の内容に戻す
+ * （決定表「保存時の上書き確認」列5）。
+ */
+export function revertKeywords(
+  body: string,
+  docIds: readonly string[],
+  existing: ReadonlyMap<string, KeywordFields>,
+): string {
+  const keep = new Set(docIds);
+  const tokens = scanKeywordTokens(body);
+  let result = body;
+  for (let i = tokens.length - 1; i >= 0; i -= 1) {
+    const token = tokens[i];
+    if (!token) continue;
+    const parsed = parseKeywordToken(token.inner);
+    if (!parsed?.docId || !keep.has(parsed.docId)) continue;
+    const fields = existing.get(parsed.docId);
+    if (!fields) continue;
+    result =
+      result.slice(0, token.start) +
+      formatKeyword({ ...fields, docId: parsed.docId }) +
+      result.slice(token.end);
+  }
+  return result;
+}
+
+/** 調べた結果を書き込む。 */
+export async function commitSave(
   materialId: string,
   chapterId: string,
-  expandedBody: string,
+  preparation: SavePreparation,
+  overwrite: readonly string[] = [],
 ): Promise<string> {
   const { data: user } = await supabase.auth.getUser();
   const ownerId = user.user?.id;
   if (!ownerId) throw new Error('ログインしていません');
 
-  const existing = await listKeywords(materialId);
-  const { body: withIds, keywords } = assignDocIds(
-    expandedBody,
-    existing.map((k) => k.docId),
-  );
+  const chosen = new Set(overwrite);
+  const kept = preparation.conflicts.filter((c) => !chosen.has(c.docId)).map((c) => c.docId);
+  const body = revertKeywords(preparation.body, kept, preparation.existing);
+
+  const keywords = [
+    ...preparation.apply,
+    ...preparation.conflicts
+      .filter((c) => chosen.has(c.docId))
+      .map((c) => ({ docId: c.docId, fields: c.incoming })),
+  ];
 
   if (keywords.length > 0) {
     const { error } = await supabase.from('keywords').upsert(
@@ -55,9 +127,9 @@ export async function saveChapter(
         chapter_id: chapterId,
         owner_id: ownerId,
         doc_id: k.docId,
-        answers: k.answers,
-        tags: k.tags,
-        wrong_choices: k.wrongChoices,
+        answers: k.fields.answers,
+        tags: k.fields.tags,
+        wrong_choices: k.fields.wrongChoices,
         is_active: true,
       })),
       { onConflict: 'material_id,doc_id' },
@@ -67,12 +139,12 @@ export async function saveChapter(
 
   const { error } = await supabase
     .from('chapters')
-    .update({ body: collapseBody(withIds) })
+    .update({ body: collapseBody(body) })
     .eq('id', chapterId);
   if (error) fail('本文の保存に失敗しました', error);
 
   await syncActiveKeywords(materialId);
-  return withIds;
+  return body;
 }
 
 /**
