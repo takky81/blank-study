@@ -669,7 +669,7 @@ export function StudyPage() {
                       className={
                         choice === value
                           ? 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-subtle px-4 text-[16px]'
-                          : 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-panel px-4 text-[16px]'
+                          : 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-panel px-4 text-[16px] hover:bg-hover'
                       }
                     >
                       {/* 見た目は番号付きの札。選択の状態は札の側で示す */}

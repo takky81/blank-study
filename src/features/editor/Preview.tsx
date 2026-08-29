@@ -28,7 +28,7 @@ export function Preview({
             type="button"
             data-testid={blank.docId === null ? `blank-new-${blank.start}` : `blank-${blank.docId}`}
             onClick={() => onOpenBlank(blank)}
-            className="mx-0.5 inline-flex h-7 min-w-20 items-center justify-center rounded border-2 border-blank-edge bg-blank px-2 align-middle text-[14px] text-ink"
+            className="mx-0.5 inline-flex h-7 min-w-20 items-center justify-center rounded border-2 border-blank-edge bg-blank px-2 align-middle text-[14px] text-ink hover:border-ink"
           >
             {answers[0] ?? '空欄'}
           </button>

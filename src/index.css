@@ -30,6 +30,9 @@
   --c-wrong: #f0b39a; /* 答えた語が入る位置・苦手 */
   --c-wrong-edge: #c2410c;
   --c-untouched: #e8e6dd; /* 未出題 */
+
+  --c-ink-hover: #3c3a31; /* 主ボタンにカーソルを乗せたとき */
+  --c-hover: #f0eee4; /* 地の上の要素にカーソルを乗せたとき */
 }
 
 .dark {
@@ -54,11 +57,15 @@
   --c-wrong: #8a4324;
   --c-wrong-edge: #f0b39a;
   --c-untouched: #3a382f;
+
+  --c-ink-hover: #dedbd0;
+  --c-hover: #302e28;
 }
 
 @theme inline {
+  /* 長文と小さい文字の読みやすさを優先したユニバーサルデザインフォント */
   --font-sans:
-    'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Courier New', monospace;
 
   --color-paper: var(--c-paper);
@@ -81,6 +88,8 @@
   --color-wrong: var(--c-wrong);
   --color-wrong-edge: var(--c-wrong-edge);
   --color-untouched: var(--c-untouched);
+  --color-ink-hover: var(--c-ink-hover);
+  --color-hover: var(--c-hover);
 }
 
 body {
@@ -90,6 +99,47 @@ body {
 
 a {
   color: var(--c-link);
+}
+
+/*
+ * 押せるものは、カーソルの形と色の変化の両方で分かるようにする。
+ * 個々の画面で書き忘れても効くよう、ここでまとめて当てる。
+ */
+@layer base {
+  button,
+  [role='button'],
+  [role='treeitem'],
+  summary,
+  label:has(input[type='checkbox']),
+  label:has(input[type='radio']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  a,
+  button,
+  label,
+  [role='treeitem'],
+  .card {
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+
+  a:hover {
+    color: var(--c-ink);
+  }
+
+  /* キーボードで辿っている位置を見せる */
+  :focus-visible {
+    outline: 2px solid var(--c-link);
+    outline-offset: 2px;
+  }
 }
 
 /* ワイヤーフレームの部品。画面側はこの名前を使う */
@@ -118,6 +168,11 @@ a {
     @apply rounded-md border-2 border-ink bg-panel;
   }
 
+  /* 行そのものが押せるカード */
+  .card-act:hover {
+    background: var(--c-hover);
+  }
+
   /* ペインの見出し帯 */
   .pane-hd {
     @apply flex h-11 shrink-0 items-center gap-3 border-b-[1.5px] border-line bg-subtle px-4 text-[13px] text-ink-soft;
@@ -130,5 +185,21 @@ a {
 
   .field {
     @apply h-11 rounded border-2 border-ink bg-panel px-3 text-[15px] text-ink;
+  }
+
+  .btn-p:hover:not(:disabled) {
+    background: var(--c-ink-hover);
+    border-color: var(--c-ink-hover);
+  }
+
+  .btn:hover:not(:disabled),
+  .btn-warn:hover:not(:disabled) {
+    background: var(--c-hover);
+  }
+
+  .btn-s:hover:not(:disabled) {
+    background: var(--c-hover);
+    border-color: var(--c-ink);
+    color: var(--c-ink);
   }
 }
