@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* テーマは端末の設定ではなく <html class="dark"> で切り替える（決定表「表示設定と共通の振る舞い」列2・列3） */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
 }

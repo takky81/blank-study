@@ -67,6 +67,7 @@ export function StudyPage() {
   const [elapsed, setElapsed] = useState(0);
   /** 記録の途中で画面を離れると解答が消えるので、離脱前に待つ（決定表「出題順」列13） */
   const recording = useRef<Promise<unknown>>(Promise.resolve());
+  const [isRecording, setRecording] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -231,7 +232,7 @@ export function StudyPage() {
     if (!current || !isAnswerable(answerValue)) return;
     const isCorrect = judge(answerValue, current.keyword.answers);
     setCorrect(isCorrect);
-    setPhase('judged');
+    setRecording(true);
     setTotal((n) => n + 1);
     if (isCorrect) {
       setCorrectCount((n) => n + 1);
@@ -255,6 +256,10 @@ export function StudyPage() {
     } catch (e) {
       // 判定はそのまま見せ、記録できなかったことだけ知らせる（決定表「正誤判定」列16）
       setError(e instanceof Error ? e.message : '解答を記録できませんでした');
+    } finally {
+      // 記録し終えてから判定を見せる。途中で画面を離れても解答が残る（列13・列15）
+      setRecording(false);
+      setPhase('judged');
     }
   }
 
@@ -563,10 +568,10 @@ export function StudyPage() {
           <button
             type="button"
             onClick={() => void submit()}
-            disabled={!isAnswerable(answerValue)}
+            disabled={!isAnswerable(answerValue) || isRecording}
             className="h-12 rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
           >
-            解答する
+            {isRecording ? '記録しています…' : '解答する'}
           </button>
         </div>
       ) : (

@@ -8,6 +8,8 @@ import { MaterialsPage } from '@/features/materials/MaterialsPage';
 import { EditorPage } from '@/features/editor/EditorPage';
 import { StudyPage } from '@/features/study/StudyPage';
 import { HistoryPage } from '@/features/history/HistoryPage';
+import { loadTheme, nextTheme, resolveTheme, saveTheme, type Theme } from '@/lib/theme';
+import { useNarrow } from '@/lib/useNarrow';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -16,6 +18,15 @@ import { HistoryPage } from '@/features/history/HistoryPage';
 export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState<Theme>(() =>
+    resolveTheme(loadTheme(), window.matchMedia('(prefers-color-scheme: dark)').matches),
+  );
+  const narrow = useNarrow();
+
+  // 選んだ側を <html> に反映する（決定表「表示設定と共通の振る舞い」列1・列2・列3）
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -52,13 +63,25 @@ export function App() {
           <span className="hidden text-xs text-stone-500 sm:inline">{session.user.email}</span>
           <button
             type="button"
+            aria-label="テーマを切り替える"
+            onClick={() => {
+              const next = nextTheme(theme);
+              setTheme(next);
+              saveTheme(next);
+            }}
+            className="h-11 w-11 rounded border border-stone-400 text-stone-600 dark:text-stone-300"
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+          <button
+            type="button"
             onClick={() => supabase.auth.signOut()}
-            className="h-9 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
+            className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
           >
             ログアウト
           </button>
         </header>
-        <main>
+        <main className={narrow ? 'pb-16' : ''}>
           <Routes>
             <Route path="/" element={<SubjectsPage />} />
             <Route path="/subjects/:subjectId" element={<MaterialsPage />} />
@@ -70,6 +93,19 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        {/* 狭い画面では下に学習と履歴のタブを出す（決定表「表示設定と共通の振る舞い」列5） */}
+        <nav
+          data-testid="mobile-nav"
+          hidden={!narrow}
+          className="fixed inset-x-0 bottom-0 z-30 flex border-t-2 border-stone-900 bg-white dark:border-stone-100 dark:bg-stone-900"
+        >
+          <Link to="/" className="flex h-14 grow items-center justify-center text-sm">
+            学習
+          </Link>
+          <Link to="/history" className="flex h-14 grow items-center justify-center text-sm">
+            履歴
+          </Link>
+        </nav>
       </div>
     </BrowserRouter>
   );
