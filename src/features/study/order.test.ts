@@ -14,10 +14,11 @@ function candidate(id: string, position: number, dueAt: Date | null = null): Can
 
 describe('pickNext（決定表「出題順」）', () => {
   it('列1 自動順は未出題を最優先する', () => {
-    const picked = pickNext(
-      [candidate('a', 0, at(-5)), candidate('b', 1, null)],
-      { order: 'auto', recent: [], now },
-    );
+    const picked = pickNext([candidate('a', 0, at(-5)), candidate('b', 1, null)], {
+      order: 'auto',
+      recent: [],
+      now,
+    });
     expect(picked?.keywordId).toBe('b');
   });
 
@@ -31,26 +32,29 @@ describe('pickNext（決定表「出題順」）', () => {
   });
 
   it('列2 未出題が無ければ期限が来たものを昇順で出す', () => {
-    const picked = pickNext(
-      [candidate('a', 0, at(-1)), candidate('b', 1, at(-3))],
-      { order: 'auto', recent: [], now },
-    );
+    const picked = pickNext([candidate('a', 0, at(-1)), candidate('b', 1, at(-3))], {
+      order: 'auto',
+      recent: [],
+      now,
+    });
     expect(picked?.keywordId).toBe('b');
   });
 
   it('列3 期限前でも近い順に前倒しで出す', () => {
-    const picked = pickNext(
-      [candidate('a', 0, at(9)), candidate('b', 1, at(2))],
-      { order: 'auto', recent: [], now },
-    );
+    const picked = pickNext([candidate('a', 0, at(9)), candidate('b', 1, at(2))], {
+      order: 'auto',
+      recent: [],
+      now,
+    });
     expect(picked?.keywordId).toBe('b');
   });
 
   it('列15 同じ due_at どうしは出現順で出す', () => {
-    const picked = pickNext(
-      [candidate('b', 1, at(-1)), candidate('a', 0, at(-1))],
-      { order: 'auto', recent: [], now },
-    );
+    const picked = pickNext([candidate('b', 1, at(-1)), candidate('a', 0, at(-1))], {
+      order: 'auto',
+      recent: [],
+      now,
+    });
     expect(picked?.keywordId).toBe('a');
   });
 
@@ -87,10 +91,11 @@ describe('pickNext（決定表「出題順」）', () => {
   });
 
   it('列6 出現順は本文の並びどおりに出し、未出題も期限も見ない', () => {
-    const picked = pickNext(
-      [candidate('a', 0, at(-9)), candidate('b', 1, null)],
-      { order: 'sequential', recent: [], now },
-    );
+    const picked = pickNext([candidate('a', 0, at(-9)), candidate('b', 1, null)], {
+      order: 'sequential',
+      recent: [],
+      now,
+    });
     expect(picked?.keywordId).toBe('a');
   });
 

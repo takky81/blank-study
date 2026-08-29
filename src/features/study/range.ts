@@ -60,7 +60,9 @@ export function viewOfBlank(docId: string, context: ViewContext): BlankView {
   const matched =
     context.correct === false &&
     context.input !== undefined &&
-    keyword.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(context.input ?? ''));
+    keyword.answers.some(
+      (value) => normalizeAnswer(value) === normalizeAnswer(context.input ?? ''),
+    );
   if (matched) return { display: 'text', text: answer, color: 'orange' };
 
   return { display: 'text', text: answer, color: masked ? 'gray' : 'none' };

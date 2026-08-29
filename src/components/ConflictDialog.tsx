@@ -28,24 +28,27 @@ export function ConflictDialog({
       role="dialog"
       aria-modal="true"
       aria-label="取り込む内容の確認"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 sm:items-center sm:p-6"
     >
-      <div className="flex max-h-dvh w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded-t-lg border-2 border-stone-900 bg-stone-50 p-5 sm:rounded-lg dark:border-stone-100 dark:bg-stone-900">
-        <h2 className="text-lg">内容の確認</h2>
-        <p className="text-sm text-stone-600 dark:text-stone-300">{description}</p>
+      <div className="flex max-h-dvh w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded-t-md border-2 border-ink bg-panel p-6 sm:rounded-md">
+        <h2 className="text-[17px]">正答が一致しないキーワードがあります</h2>
+        <p className="text-[13px] text-ink-soft">{description}</p>
 
         <ul className="flex flex-col gap-3">
           {conflicts.map((conflict) => (
-            <li
-              key={conflict.docId}
-              className="flex flex-col gap-2 rounded border-2 border-stone-900 bg-white p-3 dark:border-stone-100 dark:bg-stone-800"
-            >
-              <span className="font-mono text-xs text-stone-500">id={conflict.docId}</span>
-              <div className="flex flex-col gap-1 text-sm sm:flex-row sm:gap-6">
-                <span className="grow">
-                  登録済み: {conflict.current?.answers.join('、') ?? 'なし'}
-                </span>
-                <span className="grow">新しい内容: {conflict.incoming.answers.join('、')}</span>
+            <li key={conflict.docId} className="card flex flex-col gap-3 p-4">
+              <span className="font-mono text-[12px] text-muted">id = {conflict.docId}</span>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex min-w-0 grow basis-0 flex-col gap-1 rounded-[5px] border-[1.5px] border-line px-3 py-2.5">
+                  <span className="text-[11px] text-muted">登録済み</span>
+                  <span className="text-[14px]">
+                    {conflict.current?.answers.join(' ・ ') ?? 'なし'}
+                  </span>
+                </div>
+                <div className="flex min-w-0 grow basis-0 flex-col gap-1 rounded-[5px] border-[1.5px] border-line px-3 py-2.5">
+                  <span className="text-[11px] text-muted">取り込む内容</span>
+                  <span className="text-[14px]">{conflict.incoming.answers.join(' ・ ')}</span>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
@@ -53,9 +56,7 @@ export function ConflictDialog({
                   aria-pressed={resolutions[conflict.docId] === true}
                   onClick={() => onChange(conflict.docId, true)}
                   className={
-                    resolutions[conflict.docId] === true
-                      ? 'h-11 grow rounded border-2 border-stone-900 bg-stone-900 px-3 text-sm text-stone-50 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900'
-                      : 'h-11 grow rounded border border-stone-400 px-3 text-sm'
+                    resolutions[conflict.docId] === true ? 'btn-p grow text-[13px]' : 'btn-s grow'
                   }
                 >
                   取り込んだ内容にする
@@ -65,9 +66,7 @@ export function ConflictDialog({
                   aria-pressed={resolutions[conflict.docId] !== true}
                   onClick={() => onChange(conflict.docId, false)}
                   className={
-                    resolutions[conflict.docId] !== true
-                      ? 'h-11 grow rounded border-2 border-stone-900 bg-stone-900 px-3 text-sm text-stone-50 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900'
-                      : 'h-11 grow rounded border border-stone-400 px-3 text-sm'
+                    resolutions[conflict.docId] !== true ? 'btn-p grow text-[13px]' : 'btn-s grow'
                   }
                 >
                   登録済みを残す
@@ -78,20 +77,10 @@ export function ConflictDialog({
         </ul>
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={busy}
-            className="h-11 rounded border-2 border-stone-900 px-4 disabled:opacity-40 dark:border-stone-100"
-          >
+          <button type="button" onClick={onCancel} disabled={busy} className="btn">
             やめる
           </button>
-          <button
-            type="button"
-            onClick={onApply}
-            disabled={busy}
-            className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
+          <button type="button" onClick={onApply} disabled={busy} className="btn-p">
             {busy ? '処理しています…' : '適用'}
           </button>
         </div>

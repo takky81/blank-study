@@ -10,12 +10,7 @@ import {
 } from './question';
 
 /** 誤答の候補。章の距離が近いものから使う。 */
-function source(
-  text: string,
-  tags: string[],
-  distance: number,
-  isActive = true,
-): ChoiceSource {
+function source(text: string, tags: string[], distance: number, isActive = true): ChoiceSource {
   return { keywordId: text, answers: [text], tags, distance, isActive };
 }
 
@@ -166,8 +161,10 @@ describe('buildChoices（決定表「選択肢の生成」）', () => {
 
   it('列9 候補が多ければ無作為に必要数だけ採る', () => {
     const many = Array.from({ length: 10 }, (_, i) => source(`語${i}`, ['生物'], 0));
-    const built = buildChoices({ answers: ['光合成'], tags: ['生物'], wrongChoices: [] }, many, () =>
-      Math.random(),
+    const built = buildChoices(
+      { answers: ['光合成'], tags: ['生物'], wrongChoices: [] },
+      many,
+      () => Math.random(),
     );
     expect(built.choices).toHaveLength(CHOICE_COUNT);
     expect(new Set(built.choices).size).toBe(CHOICE_COUNT);

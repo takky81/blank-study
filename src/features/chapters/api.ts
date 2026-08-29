@@ -12,14 +12,27 @@ function fail(message: string, error: { message: string } | null): never {
   throw new Error(`${message}: ${error?.message ?? '原因不明'}`);
 }
 
-export async function getMaterialName(materialId: string): Promise<string | null> {
+/** 教材の名前と、その教材が属する科目。見つからなければ null。 */
+export type MaterialPlace = {
+  name: string;
+  subjectId: string;
+  subjectName: string;
+};
+
+export async function getMaterialPlace(materialId: string): Promise<MaterialPlace | null> {
   const { data, error } = await supabase
     .from('materials')
-    .select('name')
+    .select('name, subject_id, subjects(name)')
     .eq('id', materialId)
     .maybeSingle();
   if (error) fail('教材の取得に失敗しました', error);
-  return data?.name ?? null;
+  if (!data) return null;
+  const subject = data.subjects as unknown as { name: string } | null;
+  return {
+    name: data.name,
+    subjectId: data.subject_id,
+    subjectName: subject?.name ?? '',
+  };
 }
 
 export async function listChapters(materialId: string): Promise<ChapterRow[]> {

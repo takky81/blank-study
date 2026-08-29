@@ -8,7 +8,7 @@ test.describe('科目の管理', () => {
   test('列1 科目を追加できる（一覧の末尾に置く）', async ({ signedIn: page }) => {
     for (const name of ['基本情報技術者', '生物基礎']) {
       await page.getByLabel('科目名').fill(name);
-      await page.getByRole('button', { name: '＋ 追加' }).click();
+      await page.getByRole('button', { name: '＋ 科目を追加' }).click();
       await expect(page.getByText(name, { exact: true })).toBeVisible();
     }
     await expect(rows(page)).toHaveCount(2);
@@ -16,20 +16,20 @@ test.describe('科目の管理', () => {
   });
 
   test('列2 空の名前は追加できない', async ({ signedIn: page }) => {
-    await expect(page.getByRole('button', { name: '＋ 追加' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '＋ 科目を追加' })).toBeDisabled();
   });
 
   test('列3 空白だけの名前は追加できない', async ({ signedIn: page }) => {
     await page.getByLabel('科目名').fill('   ');
-    await expect(page.getByRole('button', { name: '＋ 追加' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '＋ 科目を追加' })).toBeDisabled();
     await page.getByLabel('科目名').fill('　');
-    await expect(page.getByRole('button', { name: '＋ 追加' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '＋ 科目を追加' })).toBeDisabled();
   });
 
   test('列4 同じ名前の科目を作れる', async ({ signedIn: page }) => {
     for (let i = 0; i < 2; i += 1) {
       await page.getByLabel('科目名').fill('世界史');
-      await page.getByRole('button', { name: '＋ 追加' }).click();
+      await page.getByRole('button', { name: '＋ 科目を追加' }).click();
       await expect(rows(page)).toHaveCount(i + 1);
     }
     await expect(page.getByText('世界史', { exact: true })).toHaveCount(2);
@@ -141,7 +141,7 @@ test.describe('科目の管理', () => {
     });
 
     await page.getByLabel('科目名').fill('生物基礎');
-    await page.getByRole('button', { name: '＋ 追加' }).click();
+    await page.getByRole('button', { name: '＋ 科目を追加' }).click();
 
     await expect(page.getByRole('alert')).toBeVisible();
     await expect(page.getByRole('button', { name: '再試行' })).toBeVisible();

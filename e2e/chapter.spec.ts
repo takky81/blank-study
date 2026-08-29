@@ -93,13 +93,15 @@ test.describe('章の管理', () => {
       { id: id(1), parentId: null, title: '基礎理論', sortOrder: 0 },
       { id: id(2), parentId: id(1), title: '2進数', sortOrder: 0 },
     ]);
-    await adminClient().from('keywords').insert({
-      material_id: materialId,
-      chapter_id: id(2),
-      owner_id: ownerId,
-      doc_id: 'k71m2p',
-      answers: ['ビット'],
-    });
+    await adminClient()
+      .from('keywords')
+      .insert({
+        material_id: materialId,
+        chapter_id: id(2),
+        owner_id: ownerId,
+        doc_id: 'k71m2p',
+        answers: ['ビット'],
+      });
     await page.reload();
 
     await page.getByRole('treeitem', { name: '基礎理論' }).click();

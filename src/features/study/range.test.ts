@@ -74,9 +74,9 @@ describe('viewOfBlank（決定表「表示範囲内のキーワードの表示�
   });
 
   it('列6 判定後は伏せていた語も読めるようにする', () => {
-    expect(viewOfBlank('w4d8x1', context({ phase: 'judged', correct: false, input: '別の語' }))).toEqual(
-      { display: 'text', text: '呼吸', color: 'gray' },
-    );
+    expect(
+      viewOfBlank('w4d8x1', context({ phase: 'judged', correct: false, input: '別の語' })),
+    ).toEqual({ display: 'text', text: '呼吸', color: 'gray' });
   });
 
   it('列7 正解のときは橙を使わない', () => {
@@ -87,7 +87,10 @@ describe('viewOfBlank（決定表「表示範囲内のキーワードの表示�
 
   it('列15 どのキーワードとも一致しなければ橙は出ない', () => {
     for (const docId of keywords.keys()) {
-      const view = viewOfBlank(docId, context({ phase: 'judged', correct: false, input: 'まったく別' }));
+      const view = viewOfBlank(
+        docId,
+        context({ phase: 'judged', correct: false, input: 'まったく別' }),
+      );
       expect(view.color).not.toBe('orange');
     }
   });

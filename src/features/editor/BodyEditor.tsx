@@ -25,15 +25,12 @@ export function BodyEditor({
   };
 
   return (
-    <div
-      hidden={hidden}
-      className="relative grow overflow-hidden rounded-md border-2 border-stone-900 bg-white dark:border-stone-100 dark:bg-stone-900"
-    >
+    <div hidden={hidden} className="relative grow overflow-hidden bg-panel">
       <div
         ref={layerRef}
         data-testid="editor-highlight"
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden p-3 font-mono text-sm leading-6 whitespace-pre-wrap"
+        className="pointer-events-none absolute inset-0 overflow-hidden p-4 font-mono text-[12.5px] leading-[2] whitespace-pre-wrap"
       >
         {highlight(value)}
       </div>
@@ -49,7 +46,7 @@ export function BodyEditor({
         onScroll={(e) => {
           if (layerRef.current) layerRef.current.scrollTop = e.currentTarget.scrollTop;
         }}
-        className="relative h-full w-full resize-none bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-stone-900 outline-none dark:caret-stone-100"
+        className="relative h-full min-h-72 w-full resize-none bg-transparent p-4 font-mono text-[12.5px] leading-[2] text-transparent caret-ink outline-none"
       />
     </div>
   );
@@ -65,7 +62,11 @@ function highlight(body: string): ReactNode[] {
     if (!parseKeywordToken(token.inner)) continue;
     if (token.start > at) nodes.push(<span key={key++}>{body.slice(at, token.start)}</span>);
     nodes.push(
-      <span key={key++} className="kw rounded bg-amber-100 text-amber-900">
+      <span
+        key={key++}
+        className="kw bg-kw pb-px"
+        style={{ borderBottom: '2px solid var(--c-blank-edge)' }}
+      >
         {body.slice(token.start, token.end)}
       </span>,
     );

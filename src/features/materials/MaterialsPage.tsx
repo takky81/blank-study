@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useTrail } from '@/components/Trail';
 import { RowActions } from '@/components/RowActions';
 import { ImportControl } from '@/features/transfer/ImportControl';
 import { exportMaterial } from '@/features/transfer/api';
@@ -33,9 +34,10 @@ export function MaterialsPage() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [deleting, setDeleting] = useState<{ material: Material; impact: MaterialImpact } | null>(
-    null,
-  );
+  const [deleting, setDeleting] = useState<{
+    material: Material;
+    impact: MaterialImpact;
+  } | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -56,6 +58,12 @@ export function MaterialsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTrail(
+    subjectName === null
+      ? [{ label: '科目一覧', to: '/' }]
+      : [{ label: '科目一覧', to: '/' }, { label: subjectName }],
+  );
 
   async function run(action: () => Promise<void>) {
     if (busy) return;
@@ -89,17 +97,18 @@ export function MaterialsPage() {
 
   const canAdd = isValidName(newName) && !busy;
   const subjectKeywordCount = materials.reduce((sum, m) => sum + m.keywordCount, 0);
+  const subjectDueToday = materials.reduce((sum, m) => sum + m.dueToday, 0);
 
   if (loading) {
-    return <p className="p-10 text-sm text-stone-500">読み込んでいます…</p>;
+    return <p className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
   }
 
   // 決定表「表示設定と共通の振る舞い」列13: 消えた科目の URL を開いても壊れない
   if (notFound) {
     return (
       <div className="flex flex-col items-start gap-4 p-10">
-        <p className="text-sm text-stone-500">この科目は見つかりませんでした。</p>
-        <Link to="/" className="rounded border-2 border-stone-900 px-4 py-2 dark:border-stone-100">
+        <p className="text-[13px] text-muted">この科目は見つかりませんでした。</p>
+        <Link to="/" className="btn">
           科目一覧へ戻る
         </Link>
       </div>
@@ -107,15 +116,19 @@ export function MaterialsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-6 sm:p-10">
+    <div className="mx-auto flex max-w-4xl flex-col gap-5 p-6 sm:px-10 sm:py-8">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl">{subjectName}</h1>
+        <h1 className="text-[22px]">{subjectName}</h1>
         <span className="grow" />
         {/* 決定表「インポートの単位」列1: zip 1つを教材まるごととして取り込む */}
         <ImportControl
-          label="zip を取り込む"
+          label="インポート"
           testId="import-material"
-          target={(fileName) => ({ kind: 'material', subjectId, name: fileName })}
+          target={(fileName) => ({
+            kind: 'material',
+            subjectId,
+            name: fileName,
+          })}
           onDone={() => void load()}
           onError={setError}
         />
@@ -135,14 +148,10 @@ export function MaterialsPage() {
             onChange={(e) => setNewName(e.target.value)}
             placeholder="教材名"
             aria-label="教材名"
-            className="h-11 rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+            className="field"
           />
-          <button
-            type="submit"
-            disabled={!canAdd}
-            className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
-            ＋ 追加
+          <button type="submit" disabled={!canAdd} className="btn-p">
+            ＋ 教材を追加
           </button>
         </form>
       </div>
@@ -150,14 +159,10 @@ export function MaterialsPage() {
       {error !== '' && (
         <div
           role="alert"
-          className="flex items-center gap-3 rounded border-2 border-orange-700 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-950/40"
+          className="flex items-center gap-3 rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn"
         >
           <span className="grow">{error}</span>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="h-11 rounded border border-orange-700 px-3"
-          >
+          <button type="button" onClick={() => void load()} className="btn-s border-warn text-warn">
             再試行
           </button>
         </div>
@@ -165,26 +170,34 @@ export function MaterialsPage() {
 
       {/* 列11・列12: 教材があるときだけ科目全体の導線を出す */}
       {materials.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4 rounded-md border-2 border-stone-900 bg-stone-200/60 p-5 dark:border-stone-100 dark:bg-stone-800">
-          <div className="flex grow flex-col gap-1">
-            <span className="text-lg">まとめて解答する</span>
-            <span className="text-xs text-stone-500 dark:text-stone-400">
-              {materials.length} 教材すべて ・ キーワード {subjectKeywordCount}
-            </span>
+        <>
+          <div className="flex flex-wrap items-center gap-4 rounded-md border-2 border-ink bg-accent-panel px-6 py-5">
+            <div className="flex grow flex-col gap-1">
+              <span className="text-[18px]">{subjectName} をまとめて解答する</span>
+              <span className="text-[13px] text-ink-soft">
+                {materials.length} 教材すべてが対象 ・ キーワード {subjectKeywordCount} ・
+                今日の復習 {subjectDueToday} 問
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={subjectKeywordCount === 0}
+              onClick={() => navigate(`/subjects/${subjectId}/study`)}
+              className="btn-p h-10 px-5"
+            >
+              科目全体で解答
+            </button>
           </div>
-          <button
-            type="button"
-            disabled={subjectKeywordCount === 0}
-            onClick={() => navigate(`/subjects/${subjectId}/study`)}
-            className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
-            科目全体で解答
-          </button>
-        </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[14px] text-ink-soft">教材ごとに解答する</span>
+            <span className="h-px grow bg-line" />
+          </div>
+        </>
       )}
 
       {materials.length === 0 ? (
-        <p className="rounded border-2 border-dashed border-stone-300 p-10 text-center text-sm text-stone-500">
+        <p className="rounded border-2 border-dashed border-line p-10 text-center text-[13px] text-muted">
           教材がまだありません。上の欄から追加してください。
         </p>
       ) : (
@@ -196,7 +209,7 @@ export function MaterialsPage() {
               onDragStart={() => setDraggingIndex(index)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => void handleDrop(index)}
-              className="flex flex-wrap items-center gap-3 rounded-md border-2 border-stone-900 bg-white p-4 dark:border-stone-100 dark:bg-stone-900"
+              className="flex flex-wrap items-center gap-3 card p-4"
             >
               {editingId === material.id ? (
                 <form
@@ -215,29 +228,29 @@ export function MaterialsPage() {
                     onChange={(e) => setEditingName(e.target.value)}
                     aria-label="新しい教材名"
                     autoFocus
-                    className="h-11 grow rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+                    className="field grow"
                   />
                   <button
                     type="submit"
                     disabled={!isValidName(editingName) || busy}
-                    className="h-11 rounded border-2 border-stone-900 px-4 disabled:opacity-40 dark:border-stone-100"
+                    className="btn"
                   >
                     確定
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                    className="h-11 rounded border border-stone-400 px-4 text-stone-600 dark:text-stone-300"
-                  >
+                  <button type="button" onClick={() => setEditingId(null)} className="btn-s">
                     やめる
                   </button>
                 </form>
               ) : (
                 <>
                   <div className="flex grow flex-col gap-1">
-                    <span className="text-lg">{material.name}</span>
-                    <span className="text-xs text-stone-500">
-                      章 {material.chapterCount} ・ キーワード {material.keywordCount}
+                    <span className="text-[17px]">{material.name}</span>
+                    <span className="text-[13px] text-muted">
+                      章 {material.chapterCount} ・ キーワード {material.keywordCount} ・ 正答率{' '}
+                      {material.correctRate === null
+                        ? '—'
+                        : `${Math.round(material.correctRate * 100)}%`}{' '}
+                      ・ 今日 {material.dueToday} 問
                     </span>
                   </div>
                   {/* 狭い画面では解答だけ残し、残りをメニューに畳む（決定表「表示設定と共通の振る舞い」列8） */}
@@ -247,53 +260,53 @@ export function MaterialsPage() {
                         type="button"
                         disabled={material.keywordCount === 0}
                         onClick={() => navigate(`/materials/${material.id}/study`)}
-                        className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                        className="btn-p"
                       >
                         解答
                       </button>
                     }
                   >
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/materials/${material.id}/edit`)}
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-                  >
-                    編集
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void run(async () => {
-                        const { fileName, bytes } = await exportMaterial(material.id);
-                        saveFile(fileName, bytes);
-                      })
-                    }
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-                  >
-                    書き出す
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingId(material.id);
-                      setEditingName(material.name);
-                    }}
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-                  >
-                    名前を変更
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void run(async () => {
-                        const impact = await countMaterialImpact(material.id);
-                        setDeleting({ material, impact });
-                      })
-                    }
-                    className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-                  >
-                    削除
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/materials/${material.id}/edit`)}
+                      className="btn-s"
+                    >
+                      編集
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void run(async () => {
+                          const { fileName, bytes } = await exportMaterial(material.id);
+                          saveFile(fileName, bytes);
+                        })
+                      }
+                      className="btn-s"
+                    >
+                      エクスポート
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(material.id);
+                        setEditingName(material.name);
+                      }}
+                      className="btn-s"
+                    >
+                      名前を変更
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void run(async () => {
+                          const impact = await countMaterialImpact(material.id);
+                          setDeleting({ material, impact });
+                        })
+                      }
+                      className="btn-s"
+                    >
+                      削除
+                    </button>
                   </RowActions>
                 </>
               )}
@@ -303,7 +316,7 @@ export function MaterialsPage() {
       )}
 
       {/* 列9: 科目をまたぐ移動は用意しない */}
-      <p className="text-center text-xs text-stone-400">
+      <p className="text-center text-[12px] text-muted">
         {materials.length > 1 ? '行をドラッグして並べ替え ／ ' : ''}
         別の科目へ移すときはエクスポートして別の科目に取り込む
       </p>

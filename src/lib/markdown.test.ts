@@ -58,7 +58,7 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
   });
 
   it('表を読む（決定表「表示範囲内のキーワードの表示」列16）', () => {
-    const blocks = parseMarkdown("| 記号 | 意味 |\n| --- | --- |\n| A | あ |\n| B | い |");
+    const blocks = parseMarkdown('| 記号 | 意味 |\n| --- | --- |\n| A | あ |\n| B | い |');
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({ type: 'table' });
     const table = blocks[0] as { type: 'table'; head: unknown[]; rows: unknown[][] };
@@ -67,7 +67,7 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
   });
 
   it('表の中のキーワードも空欄になる', () => {
-    const blocks = parseMarkdown("| 語 |\n| --- |\n| {{id=a3f9k2}} |");
+    const blocks = parseMarkdown('| 語 |\n| --- |\n| {{id=a3f9k2}} |');
     const table = blocks[0] as { type: 'table'; rows: { type: string }[][][] };
     expect(table.rows[0]?.[0]?.[0]).toMatchObject({ type: 'blank', docId: 'a3f9k2' });
   });
@@ -94,7 +94,11 @@ describe('parseMarkdown インライン（決定表「編集画面の操作」�
 
   it('リンクを読む', () => {
     expect(inlinesOf(parseMarkdown('[説明](https://example.com)'))).toEqual([
-      { type: 'link', href: 'https://example.com', children: [{ type: 'text', text: '説明', start: 1 }] },
+      {
+        type: 'link',
+        href: 'https://example.com',
+        children: [{ type: 'text', text: '説明', start: 1 }],
+      },
     ]);
   });
 

@@ -91,7 +91,7 @@ async function seedMaterial(chapters: SeedChapter[]) {
 /** 出題設定画面を開いてそのまま開始する。 */
 async function start(page: Page, materialId: string, options: { order?: '自動' | '出現順' } = {}) {
   await page.goto(`/materials/${materialId}/study`);
-  if (options.order) await page.getByRole('radio', { name: options.order }).check();
+  if (options.order) await page.getByRole('radio', { name: options.order, exact: true }).check();
   await page.getByRole('button', { name: '開始する' }).click();
 }
 
@@ -145,8 +145,8 @@ test.describe('出題', () => {
     ]);
 
     await page.goto(`/materials/${materialId}/study`);
-    await page.getByRole('radio', { name: '出現順' }).check();
-    await page.getByRole('radio', { name: '記述' }).check();
+    await page.getByRole('radio', { name: '出現順', exact: true }).check();
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
     await page.getByRole('button', { name: '開始する' }).click();
 
     await expect(page.getByLabel('解答')).toBeVisible();
@@ -205,8 +205,8 @@ test.describe('出題', () => {
     ]);
 
     await page.goto(`/materials/${materialId}/study`);
-    await page.getByRole('radio', { name: '出現順' }).check();
-    await page.getByRole('radio', { name: '記述' }).check();
+    await page.getByRole('radio', { name: '出現順', exact: true }).check();
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
     await page.getByRole('button', { name: '開始する' }).click();
     await page.getByLabel('解答').fill('呼吸');
     await page.getByRole('button', { name: '解答する' }).click();
@@ -229,7 +229,7 @@ test.describe('出題', () => {
     ]);
 
     await page.goto(`/materials/${materialId}/study`);
-    await page.getByRole('radio', { name: '選択肢' }).check();
+    await page.getByRole('radio', { name: '選択肢', exact: true }).check();
     await page.getByRole('button', { name: '開始する' }).click();
 
     await expect(page.getByRole('radio', { name: '光合成' })).toBeVisible();
@@ -342,7 +342,7 @@ test.describe('出題', () => {
     ]);
 
     await page.goto(`/materials/${materialId}/study`);
-    await page.getByRole('radio', { name: '記述' }).check();
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
     // 上位の章は出題範囲から外す。表示範囲としては広げられる
     await page.getByRole('checkbox', { name: '生物', exact: true }).uncheck();
     await page.getByRole('button', { name: '開始する' }).click();
@@ -381,7 +381,9 @@ test.describe('出題', () => {
 
     await expect
       .poll(async () => {
-        const stats = await adminClient().from('keyword_stats').select('total_count, correct_count');
+        const stats = await adminClient()
+          .from('keyword_stats')
+          .select('total_count, correct_count');
         return stats.data?.[0];
       })
       .toEqual({ total_count: 2, correct_count: 1 });
@@ -468,9 +470,7 @@ test.describe('出題', () => {
       {
         title: '光合成',
         body: '植物は {{id=aaaaaa}} を行う。',
-        keywords: [
-          { docId: 'aaaaaa', answers: ['光合成'], wrong: ['呼吸', '蒸散', '発酵'] },
-        ],
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'], wrong: ['呼吸', '蒸散', '発酵'] }],
       },
     ]);
 

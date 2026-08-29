@@ -10,6 +10,7 @@ import { StudyPage } from '@/features/study/StudyPage';
 import { HistoryPage } from '@/features/history/HistoryPage';
 import { loadTheme, nextTheme, resolveTheme, saveTheme, type Theme } from '@/lib/theme';
 import { useNarrow } from '@/lib/useNarrow';
+import { TrailProvider, Trail } from '@/components/Trail';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -40,7 +41,7 @@ export function App() {
   // 読み込み中と空を取り違えない（決定表「表示設定と共通の振る舞い」列9）
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-stone-50 text-sm text-stone-500 dark:bg-stone-950">
+      <div className="flex min-h-dvh items-center justify-center bg-paper text-[13px] text-muted ">
         読み込んでいます…
       </div>
     );
@@ -51,62 +52,67 @@ export function App() {
   // GitHub Pages のサブパスでも解決できるよう Vite の base に合わせる
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <div className="min-h-dvh bg-stone-50 dark:bg-stone-950 dark:text-stone-100">
-        <header className="flex h-14 items-center gap-4 border-b-2 border-stone-900 bg-white px-6 dark:border-stone-100 dark:bg-stone-900">
-          <Link to="/" className="text-lg">
-            穴埋め学習
-          </Link>
-          <Link to="/history" className="text-sm text-stone-600 dark:text-stone-300">
-            学習履歴
-          </Link>
-          <span className="grow" />
-          <span className="hidden text-xs text-stone-500 sm:inline">{session.user.email}</span>
-          <button
-            type="button"
-            aria-label="テーマを切り替える"
-            onClick={() => {
-              const next = nextTheme(theme);
-              setTheme(next);
-              saveTheme(next);
-            }}
-            className="h-11 w-11 rounded border border-stone-400 text-stone-600 dark:text-stone-300"
+      <TrailProvider>
+        <div className="min-h-dvh bg-paper text-ink">
+          <header className="flex h-14 items-center gap-4 border-b-2 border-ink bg-panel px-6">
+            <Link to="/" className="shrink-0 text-[17px] text-ink no-underline">
+              穴埋め学習
+            </Link>
+            <Trail />
+            <span className="grow" />
+            <span className="hidden text-[12px] text-muted lg:inline">{session.user.email}</span>
+            <Link to="/history" className="btn-s no-underline">
+              学習履歴
+            </Link>
+            <button
+              type="button"
+              aria-label="テーマを切り替える"
+              onClick={() => {
+                const next = nextTheme(theme);
+                setTheme(next);
+                saveTheme(next);
+              }}
+              className="btn-s"
+            >
+              {theme === 'dark' ? 'ライト' : 'ダーク'}
+            </button>
+            <button type="button" onClick={() => supabase.auth.signOut()} className="btn-s">
+              ログアウト
+            </button>
+          </header>
+          <main className={narrow ? 'pb-16' : ''}>
+            <Routes>
+              <Route path="/" element={<SubjectsPage />} />
+              <Route path="/subjects/:subjectId" element={<MaterialsPage />} />
+              <Route path="/materials/:materialId/edit" element={<EditorPage />} />
+              <Route path="/materials/:materialId/study" element={<StudyPage />} />
+              <Route path="/subjects/:subjectId/study" element={<StudyPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+              {/* 列13: 存在しない URL は一覧へ戻す */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+          {/* 狭い画面では下に学習と履歴のタブを出す（決定表「表示設定と共通の振る舞い」列5） */}
+          <nav
+            data-testid="mobile-nav"
+            hidden={!narrow}
+            className="fixed inset-x-0 bottom-0 z-30 flex border-t-2 border-ink bg-panel"
           >
-            {theme === 'dark' ? '☀' : '☾'}
-          </button>
-          <button
-            type="button"
-            onClick={() => supabase.auth.signOut()}
-            className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-          >
-            ログアウト
-          </button>
-        </header>
-        <main className={narrow ? 'pb-16' : ''}>
-          <Routes>
-            <Route path="/" element={<SubjectsPage />} />
-            <Route path="/subjects/:subjectId" element={<MaterialsPage />} />
-            <Route path="/materials/:materialId/edit" element={<EditorPage />} />
-            <Route path="/materials/:materialId/study" element={<StudyPage />} />
-            <Route path="/subjects/:subjectId/study" element={<StudyPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            {/* 列13: 存在しない URL は一覧へ戻す */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-        {/* 狭い画面では下に学習と履歴のタブを出す（決定表「表示設定と共通の振る舞い」列5） */}
-        <nav
-          data-testid="mobile-nav"
-          hidden={!narrow}
-          className="fixed inset-x-0 bottom-0 z-30 flex border-t-2 border-stone-900 bg-white dark:border-stone-100 dark:bg-stone-900"
-        >
-          <Link to="/" className="flex h-14 grow items-center justify-center text-sm">
-            学習
-          </Link>
-          <Link to="/history" className="flex h-14 grow items-center justify-center text-sm">
-            履歴
-          </Link>
-        </nav>
-      </div>
+            <Link
+              to="/"
+              className="flex h-14 grow items-center justify-center text-[14px] text-ink no-underline"
+            >
+              学習
+            </Link>
+            <Link
+              to="/history"
+              className="flex h-14 grow items-center justify-center text-[14px] text-ink no-underline"
+            >
+              履歴
+            </Link>
+          </nav>
+        </div>
+      </TrailProvider>
     </BrowserRouter>
   );
 }

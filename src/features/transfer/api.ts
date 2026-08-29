@@ -38,7 +38,10 @@ export async function exportMaterial(
 
   const keywords = await listKeywords(materialId);
   const byId = new Map<string, KeywordFields>(
-    keywords.map((k) => [k.docId, { answers: k.answers, tags: k.tags, wrongChoices: k.wrongChoices }]),
+    keywords.map((k) => [
+      k.docId,
+      { answers: k.answers, tags: k.tags, wrongChoices: k.wrongChoices },
+    ]),
   );
 
   return { fileName: zipFileName(material.data.name), bytes: encodeZip(buildFiles(rows, byId)) };
@@ -102,7 +105,10 @@ export async function prepareImport(bytes: Uint8Array, target: ImportTarget): Pr
       ? await listKeywords(target.materialId)
       : ([] as Awaited<ReturnType<typeof listKeywords>>);
   const existingFields = new Map<string, KeywordFields>(
-    existing.map((k) => [k.docId, { answers: k.answers, tags: k.tags, wrongChoices: k.wrongChoices }]),
+    existing.map((k) => [
+      k.docId,
+      { answers: k.answers, tags: k.tags, wrongChoices: k.wrongChoices },
+    ]),
   );
 
   // 記述にIDを配る。教材内で一意になればよい（決定表「キーワードIDの採番」列4・列5）
@@ -173,6 +179,9 @@ export function materialNameOf(fileName: string): string {
 }
 
 /** 展開形式の本文を作る。エクスポートの単体テストと画面で使う。 */
-export function expandForExport(body: string, keywords: ReadonlyMap<string, KeywordFields>): string {
+export function expandForExport(
+  body: string,
+  keywords: ReadonlyMap<string, KeywordFields>,
+): string {
   return expandBody(body, keywords);
 }

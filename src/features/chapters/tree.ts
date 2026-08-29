@@ -88,7 +88,9 @@ export function applyMove(
   const at = index === undefined ? siblings.length : Math.max(0, Math.min(index, siblings.length));
   siblings.splice(at, 0, { ...moving, parentId: newParentId });
 
-  const renumbered = new Map(siblings.map((r, i) => [r.id, { parentId: newParentId, sortOrder: i }]));
+  const renumbered = new Map(
+    siblings.map((r, i) => [r.id, { parentId: newParentId, sortOrder: i }]),
+  );
 
   return rows.map((row) => {
     const update = renumbered.get(row.id);

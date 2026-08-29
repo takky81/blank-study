@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTrail } from '@/components/Trail';
 import { MarkdownView } from '@/components/MarkdownView';
 import { buildTree, flatten, type ChapterRow } from '@/features/chapters/tree';
 import { isAnswerable, judge } from '@/lib/answer';
@@ -13,10 +14,10 @@ import { addAlternative, canRegisterAlt } from './alt';
 type Phase = 'setup' | 'answering' | 'judged' | 'done';
 
 const COLOR_CLASS: Record<BlankColor, string> = {
-  yellow: 'border-amber-500 bg-amber-100 text-stone-900',
-  gray: 'border-stone-400 bg-stone-200 text-stone-700',
-  orange: 'border-orange-600 bg-orange-200 text-stone-900',
-  none: 'border-transparent',
+  yellow: 'border-blank-edge bg-blank text-ink',
+  gray: 'border-mask-edge bg-mask text-ink-soft',
+  orange: 'border-wrong-edge bg-wrong text-ink',
+  none: 'border-transparent bg-transparent px-0',
 };
 
 /** 章の祖先をたどる。表示範囲を広げるのに使う。 */
@@ -85,6 +86,13 @@ export function StudyPage() {
     void load();
   }, [load]);
 
+  const backTo = scope.kind === 'subject' ? `/subjects/${scope.id}` : '/';
+  useTrail(
+    data === null
+      ? []
+      : [{ label: data.title, to: backTo }, { label: phase === 'setup' ? '出題設定' : '解答中' }],
+  );
+
   const chapters = data?.chapters ?? [];
   const keywords = data?.keywords ?? [];
 
@@ -95,7 +103,11 @@ export function StudyPage() {
       if (k.isActive) byDocId.set(`${k.materialId}:${k.docId}`, k);
     }
 
-    const ordered: { keyword: StudyKeyword; chapter: StudyChapter; position: number }[] = [];
+    const ordered: {
+      keyword: StudyKeyword;
+      chapter: StudyChapter;
+      position: number;
+    }[] = [];
     let position = 0;
     // 章の順序 → 章内の出現順
     for (const material of [...new Set(chapters.map((c) => c.materialId))]) {
@@ -324,7 +336,7 @@ export function StudyPage() {
     else navigate(`/subjects/${data?.subjectId ?? ''}`);
   }
 
-  if (loading) return <p className="p-10 text-sm text-stone-500">読み込んでいます…</p>;
+  if (loading) return <p className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
 
   const canStart = candidates.length > 0;
 
@@ -333,101 +345,148 @@ export function StudyPage() {
       flatten(buildTree(chapters.filter((c) => c.materialId === materialId))),
     );
 
+    const untouched = candidates.filter((c) => (c.keyword.stats?.totalCount ?? 0) === 0).length;
+
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 sm:p-10">
-        <h1 className="text-2xl">{data?.title} の出題設定</h1>
+      <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 sm:px-10 sm:py-7">
+        <h1 className="text-[22px]">{data?.title} の出題設定</h1>
 
         {error !== '' && (
-          <div role="alert" className="rounded border-2 border-orange-700 bg-orange-50 p-3 text-sm">
+          <div
+            role="alert"
+            className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn"
+          >
             {error}
           </div>
         )}
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg">出題範囲</h2>
-          <ul className="flex flex-col gap-1">
-            {tree.map((node) => (
-              <li key={node.id} style={{ paddingLeft: `${node.depth * 18}px` }}>
-                <label className="flex h-9 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={!excluded.has(node.id)}
-                    onChange={(e) =>
-                      setExcluded((prev) => {
-                        const next = new Set(prev);
-                        if (e.target.checked) next.delete(node.id);
-                        else next.add(node.id);
-                        return next;
-                      })
-                    }
-                    className="h-5 w-5"
-                  />
-                  {node.title}
-                </label>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="flex flex-col gap-5 lg:flex-row">
+          <section className="card flex grow flex-col lg:basis-0">
+            <div className="pane-hd">
+              <span className="grow">出題範囲</span>
+              <button
+                type="button"
+                onClick={() => setExcluded(new Set())}
+                className="btn-s h-8 px-3 text-[12px]"
+              >
+                すべて選択
+              </button>
+              <button
+                type="button"
+                onClick={() => setExcluded(new Set(tree.map((node) => node.id)))}
+                className="btn-s h-8 px-3 text-[12px]"
+              >
+                すべて解除
+              </button>
+            </div>
+            <ul className="flex flex-col p-3">
+              {tree.map((node) => {
+                const count = candidates.filter((c) => c.chapter.id === node.id).length;
+                return (
+                  <li key={node.id} style={{ paddingLeft: `${node.depth * 22}px` }}>
+                    <div className="flex h-11 items-center gap-3 rounded px-2 text-[14px]">
+                      <label className="flex grow items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={!excluded.has(node.id)}
+                          onChange={(e) =>
+                            setExcluded((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.delete(node.id);
+                              else next.add(node.id);
+                              return next;
+                            })
+                          }
+                          className="h-4.5 w-4.5 accent-ink"
+                        />
+                        {node.title}
+                      </label>
+                      <span className="text-[13px] text-muted">{count} 問</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg">出題順</h2>
-          <div className="flex gap-4">
-            {(
-              [
-                ['auto', '自動'],
-                ['sequential', '出現順'],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value} className="flex h-11 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="order"
-                  checked={order === value}
-                  onChange={() => setOrder(value)}
-                  className="h-5 w-5"
-                />
-                {label}
-              </label>
-            ))}
+          <div className="flex grow flex-col gap-5 lg:basis-0">
+            <section className="card flex flex-col">
+              <div className="pane-hd">出題順</div>
+              <div className="flex flex-col p-3">
+                {(
+                  [
+                    ['auto', '自動', '復習期限が近い順'],
+                    ['sequential', '出現順', '章と本文の並び順'],
+                  ] as const
+                ).map(([value, label, note]) => (
+                  <div
+                    key={value}
+                    className="flex h-11 items-center gap-3 rounded px-2 text-[14px]"
+                  >
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="order"
+                        checked={order === value}
+                        onChange={() => setOrder(value)}
+                        className="h-4.5 w-4.5 accent-ink"
+                      />
+                      {label}
+                    </label>
+                    <span className="text-[13px] text-muted">{note}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="card flex flex-col">
+              <div className="pane-hd">解答形式</div>
+              <div className="flex flex-col p-3">
+                {(
+                  [
+                    ['auto', '自動', '定着した問題は記述'],
+                    ['choice', '選択肢', ''],
+                    ['text', '記述', ''],
+                  ] as const
+                ).map(([value, label, note]) => (
+                  <div
+                    key={value}
+                    className="flex h-11 items-center gap-3 rounded px-2 text-[14px]"
+                  >
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="format"
+                        checked={formatSetting === value}
+                        onChange={() => setFormatSetting(value)}
+                        className="h-4.5 w-4.5 accent-ink"
+                      />
+                      {label}
+                    </label>
+                    {note !== '' && <span className="text-[13px] text-muted">{note}</span>}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="card flex flex-wrap items-center gap-4 p-4">
+              <div className="flex grow flex-col gap-1">
+                <span className="text-[15px]">対象 {candidates.length} 問</span>
+                <span className="text-[13px] text-muted">
+                  {canStart ? `うち未出題 ${untouched} 問` : '出題できるキーワードがありません'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={begin}
+                disabled={!canStart}
+                className="btn-p h-12 px-8"
+              >
+                開始する
+              </button>
+            </section>
           </div>
-        </section>
-
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg">解答形式</h2>
-          <div className="flex gap-4">
-            {(
-              [
-                ['auto', '自動'],
-                ['choice', '選択肢'],
-                ['text', '記述'],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value} className="flex h-11 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="format"
-                  checked={formatSetting === value}
-                  onChange={() => setFormatSetting(value)}
-                  className="h-5 w-5"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </section>
-
-        {!canStart && (
-          <p className="text-sm text-orange-700">出題できるキーワードがありません</p>
-        )}
-
-        <button
-          type="button"
-          onClick={begin}
-          disabled={!canStart}
-          className="h-12 rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-        >
-          開始する
-        </button>
+        </div>
       </div>
     );
   }
@@ -436,19 +495,18 @@ export function StudyPage() {
     const minutes = Math.floor(elapsed / 60000);
     const seconds = Math.floor((elapsed % 60000) / 1000);
     return (
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-5 p-10">
-        <h1 className="text-2xl">おつかれさまでした</h1>
-        <p className="text-lg">
-          正答 {correctCount} / {total}
-        </p>
-        <p className="text-sm text-stone-500">
-          所要時間 {minutes} 分 {seconds} 秒
-        </p>
-        <button
-          type="button"
-          onClick={() => void stop()}
-          className="h-12 rounded border-2 border-stone-900 px-5 dark:border-stone-100"
-        >
+      <div className="mx-auto flex max-w-md flex-col items-center gap-5 px-6 py-16">
+        <h1 className="text-[22px]">おつかれさまでした</h1>
+        <div className="card flex w-full flex-col items-center gap-2 p-8">
+          <span className="text-[13px] text-muted">この回の成績</span>
+          <span className="text-[28px]">
+            正答 {correctCount} / {total}
+          </span>
+          <span className="text-[13px] text-muted">
+            所要時間 {minutes} 分 {seconds} 秒
+          </span>
+        </div>
+        <button type="button" onClick={() => void stop()} className="btn">
           一覧へ戻る
         </button>
       </div>
@@ -463,31 +521,26 @@ export function StudyPage() {
     input: answerValue,
   };
 
+  const solvedCount = solved.size;
+  const progress = candidates.length === 0 ? 0 : (solvedCount / candidates.length) * 100;
+  const rangeLabel =
+    level === 0 ? `章「${current.chapter.title}」` : `章「${current.chapter.title}」＋ 上位の章`;
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-lg">{data?.title}</h1>
-        <span className="text-xs text-stone-500">
-          {total} 問／正答 {correctCount}
-        </span>
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-4 sm:px-10 sm:py-6">
+      {/* 進み具合と中断（ワイヤーフレーム Main / StudyResult のヘッダ帯） */}
+      <div className="flex flex-wrap items-center gap-4">
+        <h1 className="text-[15px]">{data?.title}</h1>
         <span className="grow" />
-        <button
-          type="button"
-          onClick={() => {
-            if (!canExpandRange(level, maxLevel)) return;
-            setLevel(expandRange(level, maxLevel));
-            setExpandedUsed(true);
-          }}
-          disabled={!canExpandRange(level, maxLevel)}
-          className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 disabled:opacity-40 dark:text-stone-300"
-        >
-          表示範囲を広げる
-        </button>
-        <button
-          type="button"
-          onClick={() => void stop()}
-          className="h-11 rounded border border-stone-400 px-3 text-sm text-stone-600 dark:text-stone-300"
-        >
+        <span className="flex items-center gap-2">
+          <span className="h-2 w-44 overflow-hidden rounded-full border-[1.5px] border-ink bg-panel">
+            <span className="block h-full bg-ink" style={{ width: `${progress}%` }} />
+          </span>
+          <span className="text-[13px] text-ink-soft">
+            {solvedCount} / {candidates.length}
+          </span>
+        </span>
+        <button type="button" onClick={() => void stop()} className="btn-s">
           中断する
         </button>
       </div>
@@ -495,64 +548,154 @@ export function StudyPage() {
       {error !== '' && (
         <div
           role="alert"
-          className="rounded border-2 border-orange-700 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-950/40"
+          className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn"
         >
           {error}
         </div>
       )}
 
-      <div
-        data-testid="study-body"
-        className="flex flex-col gap-4 rounded-md border-2 border-stone-900 bg-white p-4 dark:border-stone-100 dark:bg-stone-900"
-      >
-        {rangeChapters.map((chapter) => (
-          <MarkdownView
-            key={chapter.id}
-            body={chapter.body}
-            testId={`chapter-body-${chapter.id}`}
-            empty=""
-            renderBlank={(blank) => {
-              const docId = blank.docId ?? '';
-              const view = viewOfBlank(docId, viewContext);
-              const label =
-                view.display === 'input'
-                  ? format === 'choice'
-                    ? '選択'
-                    : '　　　　'
-                  : view.text;
-              return (
-                <span
-                  data-testid={`blank-${docId}`}
-                  data-color={view.color}
-                  className={`mx-0.5 inline-flex h-8 items-center rounded border-2 px-3 align-middle text-sm ${COLOR_CLASS[view.color]}`}
-                >
-                  {label}
-                </span>
-              );
+      {/* 判定の帯（ワイヤーフレーム StudyResult） */}
+      {phase === 'judged' && (
+        <div
+          className={
+            correct
+              ? 'flex flex-wrap items-center gap-4 rounded-md border-2 border-ink bg-subtle px-5 py-3'
+              : 'flex flex-wrap items-center gap-4 rounded-md border-2 border-warn bg-warn-panel px-5 py-3'
+          }
+        >
+          <span
+            className={
+              correct
+                ? 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink text-[17px]'
+                : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-warn text-[17px] text-warn'
+            }
+            aria-hidden
+          >
+            {correct ? '○' : '×'}
+          </span>
+          <span className={correct ? 'text-[17px]' : 'text-[17px] text-warn'}>
+            {correct ? '正解' : '不正解'}
+          </span>
+          <span className="text-[13px] text-muted">
+            {format === 'choice' ? '選択肢形式' : '記述形式'} ・ この問題は出題{' '}
+            {(current.keyword.stats?.totalCount ?? 0) + (phase === 'judged' ? 0 : 1)} 回
+          </span>
+          <span className="grow" />
+          {!correct && (
+            <>
+              <span className="flex items-baseline gap-2">
+                <span className="text-[13px] text-muted">あなたの解答</span>
+                <span className="text-[16px] text-warn">{answerValue}</span>
+              </span>
+              <span className="h-6 w-px bg-warn/40" />
+            </>
+          )}
+          <span className="flex items-baseline gap-2">
+            <span className="text-[13px] text-muted">正答</span>
+            <span className="text-[16px]">{current.keyword.answers.join('、')}</span>
+          </span>
+        </div>
+      )}
+
+      {/* 本文。上に表示範囲の帯、下に色の凡例を置く */}
+      <div className="card flex flex-col">
+        <div className="pane-hd">
+          <span className="grow">表示範囲：{rangeLabel}</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (!canExpandRange(level, maxLevel)) return;
+              setLevel(expandRange(level, maxLevel));
+              setExpandedUsed(true);
             }}
+            disabled={!canExpandRange(level, maxLevel)}
+            className="btn-s h-8 px-3 text-[12px]"
+          >
+            表示範囲を広げる
+          </button>
+        </div>
+
+        <div data-testid="study-body" className="flex flex-col gap-4 px-7 py-6 text-[17px]">
+          {rangeChapters.map((chapter) => (
+            <MarkdownView
+              key={chapter.id}
+              body={chapter.body}
+              testId={`chapter-body-${chapter.id}`}
+              empty=""
+              renderBlank={(blank) => {
+                const docId = blank.docId ?? '';
+                const view = viewOfBlank(docId, viewContext);
+                const label =
+                  view.display === 'input'
+                    ? format === 'choice'
+                      ? '選択'
+                      : '　　　　'
+                    : view.text;
+                return (
+                  <span
+                    data-testid={`blank-${docId}`}
+                    data-color={view.color}
+                    className={`mx-0.5 inline-flex h-8.5 min-w-24 items-center justify-center rounded border-2 px-3 align-middle text-[15px] ${COLOR_CLASS[view.color]}`}
+                  >
+                    {label}
+                  </span>
+                );
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-5 border-t-[1.5px] border-line px-4 py-3">
+          <Legend className="border-blank-edge bg-blank" label="今回の問題" />
+          {phase === 'judged' && !correct && (
+            <Legend className="border-wrong-edge bg-wrong" label="あなたが答えた語が入る位置" />
+          )}
+          <Legend
+            className="border-mask-edge bg-mask"
+            label={phase === 'judged' ? '解答中は伏せていた語' : '同じタグのため伏せた語'}
           />
-        ))}
+        </div>
       </div>
 
       {phase === 'answering' ? (
         <div className="flex flex-col gap-3">
           {format === 'choice' ? (
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {built?.choices.map((value) => (
-                <li key={value}>
-                  <label className="flex h-12 items-center gap-2 rounded border-2 border-stone-900 px-3 dark:border-stone-100">
-                    <input
-                      type="radio"
-                      name="choice"
-                      checked={choice === value}
-                      onChange={() => setChoice(value)}
-                      className="h-5 w-5"
-                    />
-                    {value}
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="text-[13px] text-muted">選択肢から選ぶ</p>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {built?.choices.map((value, i) => (
+                  <li key={value}>
+                    <label
+                      className={
+                        choice === value
+                          ? 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-subtle px-4 text-[16px]'
+                          : 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-panel px-4 text-[16px]'
+                      }
+                    >
+                      {/* 見た目は番号付きの札。選択の状態は札の側で示す */}
+                      <input
+                        type="radio"
+                        name="choice"
+                        checked={choice === value}
+                        onChange={() => setChoice(value)}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      />
+                      <span
+                        aria-hidden
+                        className={
+                          choice === value
+                            ? 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink bg-ink text-[12px] text-paper'
+                            : 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-edge text-[12px] text-ink-soft'
+                        }
+                      >
+                        {i + 1}
+                      </span>
+                      {value}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <input
               aria-label="解答"
@@ -562,48 +705,52 @@ export function StudyPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void submit();
               }}
-              className="h-12 rounded border-2 border-stone-900 px-3 dark:border-stone-100 dark:bg-stone-800"
+              className="field h-13 text-[17px]"
             />
           )}
-          <button
-            type="button"
-            onClick={() => void submit()}
-            disabled={!isAnswerable(answerValue) || isRecording}
-            className="h-12 rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-          >
-            {isRecording ? '記録しています…' : '解答する'}
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <p className={correct ? 'text-lg text-emerald-700' : 'text-lg text-orange-700'}>
-            {correct ? '正解' : '不正解'}
-          </p>
-          {!correct && (
-            <p className="text-sm text-stone-500">
-              正答: {current.keyword.answers.join('、')} ／ あなたの解答: {answerValue}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-3">
-            {canRegisterAlt({ correct, format, input }) && (
-              <button
-                type="button"
-                onClick={() => void registerAlt()}
-                className="h-12 rounded border-2 border-stone-900 px-4 dark:border-stone-100"
-              >
-                別解として登録する
-              </button>
-            )}
+          <div className="flex items-center gap-4">
+            <span className="text-[13px] text-muted">
+              {format === 'choice' ? '数字キーでも選べる' : 'Enter でも解答できる'}
+            </span>
+            <span className="grow" />
             <button
               type="button"
-              onClick={advance}
-              className="h-12 grow rounded border-2 border-stone-900 bg-stone-900 px-5 text-stone-50 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+              onClick={() => void submit()}
+              disabled={!isAnswerable(answerValue) || isRecording}
+              className="btn-p h-12 px-8"
             >
-              次の問題へ
+              {isRecording ? '記録しています…' : '解答する'}
             </button>
           </div>
         </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-4">
+          {canRegisterAlt({ correct, format, input }) && (
+            <>
+              <button type="button" onClick={() => void registerAlt()} className="btn">
+                「{input}」を別解として登録する
+              </button>
+              <span className="max-w-60 text-[13px] leading-relaxed text-muted">
+                登録するとこの回の判定も正解に変わる
+              </span>
+            </>
+          )}
+          <span className="grow" />
+          <button type="button" onClick={advance} className="btn-p h-12 px-8">
+            次の問題へ
+          </button>
+        </div>
       )}
     </div>
+  );
+}
+
+/** 色の凡例。ワイヤーフレームの脚注に合わせる。 */
+function Legend({ className, label }: { className: string; label: string }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span className={`h-3.5 w-3.5 rounded-[3px] border-[1.5px] ${className}`} />
+      <span className="text-[13px] text-muted">{label}</span>
+    </span>
   );
 }
