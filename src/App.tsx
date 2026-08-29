@@ -11,6 +11,7 @@ import { HistoryPage } from '@/features/history/HistoryPage';
 import { loadTheme, nextTheme, resolveTheme, saveTheme, type Theme } from '@/lib/theme';
 import { useNarrow } from '@/lib/useNarrow';
 import { TrailProvider, Trail } from '@/components/Trail';
+import { RowActions } from '@/components/RowActions';
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -54,30 +55,37 @@ export function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <TrailProvider>
         <div className="min-h-dvh bg-paper text-ink">
-          <header className="flex h-14 items-center gap-4 border-b-2 border-ink bg-panel px-6">
+          <header className="flex h-14 items-center gap-3 border-b-2 border-ink bg-panel px-4 sm:gap-4 sm:px-6">
             <Link to="/" className="shrink-0 text-[17px] text-ink no-underline">
               穴埋め学習
             </Link>
             <Trail />
             <span className="grow" />
-            <Link to="/history" className="btn-s no-underline">
-              学習履歴
-            </Link>
-            <button
-              type="button"
-              aria-label="テーマを切り替える"
-              onClick={() => {
-                const next = nextTheme(theme);
-                setTheme(next);
-                saveTheme(next);
-              }}
-              className="btn-s"
-            >
-              {theme === 'dark' ? 'ライト' : 'ダーク'}
-            </button>
-            <button type="button" onClick={() => supabase.auth.signOut()} className="btn-s">
-              ログアウト
-            </button>
+            {/* 狭い画面では右側の操作を畳む（決定表「表示設定と共通の振る舞い」列8） */}
+            <RowActions label="ヘッダの操作">
+              <Link to="/history" className="btn-s shrink-0 no-underline">
+                学習履歴
+              </Link>
+              <button
+                type="button"
+                aria-label="テーマを切り替える"
+                onClick={() => {
+                  const next = nextTheme(theme);
+                  setTheme(next);
+                  saveTheme(next);
+                }}
+                className="btn-s shrink-0"
+              >
+                {theme === 'dark' ? 'ライト' : 'ダーク'}
+              </button>
+              <button
+                type="button"
+                onClick={() => supabase.auth.signOut()}
+                className="btn-s shrink-0"
+              >
+                ログアウト
+              </button>
+            </RowActions>
           </header>
           <main className={narrow ? 'pb-16' : ''}>
             <Routes>

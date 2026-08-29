@@ -64,8 +64,7 @@
 
 @theme inline {
   /* 長文と小さい文字の読みやすさを優先したユニバーサルデザインフォント */
-  --font-sans:
-    'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
+  --font-sans: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', Meiryo, sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Courier New', monospace;
 
   --color-paper: var(--c-paper);
@@ -146,22 +145,22 @@ a {
 @layer components {
   /* 主ボタン。画面の主要な操作 */
   .btn-p {
-    @apply flex h-11 items-center justify-center rounded border-2 border-ink bg-ink px-5 text-[15px] text-paper disabled:opacity-40;
+    @apply flex h-11 shrink-0 items-center justify-center rounded border-2 border-ink bg-ink px-5 text-[15px] whitespace-nowrap text-paper disabled:opacity-40;
   }
 
   /* 標準ボタン */
   .btn {
-    @apply flex h-11 items-center justify-center rounded border-2 border-ink bg-panel px-4 text-[15px] text-ink disabled:opacity-40;
+    @apply flex h-11 shrink-0 items-center justify-center rounded border-2 border-ink bg-panel px-4 text-[15px] whitespace-nowrap text-ink disabled:opacity-40;
   }
 
   /* 副ボタン。行に並ぶ操作や補助の導線 */
   .btn-s {
-    @apply flex h-11 items-center justify-center rounded border-[1.5px] border-edge bg-panel px-3 text-[13px] text-ink-soft disabled:opacity-40;
+    @apply flex h-11 shrink-0 items-center justify-center rounded border-[1.5px] border-edge bg-panel px-3 text-[13px] whitespace-nowrap text-ink-soft disabled:opacity-40;
   }
 
   /* 危険な操作 */
   .btn-warn {
-    @apply flex h-11 items-center justify-center rounded border-2 border-warn bg-panel px-4 text-[15px] text-warn disabled:opacity-40;
+    @apply flex h-11 shrink-0 items-center justify-center rounded border-2 border-warn bg-panel px-4 text-[15px] whitespace-nowrap text-warn disabled:opacity-40;
   }
 
   .card {
