@@ -29,7 +29,7 @@ npm run dev
 
 `.env.local` に接続先を書く。ローカルの値は `npm run db:status` で確認できる。
 
-```
+```text
 VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=...
 ```

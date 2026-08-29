@@ -2,7 +2,7 @@
 
 仕様は観点ごとの決定表として `tables/*.jsonl` に持つ。書式は [docs/仕様書.md](../docs/仕様書.md) の §13 を参照。
 
-```
+```bash
 npm run build   # tables/*.jsonl -> dist/index.html
 ```
 
