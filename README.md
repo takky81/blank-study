@@ -15,6 +15,7 @@ Markdown で書いたノートの語句を空欄にして、間隔反復で覚�
 | DB 設計・データ形式・アルゴリズム | [docs/仕様書.md](docs/仕様書.md) |
 | 画面の見た目 | `design/` のワイヤーフレーム |
 | 開発環境とブランチ運用 | [docs/開発環境.md](docs/開発環境.md) |
+| 本番への配信 | [docs/本番デプロイ.md](docs/本番デプロイ.md) |
 
 決定表が機能の正。仕様書には決定表で表せないものだけを書く。
 
@@ -48,3 +49,6 @@ npm run spec:coverage # 決定表の列がテストで押さえられている�
 
 `main` に入ると GitHub Pages のサブパスへ配信する（`.github/workflows/deploy.yml`）。
 接続先はリポジトリの secrets（`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`）から渡す。
+
+初回に用意するもの（GitHub リポジトリ・Supabase プロジェクト・認証の設定）は
+[docs/本番デプロイ.md](docs/本番デプロイ.md) に書いてある。
