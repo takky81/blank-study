@@ -186,4 +186,29 @@ test.describe('表示設定と共通の振る舞い', () => {
     const base = await page.evaluate(() => document.querySelector('base')?.getAttribute('href'));
     expect(base ?? '/').toBe('/');
   });
+  test('列17 狭い画面ではヘッダの操作が畳まれる', async ({ signedIn: page }) => {
+    await seedOne(page);
+
+    // 広い画面ではそのまま並ぶ
+    await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
+
+    await page.setViewportSize(MOBILE);
+    await expect(page.getByRole('button', { name: 'ログアウト' })).toHaveCount(0);
+
+    const menu = page.getByRole('button', { name: 'ヘッダの操作' });
+    await menu.click();
+    await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
+
+    // 文字がボタンからはみ出さない
+    for (const name of ['ログアウト', 'テーマを切り替える']) {
+      const button = page.getByRole('button', { name });
+      const box = await button.boundingBox();
+      const text = await button.evaluate((el) => ({
+        w: el.scrollWidth,
+        h: el.scrollHeight,
+      }));
+      expect(text.w).toBeLessThanOrEqual(Math.ceil(box?.width ?? 0));
+      expect(text.h).toBeLessThanOrEqual(Math.ceil(box?.height ?? 0));
+    }
+  });
 });

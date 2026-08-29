@@ -14,3 +14,4 @@
 {"table":"表示設定と共通の振る舞い","col":14,"conditions":{"true":["操作:ブラウザの戻るを押す"]},"actions":{"true":["戻るを押す"]},"results":{"true":["遷移:1つ前の画面に戻る"]},"e2e":["ui.spec: ブラウザの戻るが効く"]}
 {"table":"表示設定と共通の振る舞い","col":15,"conditions":{"true":["解答中:ブラウザの戻るを押す"]},"actions":{"true":["戻るを押す"]},"results":{"true":["解答:中断として扱う","解答履歴:そこまでの解答を残す"]},"e2e":["ui.spec: 解答中に戻っても記録が残る"]}
 {"table":"表示設定と共通の振る舞い","col":16,"conditions":{"true":["デプロイ:GitHub Pages のサブパスに置く"]},"actions":{"true":["URL を直接開く"]},"results":{"true":["ルーティング:サブパスでも正しく解決する"]},"e2e":["ui.spec: サブパス配信でも画面が開く"],"note":"Vite の base とルータの basename を合わせる"}
+{"table":"表示設定と共通の振る舞い","col":17,"conditions":{"true":["画面幅:狭い","ヘッダ:操作が並ぶ"]},"actions":{"true":["画面を開く"]},"results":{"true":["表示:残りをメニューにまとめる","表示:ボタンの文字がボタンの中に収まる"]},"e2e":["ui.spec: 狭い画面ではヘッダの操作が畳まれる"]}
