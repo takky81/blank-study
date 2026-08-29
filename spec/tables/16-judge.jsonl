@@ -1,0 +1,16 @@
+{"table":"正誤判定","col":1,"conditions":{"true":["入力:正答のいずれかと文字列が完全に一致する"]},"actions":{"true":["解答するを押す"]},"results":{"true":["判定:正解"],"false":["判定:不正解"]},"unit":["judge: 完全一致は正解"],"e2e":["study.spec: 正しく答えると正解になる"]}
+{"table":"正誤判定","col":2,"conditions":{"true":["入力:前後に空白がある"]},"actions":{"true":["解答するを押す"]},"results":{"true":["正規化:前後の空白を除去する","判定:正解"]},"unit":["normalizeInput: 前後の空白を除去する"]}
+{"table":"正誤判定","col":3,"conditions":{"true":["入力:全角の英数字・記号を含む"]},"actions":{"true":["解答するを押す"]},"results":{"true":["正規化:全角を半角に変換する","判定:正解"]},"unit":["normalizeInput: 全角を半角に寄せる"]}
+{"table":"正誤判定","col":4,"conditions":{"true":["入力:英字の大文字小文字だけが異なる"]},"actions":{"true":["解答するを押す"]},"results":{"true":["正規化:大文字小文字を同一視する","判定:正解"]},"unit":["normalizeInput: 大文字小文字を同一視する"],"note":"CPU と cpu を同じ扱いにする"}
+{"table":"正誤判定","col":5,"conditions":{"true":["入力:answers の2件目以降と一致する"]},"actions":{"true":["解答するを押す"]},"results":{"true":["判定:正解"],"false":["判定:不正解"]},"unit":["judge: 別解も正解として扱う"],"note":"正答はすべて対等に扱う"}
+{"table":"正誤判定","col":6,"conditions":{"true":["入力:正規化しても正答のどれとも一致しない"]},"actions":{"true":["解答するを押す"]},"results":{"true":["判定:不正解"],"false":["判定:正解"]},"unit":["judge: 一致しなければ不正解"],"e2e":["study.spec: 違う語を答えると不正解になる"]}
+{"table":"正誤判定","col":7,"conditions":{"true":["出題形式:選択肢","入力:正答のいずれかと文字列が完全に一致する"]},"actions":{"true":["選択肢を選んで解答するを押す"]},"results":{"true":["判定:正解"]},"unit":["judge: 選択肢でも同じ判定を使う"],"e2e":["study.spec: 選択肢で正答を選ぶ"]}
+{"table":"正誤判定","col":8,"conditions":{"true":["入力:空"]},"actions":{"true":["解答するを押す"]},"results":{"true":["操作:解答を受け付けない"],"false":["判定:正解","判定:不正解"]},"unit":["judge: 空入力は解答にしない"]}
+{"table":"正誤判定","col":9,"conditions":{"true":["判定:正解"]},"actions":{"true":["解答するを押す"]},"results":{"true":["answer_logs:1件記録する","keyword_stats:出題回数と正答回数を増やす"]},"unit":["recordAnswer: 正解を記録する"]}
+{"table":"正誤判定","col":10,"conditions":{"true":["判定:不正解"]},"actions":{"true":["解答するを押す"]},"results":{"true":["answer_logs:1件記録する","keyword_stats:出題回数を増やす"],"false":["keyword_stats:出題回数と正答回数を増やす"]},"unit":["recordAnswer: 不正解を記録する"]}
+{"table":"正誤判定","col":11,"conditions":{"true":["入力:空白のみ"]},"actions":{"true":["解答するを押す"]},"results":{"true":["操作:解答を受け付けない"],"false":["判定:正解","判定:不正解"]},"unit":["judge: 空白だけの入力を解答にしない"],"note":"正規化すると空になるため"}
+{"table":"正誤判定","col":12,"conditions":{"true":["正答:前後に空白を含んで登録されている"]},"actions":{"true":["解答するを押す"]},"results":{"true":["正規化:正答の側にも同じ正規化をかける","判定:正解"]},"unit":["judge: 正答も正規化してから比べる"]}
+{"table":"正誤判定","col":13,"conditions":{"true":["入力:全角と半角が混ざる"]},"actions":{"true":["解答するを押す"]},"results":{"true":["正規化:全角を半角に変換する","判定:正解"]},"unit":["normalizeInput: 混在を寄せる"]}
+{"table":"正誤判定","col":14,"conditions":{"true":["入力:ひらがなと漢字が異なる"]},"actions":{"true":["解答するを押す"]},"results":{"true":["判定:不正解"],"false":["判定:正解"]},"unit":["judge: 読みの違いは吸収しない"],"note":"表記ゆれを許すには別解として登録する"}
+{"table":"正誤判定","col":15,"conditions":{"true":["入力:正答の一部だけが一致する"]},"actions":{"true":["解答するを押す"]},"results":{"true":["判定:不正解"],"false":["判定:正解"]},"unit":["judge: 部分一致は正解にしない"]}
+{"table":"正誤判定","col":16,"conditions":{"true":["通信:解答の記録に失敗する"]},"actions":{"true":["解答するを押す"]},"results":{"true":["画面:判定は表示する","記録:再送を試みる","画面:記録できない場合はその旨を表示する"]},"e2e":["study.spec: 記録に失敗しても解答は続けられる"]}

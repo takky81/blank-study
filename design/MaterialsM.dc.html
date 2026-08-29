@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .top { height: 52px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 14px; gap: 10px; background: #fff; flex-shrink: 0; }
+    .ttl { font-size: 16px; flex-grow: 1; }
+    .ico { font-size: 19px; color: #6b6a62; width: 24px; text-align: center; flex-shrink: 0; }
+    .body { flex-grow: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .card { border: 2px solid #26251f; border-radius: 6px; background: #fff; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .btn { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #fff; }
+    .btn-p { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 16px; font-size: 15px; background: #26251f; color: #faf9f5; }
+    .btn-s { border: 1.5px solid #a8a69c; border-radius: 5px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
+    .fld { border: 2px solid #26251f; border-radius: 5px; min-height: 46px; display: flex; align-items: center; padding: 0 12px; font-size: 15px; background: #fff; }
+    .lbl { font-size: 12px; color: #6b6a62; }
+    .muted { color: #8a887d; font-size: 12px; }
+    .nav { height: 60px; border-top: 2px solid #26251f; display: flex; background: #fff; flex-shrink: 0; }
+    .nav-i { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #8a887d; }
+    .sec-hd { padding: 9px 14px; border-bottom: 1.5px solid #c9c7bd; font-size: 12px; color: #6b6a62; background: #f2f1ea; }
+    .cb { width: 20px; height: 20px; border: 2px solid #26251f; border-radius: 3px; flex-shrink: 0; }
+    .cb-on { width: 20px; height: 20px; border: 2px solid #26251f; border-radius: 3px; background: #26251f; flex-shrink: 0; }
+    .rd { width: 19px; height: 19px; border: 2px solid #26251f; border-radius: 50%; flex-shrink: 0; }
+    .rd-on { width: 19px; height: 19px; border: 5.5px solid #26251f; border-radius: 50%; background: #fff; flex-shrink: 0; }
+    .opt { display: flex; align-items: center; gap: 11px; font-size: 15px; min-height: 46px; }
+    .kw-blank { background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; min-width: 84px; padding: 0 9px; }
+    .kw-wrong { background: #f0b39a; border: 2px solid #c2410c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
+    .kw-mask { background: #d9d7cd; border: 2px solid #a8a69c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 32px; line-height: 28px; padding: 0 9px; }
+    .lg { display: flex; align-items: center; gap: 6px; }
+    .lg-c { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div class="top">
+    <div class="ico">‹</div>
+    <div class="ttl">基本情報技術者</div>
+    <div class="ico">＋</div>
+    <div class="ico">⋯</div>
+  </div>
+  <div class="body">
+    <div style="border: 2px solid #26251f; border-radius: 6px; background: #eeebe0; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 17px;">まとめて解答する</div>
+        <div style="font-size: 12px; color: #6b6a62;">3 教材すべて ・ 412 問 ・ 今日 23 問</div>
+      </div>
+      <div class="btn-p">科目全体で解答</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 2px;">
+      <div style="font-size: 13px; color: #6b6a62;">教材ごとに解答する</div>
+      <div style="flex-grow: 1; height: 1.5px; background: #c9c7bd;"></div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 16px; flex-grow: 1;">テクノロジ系</div>
+        <div class="ico">⋯</div>
+      </div>
+      <div class="muted">210 問 ・ 正答率 85% ・ 今日 9 問</div>
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <div class="btn-p" style="flex-grow: 1;">解答</div>
+        <div class="btn-s" style="flex-grow: 1;">編集</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 16px; flex-grow: 1;">マネジメント系</div>
+        <div class="ico">⋯</div>
+      </div>
+      <div class="muted">88 問 ・ 正答率 72% ・ 今日 6 問</div>
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <div class="btn-p" style="flex-grow: 1;">解答</div>
+        <div class="btn-s" style="flex-grow: 1;">編集</div>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+    <div class="muted" style="text-align: center;">⋯ からエクスポート・削除 ／ ＋ からインポート</div>
+  </div>
+  <div class="nav">
+    <div class="nav-i" style="color: #26251f;"><div style="font-size: 17px;">▤</div><div>学習</div></div>
+    <div class="nav-i"><div style="font-size: 17px;">▧</div><div>履歴</div></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{"table":"科目の管理","col":1,"conditions":{"true":["入力:名前がある"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["subjects:1件追加する","並び:一覧の末尾に置く","画面:一覧に反映する"]},"unit":["createSubject: 末尾に追加する"],"e2e":["subject.spec: 科目を追加できる"]}
+{"table":"科目の管理","col":2,"conditions":{"true":["入力:名前が空"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["操作:追加を受け付けない"],"false":["subjects:1件追加する"]},"unit":["createSubject: 空の名前を弾く"]}
+{"table":"科目の管理","col":3,"conditions":{"true":["入力:名前が前後の空白だけ"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["操作:追加を受け付けない"],"false":["subjects:1件追加する"]},"unit":["createSubject: 空白だけの名前を弾く"]}
+{"table":"科目の管理","col":4,"conditions":{"true":["入力:既存と同じ名前"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["subjects:1件追加する"],"false":["操作:追加を受け付けない"]},"unit":["createSubject: 名前の重複を許す"]}
+{"table":"科目の管理","col":5,"conditions":{"true":["入力:名前がある"]},"actions":{"true":["名前を変更を押す"]},"results":{"true":["subjects:名前を更新する"]},"e2e":["subject.spec: 科目名を変更できる"]}
+{"table":"科目の管理","col":6,"conditions":{"true":["科目:配下に教材がない"]},"actions":{"true":["削除を押す"]},"results":{"true":["画面:削除の確認を出す"]},"e2e":["subject.spec: 削除の前に確認が出る"]}
+{"table":"科目の管理","col":7,"conditions":{"true":["科目:配下に教材がある"]},"actions":{"true":["削除を押す"]},"results":{"true":["画面:削除の確認を出す","画面:消える教材とキーワードの件数を示す"]},"e2e":["subject.spec: 配下の件数を示して確認する"]}
+{"table":"科目の管理","col":8,"conditions":{"true":["確認:削除を選ぶ"]},"actions":{"true":["削除を確定する"]},"results":{"true":["subjects:削除する","materials:配下をすべて削除する","chapters:配下をすべて削除する","keywords:配下をすべて削除する","解答履歴:配下をすべて削除する"]},"unit":["deleteSubject: 配下を連鎖して消す"],"note":"科目の削除は取り消せない"}
+{"table":"科目の管理","col":9,"conditions":{"false":["確認:削除を選ぶ"]},"actions":{"true":["削除を確定する"]},"results":{"false":["subjects:削除する"]},"e2e":["subject.spec: 確認をキャンセルすると消えない"]}
+{"table":"科目の管理","col":10,"conditions":{"true":["操作:行をドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["subjects:sort_order を更新する","並び:次回開いても保たれる"]},"e2e":["subject.spec: 並べ替えが保存される"]}
+{"table":"科目の管理","col":11,"conditions":{"true":["科目:1件もない"]},"actions":{"true":["科目一覧を開く"]},"results":{"true":["画面:科目がない旨と追加の導線を出す"]},"e2e":["subject.spec: 空の状態を案内する"]}
+{"table":"科目の管理","col":12,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["画面:失敗した旨を表示する"],"false":["subjects:1件追加する"]},"e2e":["subject.spec: 追加に失敗しても一覧が壊れない"]}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .hd { height: 56px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
+    .btn-p { border: 2px solid #26251f; border-radius: 4px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 32px; font-size: 16px; background: #26251f; color: #faf9f5; }
+    .btn { border: 2px solid #26251f; border-radius: 4px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 15px; background: #fff; }
+    .btn-s { border: 1.5px solid #a8a69c; border-radius: 4px; height: 30px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
+    .kw-blank { background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 34px; line-height: 30px; padding: 0 10px; }
+    .kw-wrong { background: #f0b39a; border: 2px solid #c2410c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 34px; line-height: 30px; padding: 0 10px; }
+    .kw-mask { background: #d9d7cd; border: 2px solid #a8a69c; border-radius: 4px; display: inline-block; vertical-align: middle; height: 34px; line-height: 30px; padding: 0 10px; }
+    .lg { display: flex; align-items: center; gap: 7px; }
+    .lg-c { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .muted { color: #8a887d; font-size: 12px; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div class="hd">
+    <div style="font-size: 13px; color: #6b6a62; display: flex; align-items: center; gap: 8px;">
+      <span>基本情報技術者</span><span>／</span><span>テクノロジ系</span><span>／</span><span style="color: #26251f;">基礎理論 ・ 2進数</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 180px; height: 8px; border: 1.5px solid #26251f; border-radius: 5px; overflow: hidden; background: #fff;">
+        <div style="width: 36%; height: 100%; background: #26251f;"></div>
+      </div>
+      <div style="font-size: 13px; color: #6b6a62;">13 / 122</div>
+    </div>
+    <div class="btn-s">中断</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 40px; min-height: 0;">
+
+    <div style="border: 2px solid #c2410c; border-radius: 6px; background: #fff7ed; display: flex; align-items: center; gap: 16px; padding: 14px 20px;">
+      <div style="width: 32px; height: 32px; border: 2px solid #c2410c; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #c2410c; font-size: 17px; flex-shrink: 0;">×</div>
+      <div style="display: flex; align-items: baseline; gap: 14px; flex-grow: 1;">
+        <div style="font-size: 17px; color: #c2410c;">不正解</div>
+        <div class="muted">記述形式 ・ この問題は出題 6 回 / 正答率 83%</div>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 10px;">
+        <span class="muted">あなたの解答</span><span style="font-size: 16px; color: #c2410c;">バイト</span>
+      </div>
+      <div style="width: 1.5px; height: 24px; background: #e0c3ae;"></div>
+      <div style="display: flex; align-items: baseline; gap: 10px;">
+        <span class="muted">正答</span><span style="font-size: 16px;">ビット</span>
+      </div>
+    </div>
+
+    <div style="border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
+      <div style="height: 38px; border-bottom: 1.5px solid #c9c7bd; display: flex; align-items: center; padding: 0 16px; gap: 10px; background: #f2f1ea; flex-shrink: 0;">
+        <div style="font-size: 12px; color: #6b6a62; flex-grow: 1;">表示範囲：章「2進数」</div>
+        <div class="btn-s" style="height: 26px; font-size: 12px;">表示範囲を広げる ▾</div>
+      </div>
+      <div style="padding: 22px 28px; display: flex; flex-direction: column; gap: 14px; font-size: 17px; line-height: 2.6;">
+        <div style="font-size: 20px; line-height: 1.4;">2進数</div>
+        <div>
+          コンピュータは 2進数 で数を扱う。1桁を <span class="kw-blank">ビット</span> と呼び、8桁をまとめたものを <span class="kw-wrong">バイト</span> という。
+        </div>
+        <div>
+          処理の速さを表すときは <span class="kw-mask">ヘルツ</span> のような単位を使い、記憶容量には <span class="kw-wrong">バイト</span> を用いる。
+        </div>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div style="padding: 11px 16px; border-top: 1.5px solid #c9c7bd; display: flex; align-items: center; gap: 22px; flex-shrink: 0;">
+        <div class="lg"><span class="lg-c" style="background: #fde68a; border: 1.5px solid #d9a441;"></span><span class="muted">出題された空欄</span></div>
+        <div class="lg"><span class="lg-c" style="background: #f0b39a; border: 1.5px solid #c2410c;"></span><span class="muted">あなたが答えた「バイト」が入る位置</span></div>
+        <div class="lg"><span class="lg-c" style="background: #d9d7cd; border: 1.5px solid #a8a69c;"></span><span class="muted">解答中は伏せていた語</span></div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div class="btn">「バイト」を別解として登録する</div>
+      <div class="muted" style="max-width: 240px; line-height: 1.6;">登録するとこの回の判定も正解に変わる</div>
+      <div style="flex-grow: 1;"></div>
+      <div class="btn-p">次の問題へ</div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .hd { height: 56px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
+    .btn { border: 2px solid #26251f; border-radius: 4px; height: 34px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; background: #fff; }
+    .btn-p { border: 2px solid #26251f; border-radius: 4px; height: 34px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; background: #26251f; color: #faf9f5; }
+    .btn-s { border: 1.5px solid #a8a69c; border-radius: 4px; height: 28px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #6b6a62; background: #fff; }
+    .muted { color: #8a887d; font-size: 13px; }
+    .pane-hd { height: 38px; border-bottom: 1.5px solid #c9c7bd; display: flex; align-items: center; padding: 0 14px; gap: 10px; font-size: 13px; color: #6b6a62; background: #f2f1ea; }
+    .tree-i { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 4px; font-size: 14px; }
+    .code { font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 12.5px; line-height: 2; }
+    .kw { background: #fef3c7; border-bottom: 2px solid #d9a441; padding: 1px 2px; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div class="hd">
+    <div style="font-size: 17px;">穴埋め学習</div>
+    <div style="font-size: 13px; color: #6b6a62; display: flex; align-items: center; gap: 8px;">
+      <span>／</span><span>基本情報技術者</span><span>／</span><span style="color: #26251f;">テクノロジ系</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="font-size: 12px; color: #c2410c;">未保存の変更あり</div>
+    <div class="btn-p">保存</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0;">
+
+    <div style="width: 250px; border-right: 2px solid #26251f; display: flex; flex-direction: column; background: #fff;">
+      <div class="pane-hd">
+        <div style="flex-grow: 1;">章</div>
+        <div class="btn-s">＋ 章</div>
+      </div>
+      <div style="flex-grow: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px;">
+        <div class="tree-i"><span style="color: #8a887d;">▾</span><span>基礎理論</span></div>
+        <div class="tree-i" style="padding-left: 28px; background: #26251f; color: #faf9f5;"><span>2進数</span></div>
+        <div class="tree-i" style="padding-left: 28px;"><span>論理演算</span></div>
+        <div class="tree-i" style="padding-left: 28px;"><span style="color: #8a887d;">▸</span><span>情報量</span></div>
+        <div class="tree-i"><span style="color: #8a887d;">▸</span><span>アルゴリズム</span></div>
+        <div class="tree-i"><span style="color: #8a887d;">▸</span><span>コンピュータ構成要素</span></div>
+      </div>
+      <div style="padding: 10px 12px; border-top: 1.5px solid #c9c7bd; font-size: 11px; color: #a8a69c;">
+        ドラッグで並べ替え・ネスト変更
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; flex-basis: 0; border-right: 2px solid #26251f; display: flex; flex-direction: column; background: #fff; min-width: 0;">
+      <div class="pane-hd">
+        <div style="flex-grow: 1;">編集</div>
+        <div class="btn-s">キーワードを作成</div>
+      </div>
+      <div class="code" style="flex-grow: 1; padding: 14px 16px; overflow: hidden;">
+        <div style="color: #8a887d;">## 2進数</div>
+        <div>&nbsp;</div>
+        <div>コンピュータは <span class="kw">{<!---->{2進数,バイナリ|id=a3f9k2|tags=表現|wrong=10進数,16進数}<!---->}</span></div>
+        <div>で数を扱う。1桁を <span class="kw">{<!---->{ビット|id=k71m2p|tags=単位}<!---->}</span> と呼び、</div>
+        <div>8桁をまとめたものを <span class="kw">{<!---->{バイト|id=q4x8dz|tags=単位}<!---->}</span> という。</div>
+        <div>&nbsp;</div>
+        <div style="color: #8a887d;">### 基数変換</div>
+        <div>&nbsp;</div>
+        <div><span class="kw">{<!---->{id=a3f9k2}<!---->}</span> から10進数への変換は、</div>
+        <div>各桁に重みを掛けて合計する。</div>
+      </div>
+      <div style="padding: 8px 14px; border-top: 1.5px solid #c9c7bd; font-size: 11px; color: #a8a69c;">
+        章の2回目以降の出現は id のみで表示される
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; flex-basis: 0; display: flex; flex-direction: column; background: #fff; min-width: 0;">
+      <div class="pane-hd">
+        <div style="flex-grow: 1;">プレビュー</div>
+        <div class="btn-s">キーワードを作成</div>
+      </div>
+      <div style="flex-grow: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 2.1;">
+        <div style="font-size: 19px; line-height: 1.4;">2進数</div>
+        <div>
+          コンピュータは <span style="background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 28px; line-height: 24px; min-width: 78px; padding: 0 8px;">&nbsp;</span> で数を扱う。1桁を <span style="background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 28px; line-height: 24px; min-width: 78px; padding: 0 8px;">&nbsp;</span> と呼び、8桁をまとめたものを <span style="background: #fde68a; border: 2px solid #d9a441; border-radius: 4px; display: inline-block; vertical-align: middle; height: 28px; line-height: 24px; min-width: 78px; padding: 0 8px;">&nbsp;</span> という。
+        </div>
+        <div style="font-size: 16px; line-height: 1.4; margin-top: 4px;">基数変換</div>
+        <div>
+          <span style="background: #cfe3f5; border-bottom: 2px solid #6b93bd; padding: 1px 3px;">各桁に重み</span> を掛けて合計する。
+        </div>
+      </div>
+      <div style="padding: 8px 14px; border-top: 1.5px solid #c9c7bd; font-size: 11px; color: #a8a69c;">
+        文字を選択して「キーワードを作成」／ 空欄をクリックで編集
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{"table":"教材の管理","col":1,"conditions":{"true":["入力:名前がある"]},"actions":{"true":["教材を追加を押す"]},"results":{"true":["materials:1件追加する","所属:表示中の科目にする","並び:一覧の末尾に置く"]},"unit":["createMaterial: 表示中の科目に追加する"],"e2e":["material.spec: 教材を追加できる"]}
+{"table":"教材の管理","col":2,"conditions":{"true":["入力:名前が空"]},"actions":{"true":["教材を追加を押す"]},"results":{"true":["操作:追加を受け付けない"],"false":["materials:1件追加する"]},"unit":["createMaterial: 空の名前を弾く"]}
+{"table":"教材の管理","col":3,"conditions":{"true":["入力:既存と同じ名前"]},"actions":{"true":["教材を追加を押す"]},"results":{"true":["materials:1件追加する"],"false":["操作:追加を受け付けない"]},"unit":["createMaterial: 名前の重複を許す"]}
+{"table":"教材の管理","col":4,"conditions":{"true":["教材:新規に作った"]},"actions":{"true":["教材を追加を押す"]},"results":{"true":["chapters:最上位の章を1件作る"]},"unit":["createMaterial: 空の章を1つ用意する"],"note":"章が0件だと編集を始められないため"}
+{"table":"教材の管理","col":5,"conditions":{"true":["入力:名前がある"]},"actions":{"true":["名前を変更を押す"]},"results":{"true":["materials:名前を更新する"]},"e2e":["material.spec: 教材名を変更できる"]}
+{"table":"教材の管理","col":6,"conditions":{"true":["確認:削除を選ぶ"]},"actions":{"true":["削除を確定する"]},"results":{"true":["materials:削除する","chapters:配下をすべて削除する","keywords:配下をすべて削除する","解答履歴:配下をすべて削除する"]},"unit":["deleteMaterial: 配下を連鎖して消す"]}
+{"table":"教材の管理","col":7,"conditions":{"true":["教材:キーワードがある"]},"actions":{"true":["削除を押す"]},"results":{"true":["画面:削除の確認を出す","画面:消えるキーワードと解答履歴の件数を示す"]},"e2e":["material.spec: 配下の件数を示して確認する"]}
+{"table":"教材の管理","col":8,"conditions":{"true":["操作:行をドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["materials:sort_order を更新する"]},"e2e":["material.spec: 並べ替えが保存される"]}
+{"table":"教材の管理","col":9,"conditions":{"true":["操作:別の科目へ移したい"]},"actions":{"true":["教材一覧を開く"]},"results":{"true":["操作:科目をまたぐ移動は用意しない"]},"e2e":["material.spec: 教材を別の科目へ移す操作が無い"],"note":"移したい場合はエクスポートして別の科目にインポートする"}
+{"table":"教材の管理","col":10,"conditions":{"true":["教材:1件もない"]},"actions":{"true":["教材一覧を開く"]},"results":{"true":["画面:教材がない旨と追加の導線を出す"],"false":["画面:科目全体で解答する導線を出す"]},"e2e":["material.spec: 空の状態を案内する"]}
+{"table":"教材の管理","col":11,"conditions":{"true":["科目:キーワードが1件以上ある"]},"actions":{"true":["教材一覧を開く"]},"results":{"true":["画面:科目全体で解答する導線を出す","画面:教材ごとに解答する導線を出す"]},"e2e":["material.spec: 科目全体と教材ごとの両方から始められる"]}
+{"table":"教材の管理","col":12,"conditions":{"true":["科目:キーワードが0件"]},"actions":{"true":["科目全体で解答を押す"]},"results":{"true":["操作:開始を受け付けない"]},"e2e":["material.spec: 問題が無ければ開始できない"]}
+{"table":"教材の管理","col":13,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["削除を確定する"]},"results":{"true":["画面:失敗した旨を表示する"],"false":["materials:削除する"]},"e2e":["material.spec: 削除に失敗しても一覧が壊れない"]}

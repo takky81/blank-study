@@ -1,0 +1,9 @@
+{"table":"エクスポート","col":1,"conditions":{"true":["対象:教材"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["zip:章の階層をフォルダ構成で表す","zip:ファイル名を教材名にする","本文:章の最初の1か所だけフル形式に展開する","本文:2回目以降の出現は id のみのままにする"]},"unit":["buildZip: 章構成をフォルダにする"],"e2e":["export.spec: 教材を zip に書き出す"]}
+{"table":"エクスポート","col":2,"conditions":{"true":["対象:教材"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["フォルダ名:連番プレフィックスを付ける","ファイル名:連番プレフィックスを付ける","各フォルダ:index.md にその章自体の本文を書く"]},"unit":["buildZip: 連番プレフィックスで並び順を表す"]}
+{"table":"エクスポート","col":3,"conditions":{"true":["対象:教材"]},"actions":{"true":["エクスポートを押す"]},"results":{"false":["zip:メタ情報ファイルを含める","zip:学習履歴を含める","zip:画像を含める"]},"unit":["buildZip: 余分なファイルを含めない"]}
+{"table":"エクスポート","col":4,"conditions":{"true":["対象:教材","キーワード:is_active が false"]},"actions":{"true":["エクスポートを押す"]},"results":{"false":["本文:そのキーワードの記述を含める"]},"unit":["buildZip: 本文に無いキーワードは書き出さない"],"note":"本文に出現しないため、展開の対象にならない"}
+{"table":"エクスポート","col":5,"conditions":{"true":["対象:教材"]},"actions":{"true":["エクスポートした zip を同じ教材に取り込む"]},"results":{"true":["keywords:内容が変わらない","解答履歴:継続する"]},"e2e":["export.spec: 書き出して取り込んでも内容が変わらない"],"note":"正答が完全に一致するため無確認で上書きされる"}
+{"table":"エクスポート","col":6,"conditions":{"true":["教材:キーワードが1件もない"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["zip:本文だけを書き出す"]},"unit":["buildZip: キーワードが無い教材"]}
+{"table":"エクスポート","col":7,"conditions":{"true":["教材:章が1件もない"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["操作:エクスポートを受け付けない"],"false":["zip:本文だけを書き出す"]},"unit":["buildZip: 章が無い教材は書き出さない"]}
+{"table":"エクスポート","col":8,"conditions":{"true":["章タイトル:ファイル名に使えない文字を含む"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["ファイル名:使えない文字を置き換える","章タイトル:本文の側では元の文字を保つ"]},"unit":["buildZip: ファイル名を安全な文字にする"]}
+{"table":"エクスポート","col":9,"conditions":{"true":["章:同じ親に同じタイトルが複数ある"]},"actions":{"true":["エクスポートを押す"]},"results":{"true":["ファイル名:連番で区別する"]},"unit":["buildZip: 同名の章を区別する"]}

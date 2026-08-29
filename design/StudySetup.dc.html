@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .hd { height: 56px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
+    .btn-p { border: 2px solid #26251f; border-radius: 4px; height: 42px; display: flex; align-items: center; padding: 0 24px; font-size: 16px; background: #26251f; color: #faf9f5; }
+    .btn-s { border: 1.5px solid #a8a69c; border-radius: 4px; height: 30px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
+    .sec { border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; flex-direction: column; }
+    .sec-hd { padding: 12px 18px; border-bottom: 1.5px solid #c9c7bd; font-size: 14px; color: #6b6a62; display: flex; align-items: center; gap: 10px; }
+    .cb { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 3px; flex-shrink: 0; }
+    .cb-on { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 3px; background: #26251f; flex-shrink: 0; }
+    .rd { width: 17px; height: 17px; border: 2px solid #26251f; border-radius: 50%; flex-shrink: 0; }
+    .rd-on { width: 17px; height: 17px; border: 5px solid #26251f; border-radius: 50%; background: #fff; flex-shrink: 0; }
+    .opt { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 9px 0; }
+    .muted { color: #8a887d; font-size: 12px; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div class="hd">
+    <div style="font-size: 17px;">穴埋め学習</div>
+    <div style="font-size: 13px; color: #6b6a62; display: flex; align-items: center; gap: 8px;">
+      <span>／</span><span>基本情報技術者</span><span>／</span><span style="color: #26251f;">出題設定</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div class="btn-s">キャンセル</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 24px; padding: 28px 40px; min-height: 0;">
+
+    <div class="sec" style="flex-grow: 1.4; flex-basis: 0; min-width: 0;">
+      <div class="sec-hd"><span style="flex-grow: 1;">出題範囲</span><span class="btn-s">すべて選択</span><span class="btn-s">すべて解除</span></div>
+      <div style="flex-grow: 1; padding: 12px 18px; display: flex; flex-direction: column; gap: 1px; overflow: hidden;">
+        <div class="opt"><span style="color: #8a887d; width: 12px;">▾</span><span class="cb-on"></span><span>基本情報技術者</span><span class="muted">412 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▾</span><span class="cb-on"></span><span>テクノロジ系</span><span class="muted">210 問</span></div>
+        <div class="opt" style="padding-left: 64px;"><span class="cb-on"></span><span>基礎理論</span><span class="muted">64 問</span></div>
+        <div class="opt" style="padding-left: 64px;"><span class="cb-on"></span><span>アルゴリズム</span><span class="muted">58 問</span></div>
+        <div class="opt" style="padding-left: 64px;"><span class="cb"></span><span style="color: #8a887d;">コンピュータ構成要素</span><span class="muted">88 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▸</span><span class="cb"></span><span style="color: #8a887d;">マネジメント系</span><span class="muted">88 問</span></div>
+        <div class="opt" style="padding-left: 26px;"><span style="color: #8a887d; width: 12px;">▸</span><span class="cb"></span><span style="color: #8a887d;">ストラテジ系</span><span class="muted">114 問</span></div>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; flex-basis: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div class="sec">
+        <div class="sec-hd">出題順</div>
+        <div style="padding: 8px 18px 14px;">
+          <div class="opt"><span class="rd-on"></span><span>自動</span><span class="muted">復習期限が近い順</span></div>
+          <div class="opt"><span class="rd"></span><span>出現順</span><span class="muted">章と本文の並び順</span></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-hd">解答形式</div>
+        <div style="padding: 8px 18px 14px;">
+          <div class="opt"><span class="rd-on"></span><span>自動</span><span class="muted">定着した問題は記述</span></div>
+          <div class="opt"><span class="rd"></span><span>選択肢</span></div>
+          <div class="opt"><span class="rd"></span><span>記述</span></div>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1;"></div>
+
+      <div class="sec" style="padding: 18px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+            <div style="font-size: 15px;">対象 122 問</div>
+            <div class="muted">うち今日の復習 17 問 ・ 未出題 34 問</div>
+          </div>
+          <div class="btn-p">開始する</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

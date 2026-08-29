@@ -1,0 +1,16 @@
+{"table":"キーワード記法のパース","col":1,"conditions":{"true":["記述:正答リストのみ"]},"actions":{"true":["本文をパースする"]},"results":{"true":["正答:記述どおりに取り込む","id:自動採番する","タグ:空にする","誤答選択肢:空にする"]},"unit":["parseKeyword: 正答リストのみ"]}
+{"table":"キーワード記法のパース","col":2,"conditions":{"true":["記述:id / tags / wrong をすべて指定"]},"actions":{"true":["本文をパースする"]},"results":{"true":["正答:記述どおりに取り込む","id:記述の値を使う","タグ:記述どおりに取り込む","誤答選択肢:記述どおりに取り込む"],"false":["id:自動採番する"]},"unit":["parseKeyword: 全項目を指定"]}
+{"table":"キーワード記法のパース","col":3,"conditions":{"true":["記述:id のみ"]},"actions":{"true":["本文をパースする"]},"results":{"true":["id:記述の値を使う","正答:更新しない（既存を参照する）"],"false":["正答:記述どおりに取り込む"]},"unit":["parseKeyword: id のみの参照"],"note":"章の2回目以降の出現、および保存形式の本文"}
+{"table":"キーワード記法のパース","col":4,"conditions":{"true":["記述:key=value を順不同で並べる"]},"actions":{"true":["本文をパースする"]},"results":{"true":["正答:記述どおりに取り込む","タグ:記述どおりに取り込む","誤答選択肢:記述どおりに取り込む"]},"unit":["parseKeyword: セグメントの順序に依存しない"]}
+{"table":"キーワード記法のパース","col":5,"conditions":{"true":["値:区切り文字を含む","値:クォートで囲まれている"]},"actions":{"true":["本文をパースする"]},"results":{"true":["区切り文字:値の一部として扱う"]},"unit":["parseKeyword: カンマを含む正答をクォートで囲む","parseKeyword: パイプを含む正答をクォートで囲む"]}
+{"table":"キーワード記法のパース","col":6,"conditions":{"true":["値:区切り文字を含む"],"false":["値:クォートで囲まれている"]},"actions":{"true":["本文をパースする"]},"results":{"true":["区切り文字:値の区切りとして扱う"],"false":["区切り文字:値の一部として扱う"]},"unit":["parseKeyword: クォートなしの区切り文字"]}
+{"table":"キーワード記法のパース","col":7,"conditions":{"true":["値:クォートで囲まれている","値:クォート内に連続したクォートを含む"]},"actions":{"true":["本文をパースする"]},"results":{"true":["連続クォート:1つのクォートとして扱う"]},"unit":["parseKeyword: クォートのエスケープ"]}
+{"table":"キーワード記法のパース","col":8,"conditions":{"true":["記述:正答リストが空","記述:id を持たない"]},"actions":{"true":["本文をパースする"]},"results":{"true":["扱い:キーワードとして認識しない"]},"unit":["parseKeyword: 空の記述を無視する"],"note":"正答リストは id のみの形を除いて必須"}
+{"table":"キーワード記法のパース","col":9,"conditions":{"true":["記述:閉じ括弧がない"]},"actions":{"true":["本文をパースする"]},"results":{"true":["扱い:キーワードとして認識しない","本文:文字列のまま残す"]},"unit":["parseKeyword: 閉じていない記述を無視する"]}
+{"table":"キーワード記法のパース","col":10,"conditions":{"true":["記述:未知のキーを含む"]},"actions":{"true":["本文をパースする"]},"results":{"true":["未知のキー:無視する","正答:記述どおりに取り込む"]},"unit":["parseKeyword: 未知のキーを読み飛ばす"]}
+{"table":"キーワード記法のパース","col":11,"conditions":{"true":["記述:同じキーを2回指定"]},"actions":{"true":["本文をパースする"]},"results":{"true":["同じキー:最後の値を採用する"]},"unit":["parseKeyword: 重複したキーは後勝ち"]}
+{"table":"キーワード記法のパース","col":12,"conditions":{"true":["値:前後に空白がある"]},"actions":{"true":["本文をパースする"]},"results":{"true":["値:前後の空白を除去して取り込む"]},"unit":["parseKeyword: 値の前後の空白を落とす"]}
+{"table":"キーワード記法のパース","col":13,"conditions":{"true":["記述:tags が空文字"]},"actions":{"true":["本文をパースする"]},"results":{"true":["タグ:空にする"],"false":["タグ:空文字を1件として取り込む"]},"unit":["parseKeyword: 空の tags を空配列にする"]}
+{"table":"キーワード記法のパース","col":14,"conditions":{"true":["記述:正答が1件だけ"]},"actions":{"true":["本文をパースする"]},"results":{"true":["正答:1件として取り込む"]},"unit":["parseKeyword: 正答1件"]}
+{"table":"キーワード記法のパース","col":15,"conditions":{"true":["記述:正答リストに同じ値が2回ある"]},"actions":{"true":["本文をパースする"]},"results":{"true":["正答:重複を除いて取り込む"]},"unit":["parseKeyword: 正答の重複を落とす"]}
+{"table":"キーワード記法のパース","col":16,"conditions":{"true":["記述:改行をまたぐ"]},"actions":{"true":["本文をパースする"]},"results":{"true":["扱い:キーワードとして認識しない"]},"unit":["parseKeyword: 記述は1行に収める"],"note":"閉じ忘れの誤検出を防ぐため改行をまたがせない"}

@@ -1,0 +1,14 @@
+{"table":"編集画面の操作","col":1,"conditions":{"true":["操作:章ツリーで章を選ぶ"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["編集領域:展開形式の本文を表示する","プレビュー:Markdown をレンダリングする","プレビュー:キーワードを空欄として描画する"]},"e2e":["editor.spec: 章を選ぶと本文が出る"]}
+{"table":"編集画面の操作","col":2,"conditions":{"true":["編集領域:本文を書き換える"]},"actions":{"true":["文字を入力する"]},"results":{"true":["プレビュー:入力に追随して更新する","状態:未保存の変更ありにする"]},"e2e":["editor.spec: 入力するとプレビューが変わる"]}
+{"table":"編集画面の操作","col":3,"conditions":{"true":["プレビュー:文字を選択している"]},"actions":{"true":["キーワードを作成を押す"]},"results":{"true":["画面:キーワード編集ダイアログを開く","ダイアログ:選択範囲を正答の1件目に入れる"]},"e2e":["editor.spec: 選択した語をキーワードにする"]}
+{"table":"編集画面の操作","col":4,"conditions":{"false":["プレビュー:文字を選択している"]},"actions":{"true":["キーワードを作成を押す"]},"results":{"true":["操作:作成を受け付けない"],"false":["画面:キーワード編集ダイアログを開く"]},"unit":["canCreateKeyword: 選択が無ければ押せない"]}
+{"table":"編集画面の操作","col":5,"conditions":{"true":["プレビュー:選択範囲が既存のキーワードにかかる"]},"actions":{"true":["キーワードを作成を押す"]},"results":{"true":["操作:作成を受け付けない"],"false":["画面:キーワード編集ダイアログを開く"]},"unit":["canCreateKeyword: キーワードの入れ子を作らせない"]}
+{"table":"編集画面の操作","col":6,"conditions":{"true":["プレビュー:空欄をクリックする"]},"actions":{"true":["空欄をクリックする"]},"results":{"true":["画面:キーワード編集ダイアログを開く","ダイアログ:登録済みの正答・タグ・誤答選択肢を入れる"]},"e2e":["editor.spec: 空欄をクリックして編集する"]}
+{"table":"編集画面の操作","col":7,"conditions":{"true":["ダイアログ:正答が1件以上ある"]},"actions":{"true":["確定を押す"]},"results":{"true":["本文:記述を書き換える","状態:未保存の変更ありにする"],"false":["keywords:この時点で更新する"]},"unit":["applyKeywordDialog: 本文にだけ反映する"],"note":"DB への反映は保存時"}
+{"table":"編集画面の操作","col":8,"conditions":{"true":["ダイアログ:正答が0件"]},"actions":{"true":["確定を押す"]},"results":{"true":["操作:確定を受け付けない"],"false":["本文:記述を書き換える"]},"unit":["applyKeywordDialog: 正答は1件以上必要"]}
+{"table":"編集画面の操作","col":9,"conditions":{"true":["ダイアログ:内容を変更した"]},"actions":{"true":["キャンセルを押す"]},"results":{"false":["本文:記述を書き換える"]},"e2e":["editor.spec: ダイアログのキャンセルで戻らない"]}
+{"table":"編集画面の操作","col":10,"conditions":{"true":["ダイアログ:既存のキーワードを開いている"]},"actions":{"true":["キーワードを解除を押す"]},"results":{"true":["本文:記述を外して正答の先頭を素のテキストにする","状態:未保存の変更ありにする"]},"e2e":["editor.spec: キーワードを解除して普通の文にする"],"note":"保存すると本文に出現しなくなるため is_active が false になる"}
+{"table":"編集画面の操作","col":11,"conditions":{"true":["ダイアログ:誤答選択肢を空にする"]},"actions":{"true":["確定を押す"]},"results":{"true":["誤答選択肢:空にする","出題:同じタグから自動で集める"]},"unit":["applyKeywordDialog: 空の誤答は自動生成に任せる"]}
+{"table":"編集画面の操作","col":12,"conditions":{"true":["編集領域:キーワードの記述を書く"]},"actions":{"true":["文字を入力する"]},"results":{"true":["編集領域:記述をシンタックスハイライトする"]},"e2e":["editor.spec: 記述が色分けされる"]}
+{"table":"編集画面の操作","col":13,"conditions":{"true":["画面幅:狭い"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["画面:章 / 編集 / プレビュー をタブで切り替える"],"false":["画面:3つを横に並べる"]},"e2e":["editor.spec: 狭い画面ではタブになる"]}
+{"table":"編集画面の操作","col":14,"conditions":{"true":["本文:画像の記述がある"]},"actions":{"true":["編集画面を開く"]},"results":{"true":["プレビュー:画像として描画しない","本文:記述をそのまま保つ"]},"unit":["renderPreview: 画像記述を素通しする"],"note":"初版は画像を扱わない。記述を壊さずに素通しする"}

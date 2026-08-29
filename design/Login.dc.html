@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .fld { border: 2px solid #26251f; border-radius: 4px; height: 46px; display: flex; align-items: center; padding: 0 12px; color: #8a887d; font-size: 15px; background: #fff; }
+    .btn { border: 2px solid #26251f; border-radius: 4px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: #26251f; color: #faf9f5; }
+    .lbl { font-size: 13px; color: #6b6a62; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+    <div style="width: 420px; display: flex; flex-direction: column; gap: 24px; border: 2px solid #26251f; border-radius: 8px; padding: 40px 36px; background: #fff;">
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 26px;">穴埋め学習</div>
+        <div class="lbl">ログインしてください</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="lbl">メールアドレス</div>
+        <div class="fld">you@example.com</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="lbl">パスワード</div>
+        <div class="fld">••••••••</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="btn">ログイン</div>
+        <div style="font-size: 13px; color: #c2410c; min-height: 18px;">メールアドレスまたはパスワードが違います</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: center; padding-bottom: 40px;">
+    <div style="font-size: 12px; color: #8a887d;">サインアップ導線なし / アカウントは Supabase 管理画面で作成</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "デスクトップ" },
+    { "id": "page-2", "name": "スマートフォン" }
+  ],
+  "artboards": [
+    { "file": "Login.dc.html",          "page": "page-1", "x": 0,    "y": 0,    "w": 1180, "h": 800, "title": "ログイン" },
+    { "file": "Subjects.dc.html",       "page": "page-1", "x": 1260, "y": 0,    "w": 1180, "h": 800, "title": "科目一覧" },
+    { "file": "Materials.dc.html",      "page": "page-1", "x": 2520, "y": 0,    "w": 1180, "h": 800, "title": "教材一覧" },
+
+    { "file": "Editor.dc.html",         "page": "page-1", "x": 0,    "y": 920,  "w": 1180, "h": 800, "title": "教材編集" },
+    { "file": "StudySetup.dc.html",     "page": "page-1", "x": 1260, "y": 920,  "w": 1180, "h": 800, "title": "出題設定" },
+    { "file": "History.dc.html",        "page": "page-1", "x": 2520, "y": 920,  "w": 1180, "h": 800, "title": "学習履歴" },
+
+    { "file": "Main.dc.html",           "page": "page-1", "x": 0,    "y": 1840, "w": 1180, "h": 800, "title": "解答 ・ 出題（選択肢）" },
+    { "file": "StudyResult.dc.html",    "page": "page-1", "x": 1260, "y": 1840, "w": 1180, "h": 800, "title": "解答 ・ 正誤表示（記述）" },
+
+    { "file": "KeywordDialog.dc.html",  "page": "page-1", "x": 0,    "y": 2760, "w": 820,  "h": 620, "title": "キーワード編集" },
+    { "file": "ConflictDialog.dc.html", "page": "page-1", "x": 900,  "y": 2760, "w": 900,  "h": 620, "title": "差分確認" },
+    { "file": "ImportDialog.dc.html",   "page": "page-1", "x": 1880, "y": 2760, "w": 820,  "h": 620, "title": "インポート" },
+
+    { "file": "LoginM.dc.html",          "page": "page-2", "x": 0,    "y": 0,    "w": 390, "h": 844, "title": "ログイン" },
+    { "file": "SubjectsM.dc.html",       "page": "page-2", "x": 470,  "y": 0,    "w": 390, "h": 844, "title": "科目一覧" },
+    { "file": "MaterialsM.dc.html",      "page": "page-2", "x": 940,  "y": 0,    "w": 390, "h": 844, "title": "教材一覧" },
+    { "file": "EditorM.dc.html",         "page": "page-2", "x": 1410, "y": 0,    "w": 390, "h": 844, "title": "教材編集" },
+
+    { "file": "StudySetupM.dc.html",     "page": "page-2", "x": 0,    "y": 964,  "w": 390, "h": 844, "title": "出題設定" },
+    { "file": "StudyM.dc.html",          "page": "page-2", "x": 470,  "y": 964,  "w": 390, "h": 844, "title": "解答 ・ 出題" },
+    { "file": "StudyResultM.dc.html",    "page": "page-2", "x": 940,  "y": 964,  "w": 390, "h": 844, "title": "解答 ・ 正誤表示" },
+    { "file": "HistoryM.dc.html",        "page": "page-2", "x": 1410, "y": 964,  "w": 390, "h": 844, "title": "学習履歴" },
+
+    { "file": "KeywordDialogM.dc.html",  "page": "page-2", "x": 0,    "y": 1928, "w": 390, "h": 844, "title": "キーワード編集" },
+    { "file": "ConflictDialogM.dc.html", "page": "page-2", "x": 470,  "y": 1928, "w": 390, "h": 844, "title": "差分確認" },
+    { "file": "ImportDialogM.dc.html",   "page": "page-2", "x": 940,  "y": 1928, "w": 390, "h": 844, "title": "インポート" }
+  ],
+  "annotations": [
+    { "id": "brief", "page": "page-1", "x": 0, "y": -200, "w": 620, "text": "穴埋め学習アプリ ワイヤーフレーム\n仕様書 docs/仕様書.md にもとづく低忠実度の下書き。\n色は空欄=黄・誤答位置=橙・伏せ字=グレーだけ仕様どおり、他は白黒。" },
+    { "id": "row-entry",   "page": "page-1", "x": -360, "y": 40,   "w": 280, "text": "入口\nログイン → 科目 → 教材" },
+    { "id": "row-author",  "page": "page-1", "x": -360, "y": 960,  "w": 280, "text": "つくる・ふりかえる\n編集 / 出題設定 / 履歴" },
+    { "id": "row-study",   "page": "page-1", "x": -360, "y": 1880, "w": 280, "text": "とく\n出題 → 正誤 → 別解登録" },
+    { "id": "row-dialogs", "page": "page-1", "x": -360, "y": 2800, "w": 280, "text": "ダイアログ\n差分確認は編集保存とインポートで共用" },
+    { "id": "m-brief", "page": "page-2", "x": 0, "y": -180, "w": 620, "text": "スマートフォン版（390 × 844）\nデスクトップ版と同じ11画面。3ペインの編集画面はタブに、\n行内のボタン列は ⋯ メニューに畳んでいる。" },
+    { "id": "m-row-1", "page": "page-2", "x": -360, "y": 40,   "w": 280, "text": "入口と編集" },
+    { "id": "m-row-2", "page": "page-2", "x": -360, "y": 1004, "w": 280, "text": "とく・ふりかえる" },
+    { "id": "m-row-3", "page": "page-2", "x": -360, "y": 1968, "w": 280, "text": "ダイアログ\nスマホでは全画面シート" }
+  ],
+  "launch": { "view": "canvas", "page": "page-2" }
+}

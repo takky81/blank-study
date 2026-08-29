@@ -1,0 +1,13 @@
+{"table":"章の管理","col":1,"conditions":{"true":["選択:章を選んでいる"]},"actions":{"true":["章を追加を押す"]},"results":{"true":["chapters:1件追加する","親:選んでいる章にする","並び:同じ親の末尾に置く"]},"unit":["createChapter: 選択中の章の下に作る"],"e2e":["chapter.spec: 章を追加できる"]}
+{"table":"章の管理","col":2,"conditions":{"false":["選択:章を選んでいる"]},"actions":{"true":["章を追加を押す"]},"results":{"true":["chapters:1件追加する","親:最上位にする"]},"unit":["createChapter: 選択が無ければ最上位に作る"]}
+{"table":"章の管理","col":3,"conditions":{"true":["入力:タイトルが空"]},"actions":{"true":["タイトルを確定する"]},"results":{"true":["操作:確定を受け付けない"],"false":["chapters:タイトルを更新する"]},"unit":["renameChapter: 空のタイトルを弾く"]}
+{"table":"章の管理","col":4,"conditions":{"true":["入力:タイトルがある"]},"actions":{"true":["タイトルを確定する"]},"results":{"true":["chapters:タイトルを更新する"]},"e2e":["chapter.spec: 章名を変更できる"]}
+{"table":"章の管理","col":5,"conditions":{"true":["章:配下に子の章がある"]},"actions":{"true":["削除を押す"]},"results":{"true":["画面:削除の確認を出す","画面:消える章とキーワードの件数を示す"]},"e2e":["chapter.spec: 配下の件数を示して確認する"]}
+{"table":"章の管理","col":6,"conditions":{"true":["確認:削除を選ぶ"]},"actions":{"true":["削除を確定する"]},"results":{"true":["chapters:配下の章もまとめて削除する","keywords:is_active を false にする","解答履歴:保持する"],"false":["keywords:削除する"]},"unit":["deleteChapter: キーワードは非活性にして残す"],"note":"教材そのものを消さない限り解答履歴は残す"}
+{"table":"章の管理","col":7,"conditions":{"true":["操作:同じ親の中でドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["chapters:sort_order を更新する"],"false":["chapters:parent_id を更新する"]},"unit":["moveChapter: 並べ替え"],"e2e":["chapter.spec: 章を並べ替えられる"]}
+{"table":"章の管理","col":8,"conditions":{"true":["操作:別の章の下へドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["chapters:parent_id を更新する","chapters:配下の章もついていく"]},"unit":["moveChapter: ネストを変える"],"e2e":["chapter.spec: 章を入れ子にできる"]}
+{"table":"章の管理","col":9,"conditions":{"true":["操作:自分自身の子孫の下へドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["操作:移動を受け付けない"],"false":["chapters:parent_id を更新する"]},"unit":["moveChapter: 循環する移動を弾く"]}
+{"table":"章の管理","col":10,"conditions":{"true":["操作:別の教材へ移したい"]},"actions":{"true":["並べ替える"]},"results":{"true":["操作:教材をまたぐ移動は用意しない"]},"e2e":["chapter.spec: 章を別の教材へドラッグできない"],"note":"移したい場合はエクスポートして章単位でインポートする"}
+{"table":"章の管理","col":11,"conditions":{"true":["章:出題範囲として選ばれている"]},"actions":{"true":["削除を確定する"]},"results":{"true":["出題対象:その章のキーワードを除く"]},"unit":["collectCandidates: 削除された章を除く"]}
+{"table":"章の管理","col":12,"conditions":{"true":["章:並び順を変えた"]},"actions":{"true":["出現順で出題する"]},"results":{"true":["出題:新しい並び順に従う"]},"unit":["pickNext: 章の並び順の変更が出題順に効く"]}
+{"table":"章の管理","col":13,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["並べ替える"]},"results":{"true":["画面:失敗した旨を表示する","ツリー:元の並びに戻す"],"false":["chapters:sort_order を更新する"]},"e2e":["chapter.spec: 並べ替えに失敗したら元に戻る"]}

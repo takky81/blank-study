@@ -1,0 +1,9 @@
+{
+  "name": "blank-study-spec",
+  "private": true,
+  "type": "module",
+  "description": "決定表(jsonl)から表示用HTMLを生成する",
+  "scripts": {
+    "build": "node --experimental-strip-types build-tables.ts"
+  }
+}

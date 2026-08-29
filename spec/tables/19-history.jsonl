@@ -1,0 +1,19 @@
+{"table":"学習履歴の集計","col":1,"conditions":{"true":["キーワード:keyword_stats が無い"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["区分:未出題"],"false":["区分:苦手","区分:定着"]},"unit":["classify: 未出題"]}
+{"table":"学習履歴の集計","col":2,"conditions":{"true":["出題回数:3回以上","正答率:90%以上"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["区分:定着"],"false":["区分:未出題","区分:苦手"]},"unit":["classify: 定着"],"note":"解答形式の自動判定と同じしきい値を使う"}
+{"table":"学習履歴の集計","col":3,"conditions":{"true":["出題回数:1回以上"],"false":["出題回数:3回以上","正答率:90%以上"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["区分:苦手"],"false":["区分:未出題","区分:定着"]},"unit":["classify: 苦手"]}
+{"table":"学習履歴の集計","col":4,"conditions":{"true":["出題回数:ちょうど3回","正答率:ちょうど90%"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["区分:定着"]},"unit":["classify: 境界は定着に入れる"],"note":"境界値"}
+{"table":"学習履歴の集計","col":5,"conditions":{"true":["階層:章"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["達成度バー:未出題 / 苦手 / 定着 の内訳を出す","数値:総問題数・正答率・今日の復習予定数を出す"]},"e2e":["history.spec: 章ごとの達成度が出る"]}
+{"table":"学習履歴の集計","col":6,"conditions":{"true":["階層:科目","階層:教材"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["集計:配下の合計から計算する"]},"unit":["aggregate: 上位は配下の合計"]}
+{"table":"学習履歴の集計","col":7,"conditions":{"true":["キーワード:is_active が false"]},"actions":{"true":["達成度を集計する"]},"results":{"false":["集計:対象に含める"]},"unit":["aggregate: 非活性を除く"]}
+{"table":"学習履歴の集計","col":8,"conditions":{"true":["章:キーワードが0件"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["正答率:表示しない","総問題数:0と表示する"],"false":["正答率:0%と表示する"]},"unit":["aggregate: 0除算を避ける"],"note":"境界値"}
+{"table":"学習履歴の集計","col":9,"conditions":{"true":["章:出題回数が0"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["正答率:表示しない","達成度バー:すべて未出題にする"]},"unit":["aggregate: 未出題だけの章"]}
+{"table":"学習履歴の集計","col":10,"conditions":{"true":["集計:正答率"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["正答率:正答回数 ÷ 出題回数"]},"unit":["aggregate: 正答率の定義"]}
+{"table":"学習履歴の集計","col":11,"conditions":{"true":["集計:今日の復習予定数"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["対象:due_at が今日の終わり以前のもの","対象:未出題も含める"]},"unit":["dueToday: 今日ぶんを数える"],"note":"未出題は期限切れと同じ扱いで数える"}
+{"table":"学習履歴の集計","col":12,"conditions":{"true":["集計:今週の復習予定数"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["対象:due_at が今週の終わり以前のもの"]},"unit":["dueThisWeek: 今週ぶんを数える"]}
+{"table":"学習履歴の集計","col":13,"conditions":{"true":["表示:苦手キーワード一覧"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["並び:正答率の低い順","対象:出題回数が1回以上のもの"],"false":["対象:未出題を含める"]},"unit":["weakKeywords: 正答率の低い順に並べる"],"e2e":["history.spec: 苦手キーワードが並ぶ"]}
+{"table":"学習履歴の集計","col":14,"conditions":{"true":["表示:苦手キーワード一覧","正答率:同じものが複数ある"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["並び:出題回数の多い順で先に出す"]},"unit":["weakKeywords: 同着の順序を決める"]}
+{"table":"学習履歴の集計","col":15,"conditions":{"true":["表示:日別の学習量"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["集計:answer_logs を日ごとに数える","表示:解答数と正答率を出す"]},"unit":["dailyVolume: 日ごとに集計する"]}
+{"table":"学習履歴の集計","col":16,"conditions":{"true":["表示:日別の学習量","日:解答が0件"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["表示:その日を0として並べる"],"false":["表示:その日を飛ばす"]},"unit":["dailyVolume: 空の日も並べる"]}
+{"table":"学習履歴の集計","col":17,"conditions":{"true":["操作:階層の行を押す"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["表示:配下を開閉する"]},"e2e":["history.spec: 階層を開閉できる"]}
+{"table":"学習履歴の集計","col":18,"conditions":{"true":["解答履歴:1件もない"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["画面:履歴がない旨を表示する"],"false":["表示:日別の学習量を出す"]},"e2e":["history.spec: 空の状態を案内する"]}
+{"table":"学習履歴の集計","col":19,"conditions":{"true":["別解の登録:その回を正解に覆した"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["集計:覆したあとの値で数える"]},"unit":["aggregate: 別解登録の反映"]}

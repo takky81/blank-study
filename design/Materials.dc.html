@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Zen Kurenaido', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif; background: #faf9f5; color: #26251f; }
+    a { color: #8a6d1f; } a:hover { color: #5f4a12; }
+    .hd { height: 56px; border-bottom: 2px solid #26251f; display: flex; align-items: center; padding: 0 24px; gap: 16px; background: #fff; }
+    .btn { border: 2px solid #26251f; border-radius: 4px; height: 34px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; background: #fff; }
+    .btn-p { border: 2px solid #26251f; border-radius: 4px; height: 34px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; background: #26251f; color: #faf9f5; }
+    .btn-s { border: 1.5px solid #a8a69c; border-radius: 4px; height: 30px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #6b6a62; background: #fff; }
+    .row { border: 2px solid #26251f; border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 16px 20px; gap: 12px; }
+    .muted { color: #8a887d; font-size: 13px; }
+    .crumb { font-size: 13px; color: #6b6a62; display: flex; align-items: center; gap: 8px; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 800px; display: flex; flex-direction: column; background: #faf9f5;">
+
+  <div class="hd">
+    <div style="font-size: 17px;">穴埋め学習</div>
+    <div class="crumb"><span>／</span><span>科目一覧</span><span>／</span><span style="color: #26251f;">基本情報技術者</span></div>
+    <div style="flex-grow: 1;"></div>
+    <div class="btn-s">学習履歴</div>
+    <div class="btn-s">ダーク</div>
+    <div class="btn-s">ログアウト</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 20px; padding: 32px 40px;">
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 22px;">基本情報技術者</div>
+      <div style="flex-grow: 1;"></div>
+      <div class="btn">インポート</div>
+      <div class="btn-p">＋ 教材を追加</div>
+    </div>
+
+    <div style="border: 2px solid #26251f; border-radius: 6px; background: #eeebe0; display: flex; align-items: center; padding: 20px 22px; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 5px; flex-grow: 1;">
+        <div style="font-size: 18px;">基本情報技術者 をまとめて解答する</div>
+        <div style="font-size: 13px; color: #6b6a62;">3 教材すべてが対象 ・ 412 キーワード ・ 今日の復習 23 問</div>
+      </div>
+      <div style="border: 2px solid #26251f; border-radius: 4px; height: 40px; display: flex; align-items: center; padding: 0 20px; font-size: 15px; background: #26251f; color: #faf9f5;">科目全体で解答</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 14px; color: #6b6a62;">教材ごとに解答する</div>
+      <div style="flex-grow: 1; height: 1.5px; background: #c9c7bd;"></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+
+      <div class="row">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+          <div style="font-size: 17px;">テクノロジ系</div>
+          <div class="muted">章 12 ・ キーワード 210 ・ 正答率 85% ・ 今日 9 問</div>
+        </div>
+        <div class="btn-p">解答</div>
+        <div class="btn-s">編集</div>
+        <div class="btn-s">エクスポート</div>
+        <div class="btn-s">削除</div>
+      </div>
+
+      <div class="row">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+          <div style="font-size: 17px;">マネジメント系</div>
+          <div class="muted">章 6 ・ キーワード 88 ・ 正答率 72% ・ 今日 6 問</div>
+        </div>
+        <div class="btn-p">解答</div>
+        <div class="btn-s">編集</div>
+        <div class="btn-s">エクスポート</div>
+        <div class="btn-s">削除</div>
+      </div>
+
+      <div class="row">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+          <div style="font-size: 17px;">ストラテジ系</div>
+          <div class="muted">章 8 ・ キーワード 114 ・ 正答率 66% ・ 今日 8 問</div>
+        </div>
+        <div class="btn-p">解答</div>
+        <div class="btn-s">編集</div>
+        <div class="btn-s">エクスポート</div>
+        <div class="btn-s">削除</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
