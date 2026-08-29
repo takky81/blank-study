@@ -72,6 +72,27 @@ describe('parseMarkdown ブロック（決定表「編集画面の操作」列1�
     expect(table.rows[0]?.[0]?.[0]).toMatchObject({ type: 'blank', docId: 'a3f9k2' });
   });
 
+  it('表 列17 記述の中の | でセルを分けない', () => {
+    const blocks = parseMarkdown(
+      ['| 語 | 説明 |', '| --- | --- |', '| {{光合成|id=a3f9k2|tags=生物}} | 葉緑体で行う |'].join(
+        '\n',
+      ),
+    );
+    const table = blocks[0] as { type: 'table'; head: unknown[]; rows: unknown[][][] };
+    expect(table.head).toHaveLength(2);
+    expect(table.rows[0]).toHaveLength(2);
+    expect(table.rows[0]?.[0]?.[0]).toMatchObject({ type: 'blank', docId: 'a3f9k2' });
+    expect(table.rows[0]?.[1]?.[0]).toMatchObject({ type: 'text', text: '葉緑体で行う' });
+  });
+
+  it('表 列17 記述が閉じていなくても行を落とさない', () => {
+    const blocks = parseMarkdown(
+      ['| 語 | 説明 |', '| --- | --- |', '| {{光合成|id=a3 | あ |'].join('\n'),
+    );
+    const table = blocks[0] as { type: 'table'; rows: unknown[][][] };
+    expect(table.rows).toHaveLength(1);
+  });
+
   it('空の本文はブロックを作らない', () => {
     expect(parseMarkdown('')).toEqual([]);
   });
