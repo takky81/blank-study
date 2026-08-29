@@ -15,3 +15,5 @@
 {"table":"表示設定と共通の振る舞い","col":15,"conditions":{"true":["解答中:ブラウザの戻るを押す"]},"actions":{"true":["戻るを押す"]},"results":{"true":["解答:中断として扱う","解答履歴:そこまでの解答を残す"]},"e2e":["ui.spec: 解答中に戻っても記録が残る"]}
 {"table":"表示設定と共通の振る舞い","col":16,"conditions":{"true":["デプロイ:GitHub Pages のサブパスに置く"]},"actions":{"true":["URL を直接開く"]},"results":{"true":["ルーティング:サブパスでも正しく解決する"]},"e2e":["ui.spec: サブパス配信でも画面が開く"],"note":"Vite の base とルータの basename を合わせる"}
 {"table":"表示設定と共通の振る舞い","col":17,"conditions":{"true":["画面幅:狭い","ヘッダ:操作が並ぶ"]},"actions":{"true":["画面を開く"]},"results":{"true":["表示:残りをメニューにまとめる","表示:ボタンの文字がボタンの中に収まる"]},"e2e":["ui.spec: 狭い画面ではヘッダの操作が畳まれる"]}
+{"table":"表示設定と共通の振る舞い","col":18,"conditions":{"true":["配色:どちらのテーマでも"]},"actions":{"true":["画面を表示する"]},"results":{"true":["文字と地:コントラスト比が 4.5:1 以上","部品の輪郭:コントラスト比が 3:1 以上"]},"unit":["contrastRatio: 文字と地は 4.5:1 以上ある","contrastRatio: 部品の輪郭は 3:1 以上ある"],"note":"WCAG 2.1 AA に合わせる"}
+{"table":"表示設定と共通の振る舞い","col":19,"conditions":{"true":["配色:どちらのテーマでも"]},"actions":{"true":["画面を表示する"]},"results":{"true":["地の濃さ:主ボタン > 白抜きボタンのホバー > 背景 の順に濃い"]},"unit":["relativeLuminance: 地の濃さの順を保つ"]}
