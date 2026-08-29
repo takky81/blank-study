@@ -348,7 +348,7 @@ export function EditorPage() {
           <button
             type="button"
             onClick={() => void load()}
-            className="h-9 rounded border border-orange-700 px-3"
+            className="h-11 rounded border border-orange-700 px-3"
           >
             再試行
           </button>

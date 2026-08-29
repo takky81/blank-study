@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { RowActions } from '@/components/RowActions';
 import { ImportControl } from '@/features/transfer/ImportControl';
 import { exportMaterial } from '@/features/transfer/api';
 import { saveFile } from '@/features/transfer/download';
@@ -23,6 +24,7 @@ export function MaterialsPage() {
   const navigate = useNavigate();
 
   const [subjectName, setSubjectName] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,6 +43,7 @@ export function MaterialsPage() {
     setError('');
     try {
       const [name, list] = await Promise.all([getSubjectName(subjectId), listMaterials(subjectId)]);
+      setNotFound(name === null);
       setSubjectName(name);
       setMaterials(list);
     } catch (e) {
@@ -92,7 +95,7 @@ export function MaterialsPage() {
   }
 
   // 決定表「表示設定と共通の振る舞い」列13: 消えた科目の URL を開いても壊れない
-  if (subjectName === null) {
+  if (notFound) {
     return (
       <div className="flex flex-col items-start gap-4 p-10">
         <p className="text-sm text-stone-500">この科目は見つかりませんでした。</p>
@@ -153,7 +156,7 @@ export function MaterialsPage() {
           <button
             type="button"
             onClick={() => void load()}
-            className="h-9 rounded border border-orange-700 px-3"
+            className="h-11 rounded border border-orange-700 px-3"
           >
             再試行
           </button>
@@ -237,14 +240,19 @@ export function MaterialsPage() {
                       章 {material.chapterCount} ・ キーワード {material.keywordCount}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    disabled={material.keywordCount === 0}
-                    onClick={() => navigate(`/materials/${material.id}/study`)}
-                    className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                  {/* 狭い画面では解答だけ残し、残りをメニューに畳む（決定表「表示設定と共通の振る舞い」列8） */}
+                  <RowActions
+                    primary={
+                      <button
+                        type="button"
+                        disabled={material.keywordCount === 0}
+                        onClick={() => navigate(`/materials/${material.id}/study`)}
+                        className="h-11 rounded border-2 border-stone-900 bg-stone-900 px-4 text-stone-50 disabled:opacity-40 dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                      >
+                        解答
+                      </button>
+                    }
                   >
-                    解答
-                  </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/materials/${material.id}/edit`)}
@@ -286,6 +294,7 @@ export function MaterialsPage() {
                   >
                     削除
                   </button>
+                  </RowActions>
                 </>
               )}
             </li>
