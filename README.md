@@ -43,7 +43,7 @@ npm run test:e2e      # E2E（ローカルの Supabase を使う）
 npm run spec:coverage # 決定表の列がテストで押さえられているか
 ```
 
-決定表の列は原則すべてテストで押さえる。`spec:coverage` が 270/270 を保つこと。
+決定表の列は原則すべてテストで押さえる。`spec:coverage` が 287/287 を保つこと。
 
 ## 配信
 

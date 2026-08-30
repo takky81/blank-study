@@ -1,5 +1,5 @@
 import { test, expect, type Page } from './fixtures';
-import { ensureTestUser, seedSubject, adminClient } from './db';
+import { ensureTestUser, seedSubject, adminClient, seedManyKeywords } from './db';
 
 /**
  * 決定表「編集画面の操作」 spec/tables/05-editor-ui.jsonl
@@ -430,6 +430,32 @@ test.describe('保存と正規化', () => {
       return event.defaultPrevented;
     });
     expect(prevented).toBe(true);
+  });
+
+  test('列12 1000件を超えても出題対象の同期が全件に当たる', async ({ signedIn: page }) => {
+    const { ownerId, materialId, chapterId } = await openChapter(page, '');
+    const docIds = await seedManyKeywords({
+      ownerId,
+      materialId,
+      chapterId,
+      count: 1001,
+      isActive: false,
+    });
+
+    // すべてを本文に書き戻して保存する。取得が打ち切られると、
+    // 並びで後ろのキーワードが非活性のまま残る
+    const text = docIds.map((id) => `{{id=${id}}} の説明。`).join(String.fromCharCode(10, 10));
+    await page.getByLabel('本文').fill(text);
+    await page.getByRole('button', { name: '保存' }).click();
+    await expect(page.getByText('未保存の変更あり')).toHaveCount(0);
+
+    const active = await adminClient()
+      .from('keywords')
+      .select('id', { count: 'exact', head: true })
+      .eq('material_id', materialId)
+      .eq('is_active', true);
+    if (active.error) throw active.error;
+    expect(active.count).toBe(1001);
   });
 });
 

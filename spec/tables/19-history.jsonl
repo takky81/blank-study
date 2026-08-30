@@ -17,3 +17,4 @@
 {"table":"学習履歴の集計","col":17,"conditions":{"true":["操作:階層の行を押す"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["表示:配下を開閉する"]},"e2e":["history.spec: 階層を開閉できる"]}
 {"table":"学習履歴の集計","col":18,"conditions":{"true":["解答履歴:1件もない"]},"actions":{"true":["学習履歴を開く"]},"results":{"true":["画面:履歴がない旨を表示する"],"false":["表示:日別の学習量を出す"]},"e2e":["history.spec: 空の状態を案内する"]}
 {"table":"学習履歴の集計","col":19,"conditions":{"true":["別解の登録:その回を正解に覆した"]},"actions":{"true":["達成度を集計する"]},"results":{"true":["集計:覆したあとの値で数える"]},"unit":["aggregate: 別解登録の反映"]}
+{"table": "学習履歴の集計", "col": 20, "conditions": {"true": ["キーワードまたは解答履歴:1回の取得件数の上限を超える"]}, "actions": {"true": ["学習履歴を開く"]}, "results": {"true": ["集計:全件を対象にする"]}, "unit": ["fetchAll: 上限を超えても全件を取る"], "e2e": ["history.spec: 1000件を超えても集計から漏れない"]}

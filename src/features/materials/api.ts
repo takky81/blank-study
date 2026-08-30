@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeName } from '@/features/subjects/validation';
+import { fetchMaterialSummary } from '@/lib/summary';
 
 export type Material = {
   id: string;
@@ -46,49 +47,20 @@ export async function listMaterials(subjectId: string): Promise<Material[]> {
   const ids = (materials.data ?? []).map((m) => m.id);
   if (ids.length === 0) return [];
 
-  const [chapters, keywords] = await Promise.all([
-    supabase.from('chapters').select('material_id').in('material_id', ids),
-    supabase
-      .from('keywords')
-      .select('material_id, keyword_stats(total_count, correct_count, due_at)')
-      .in('material_id', ids)
-      .eq('is_active', true),
-  ]);
-  if (chapters.error) fail('章の取得に失敗しました', chapters.error);
-  if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
-
-  const count = (rows: { material_id: string }[] | null) => {
-    const map = new Map<string, number>();
-    for (const row of rows ?? []) map.set(row.material_id, (map.get(row.material_id) ?? 0) + 1);
-    return map;
-  };
-  const chapterCounts = count(chapters.data);
-  const keywordCounts = count(keywords.data);
-
-  // 一覧に出す正答率と今日の復習数（ワイヤーフレーム Materials の行）
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
-  const answers = new Map<string, { total: number; correct: number; due: number }>();
-  for (const row of keywords.data ?? []) {
-    const stats = Array.isArray(row.keyword_stats) ? row.keyword_stats[0] : row.keyword_stats;
-    const found = answers.get(row.material_id) ?? { total: 0, correct: 0, due: 0 };
-    found.total += stats?.total_count ?? 0;
-    found.correct += stats?.correct_count ?? 0;
-    // 未出題は期限切れと同じ扱いで数える
-    if (!stats?.due_at || new Date(stats.due_at) <= endOfDay) found.due += 1;
-    answers.set(row.material_id, found);
-  }
+  // 件数と解答実績はサーバ側で数える（決定表「教材の管理」列14）。
+  // キーワードの行を引いて手元で数えると、行数上限を超えたぶんを数え落とす。
+  const summary = new Map((await fetchMaterialSummary()).map((s) => [s.materialId, s]));
 
   return (materials.data ?? []).map((m) => {
-    const stats = answers.get(m.id);
+    const stats = summary.get(m.id);
     return {
       id: m.id,
       name: m.name,
       sortOrder: m.sort_order,
-      chapterCount: chapterCounts.get(m.id) ?? 0,
-      keywordCount: keywordCounts.get(m.id) ?? 0,
-      correctRate: stats && stats.total > 0 ? stats.correct / stats.total : null,
-      dueToday: stats?.due ?? 0,
+      chapterCount: stats?.chapterCount ?? 0,
+      keywordCount: stats?.keywordCount ?? 0,
+      correctRate: stats && stats.totalCount > 0 ? stats.correctCount / stats.totalCount : null,
+      dueToday: stats?.dueCount ?? 0,
     };
   });
 }
@@ -134,28 +106,24 @@ export async function renameMaterial(id: string, name: string): Promise<void> {
 
 /** 削除で消えるものの件数を数える（列7）。 */
 export async function countMaterialImpact(id: string): Promise<MaterialImpact> {
-  const [chapters, keywords] = await Promise.all([
+  // 件数はサーバ側で数える（列14）。id を引いて並べると、
+  // 行数上限で数え落とし、URL も長くなりすぎる。
+  const [chapters, keywords, logs] = await Promise.all([
     supabase.from('chapters').select('id', { count: 'exact', head: true }).eq('material_id', id),
-    supabase.from('keywords').select('id').eq('material_id', id),
+    supabase.from('keywords').select('id', { count: 'exact', head: true }).eq('material_id', id),
+    supabase
+      .from('answer_logs')
+      .select('id, keywords!inner(material_id)', { count: 'exact', head: true })
+      .eq('keywords.material_id', id),
   ]);
   if (chapters.error) fail('章の取得に失敗しました', chapters.error);
   if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
-
-  const keywordIds = (keywords.data ?? []).map((k) => k.id);
-  let answerLogCount = 0;
-  if (keywordIds.length > 0) {
-    const logs = await supabase
-      .from('answer_logs')
-      .select('id', { count: 'exact', head: true })
-      .in('keyword_id', keywordIds);
-    if (logs.error) fail('解答履歴の取得に失敗しました', logs.error);
-    answerLogCount = logs.count ?? 0;
-  }
+  if (logs.error) fail('解答履歴の取得に失敗しました', logs.error);
 
   return {
     chapterCount: chapters.count ?? 0,
-    keywordCount: keywordIds.length,
-    answerLogCount,
+    keywordCount: keywords.count ?? 0,
+    answerLogCount: logs.count ?? 0,
   };
 }
 

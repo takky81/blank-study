@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAll } from '@/lib/paged';
 import { assignDocIds, collapseBody, formatKeyword, type KeywordFields } from '@/lib/body';
 import { planSave } from './overwrite';
 import type { Conflict } from '@/features/transfer/match';
@@ -12,12 +13,18 @@ function fail(message: string, error: { message: string } | null): never {
 
 /** 教材のキーワードを引く。展開形式に戻すときと、空欄の表示に使う。 */
 export async function listKeywords(materialId: string): Promise<KeywordRow[]> {
-  const { data, error } = await supabase
-    .from('keywords')
-    .select('doc_id, answers, tags, wrong_choices, is_active')
-    .eq('material_id', materialId);
-  if (error) fail('キーワードの取得に失敗しました', error);
-  return (data ?? []).map((k) => ({
+  // 行数上限で切られると、展開できないキーワードが出る（決定表「エクスポート」列10）
+  const data = await fetchAll(async (from, to) => {
+    const page = await supabase
+      .from('keywords')
+      .select('doc_id, answers, tags, wrong_choices, is_active', { count: 'exact' })
+      .eq('material_id', materialId)
+      .order('doc_id')
+      .range(from, to);
+    if (page.error) fail('キーワードの取得に失敗しました', page.error);
+    return { rows: page.data ?? [], total: page.count };
+  });
+  return data.map((k) => ({
     docId: k.doc_id,
     answers: k.answers ?? [],
     tags: k.tags ?? [],
@@ -152,25 +159,30 @@ export async function commitSave(
  * キーワードのレコードと解答履歴は消さず、出題対象から外すだけにする。
  */
 export async function syncActiveKeywords(materialId: string): Promise<void> {
-  const [chapters, keywords] = await Promise.all([
-    supabase.from('chapters').select('body').eq('material_id', materialId),
-    supabase.from('keywords').select('id, doc_id, is_active').eq('material_id', materialId),
-  ]);
-  if (chapters.error) fail('本文の取得に失敗しました', chapters.error);
-  if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
+  // 行数上限で切られると、同期から漏れる章が出る（決定表「保存と正規化」列12）
+  const chapters = await fetchAll(async (from, to) => {
+    const page = await supabase
+      .from('chapters')
+      .select('body', { count: 'exact' })
+      .eq('material_id', materialId)
+      .order('id')
+      .range(from, to);
+    if (page.error) fail('本文の取得に失敗しました', page.error);
+    return { rows: page.data ?? [], total: page.count };
+  });
 
   const present = new Set<string>();
-  for (const chapter of chapters.data ?? []) {
+  for (const chapter of chapters) {
     for (const matched of String(chapter.body ?? '').matchAll(/\{\{id=([a-z0-9]{6})\}\}/g)) {
       present.add(matched[1] as string);
     }
   }
 
-  const updates = (keywords.data ?? [])
-    .map((k) => ({ id: k.id as string, next: present.has(k.doc_id), current: k.is_active }))
-    .filter((k) => k.next !== k.current);
-
-  await Promise.all(
-    updates.map((u) => supabase.from('keywords').update({ is_active: u.next }).eq('id', u.id)),
-  );
+  // 差分の判定も更新も DB 側で1回にまとめる。
+  // 1件ずつ更新すると、変わった数だけ往復が発生する。
+  const { error } = await supabase.rpc('sync_active_keywords', {
+    p_material_id: materialId,
+    p_doc_ids: [...present],
+  });
+  if (error) fail('出題対象の更新に失敗しました', error);
 }

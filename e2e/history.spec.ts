@@ -1,5 +1,5 @@
 import { test, expect, type Page } from './fixtures';
-import { ensureTestUser, seedSubject, adminClient } from './db';
+import { ensureTestUser, seedSubject, adminClient, seedManyKeywords } from './db';
 
 /** 決定表「学習履歴の集計」 spec/tables/19-history.jsonl */
 
@@ -138,5 +138,29 @@ test.describe('学習履歴', () => {
 
     await expect(page.getByText('まだ解答の記録がありません')).toBeVisible();
     await expect(page.getByTestId('daily-volume')).toHaveCount(0);
+  });
+
+  test('列20 1000件を超えても集計から漏れない', async ({ signedIn: page }) => {
+    const { ownerId, materialId } = await seedHistory([
+      { docId: 'aaaaaa', answers: ['光合成'], total: 1, correct: 1 },
+    ]);
+    const chapter = await adminClient()
+      .from('chapters')
+      .select('id')
+      .eq('material_id', materialId)
+      .single();
+    if (chapter.error) throw chapter.error;
+    await seedManyKeywords({
+      ownerId,
+      materialId,
+      chapterId: chapter.data.id as string,
+      count: 1001,
+    });
+    await open(page);
+
+    // 元からある1件と合わせて 1002 件。未出題は今日の復習に数える
+    await expect(page.getByText('1002 問').first()).toBeVisible();
+    await page.getByRole('button', { name: /テクノロジ系/ }).click();
+    await expect(page.getByTestId('history-row-基礎理論')).toContainText('1002 問');
   });
 });

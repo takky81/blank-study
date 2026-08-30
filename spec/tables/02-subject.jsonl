@@ -10,3 +10,5 @@
 {"table":"科目の管理","col":10,"conditions":{"true":["操作:行をドラッグする"]},"actions":{"true":["並べ替える"]},"results":{"true":["subjects:sort_order を更新する","並び:次回開いても保たれる"]},"e2e":["subject.spec: 並べ替えが保存される"]}
 {"table":"科目の管理","col":11,"conditions":{"true":["科目:1件もない"]},"actions":{"true":["科目一覧を開く"]},"results":{"true":["画面:科目がない旨と追加の導線を出す"]},"e2e":["subject.spec: 空の状態を案内する"]}
 {"table":"科目の管理","col":12,"conditions":{"true":["通信:失敗する"]},"actions":{"true":["科目を追加を押す"]},"results":{"true":["画面:失敗した旨を表示する"],"false":["subjects:1件追加する"]},"e2e":["subject.spec: 追加に失敗しても一覧が壊れない"]}
+{"table": "科目の管理", "col": 13, "conditions": {"true": ["キーワード:1回の取得件数の上限を超える"]}, "actions": {"true": ["科目一覧を開く"]}, "results": {"true": ["画面:キーワードの件数を全件で示す"]}, "e2e": ["subject.spec: 1000件を超えても一覧のキーワード数が頭打ちにならない"], "note": "上限は仕様書 §5.2 の定数。超えた分は黙って落ちるため、数える処理はサーバ側に置く"}
+{"table": "科目の管理", "col": 14, "conditions": {"true": ["キーワード:1回の取得件数の上限を超える"]}, "actions": {"true": ["削除を押す"]}, "results": {"true": ["画面:削除の確認を出す", "画面:消える教材とキーワードの件数を示す"]}, "e2e": ["subject.spec: 1000件を超えても削除の確認に全件を示す"]}

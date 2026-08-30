@@ -124,3 +124,45 @@ export async function countRows(table: string, ownerId: string): Promise<number>
   if (error) throw error;
   return count ?? 0;
 }
+
+/**
+ * キーワードをまとめて作る。
+ * 1リクエストの取得件数の上限（仕様書 §5.2）を超えた状態を作るのに使う。
+ * doc_id は k00000 から連番にして、並び順で最後の1件を狙えるようにする。
+ */
+export async function seedManyKeywords(input: {
+  ownerId: string;
+  materialId: string;
+  chapterId: string;
+  count: number;
+  isActive?: boolean;
+}): Promise<string[]> {
+  const db = adminClient();
+  const docIds = Array.from({ length: input.count }, (_, i) => `k${String(i).padStart(5, '0')}`);
+  const rows = docIds.map((docId, i) => ({
+    material_id: input.materialId,
+    chapter_id: input.chapterId,
+    owner_id: input.ownerId,
+    doc_id: docId,
+    answers: [`語${i}`],
+    tags: ['用語'],
+    is_active: input.isActive ?? true,
+  }));
+
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await db.from('keywords').insert(rows.slice(i, i + 500));
+    if (error) throw error;
+  }
+  return docIds;
+}
+
+/** 章の本文を差し替える。渡した doc_id を保存形式で並べる。 */
+export async function setChapterBody(
+  chapterId: string,
+  docIds: readonly string[],
+  suffix = ' の説明。',
+): Promise<void> {
+  const body = docIds.map((id) => `{{id=${id}}}${suffix}`).join('\n\n');
+  const { error } = await adminClient().from('chapters').update({ body }).eq('id', chapterId);
+  if (error) throw error;
+}

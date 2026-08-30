@@ -1,5 +1,5 @@
 import { test, expect, type Page } from './fixtures';
-import { ensureTestUser, seedSubject, adminClient } from './db';
+import { ensureTestUser, seedSubject, adminClient, seedManyKeywords, setChapterBody } from './db';
 import { encodeZip, decodeZip } from '../src/features/transfer/archive';
 
 /**
@@ -293,5 +293,28 @@ test.describe('エクスポート', () => {
       .single();
     expect(keyword.data?.answers).toEqual(['光合成']);
     expect(keyword.data?.tags).toEqual(['生物']);
+  });
+
+  test('列10 1000件を超えても全て展開して書き出す', async ({ signedIn: page }) => {
+    const { ownerId, subjectId } = await seedOnlySubject(page);
+    const { materialId, chapterId } = await seedMaterial(ownerId, subjectId);
+    const docIds = await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await setChapterBody(chapterId, docIds);
+    await page.reload();
+
+    const download = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'エクスポート' }).click(),
+    ]).then(([d]) => d);
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk as Buffer);
+    const files = decodeZip(new Uint8Array(Buffer.concat(chunks)));
+    const body = files['010_基礎理論.md'] ?? '';
+
+    // id のまま残った記述が1つも無いこと。並びで最後になるものも展開されている
+    expect(body).not.toMatch(/\{\{id=/);
+    expect(body).toContain('{{語1000|id=k01000|tags=用語}}');
   });
 });

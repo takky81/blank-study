@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAll } from '@/lib/paged';
 import { scanKeywordTokens, parseKeywordToken } from '@/lib/keyword';
 import type { ChapterRow } from '@/features/chapters/tree';
 import { updateSrs, type SrsState } from './srs';
@@ -58,15 +59,24 @@ export async function loadStudyData(scope: {
       .select('id, material_id, parent_id, title, body, sort_order')
       .in('material_id', materialIds)
       .order('sort_order'),
-    supabase
-      .from('keywords')
-      .select(
-        'id, doc_id, material_id, chapter_id, answers, tags, wrong_choices, is_active, keyword_stats(total_count, correct_count, repetition, ease_factor, interval_days, due_at)',
-      )
-      .in('material_id', materialIds),
+    // 行数上限で切られると、出題されないキーワードが出る（決定表「出題順」列16）
+    fetchAll(async (from, to) => {
+      const page = await supabase
+        .from('keywords')
+        .select(
+          'id, doc_id, material_id, chapter_id, answers, tags, wrong_choices, is_active, keyword_stats(total_count, correct_count, repetition, ease_factor, interval_days, due_at)',
+          { count: 'exact' },
+        )
+        .in('material_id', materialIds)
+        // 分割して取るので、並びは一意に決まるものにする
+        .order('doc_id')
+        .order('id')
+        .range(from, to);
+      if (page.error) fail('キーワードの取得に失敗しました', page.error);
+      return { rows: page.data ?? [], total: page.count };
+    }),
   ]);
   if (chapters.error) fail('章の取得に失敗しました', chapters.error);
-  if (keywords.error) fail('キーワードの取得に失敗しました', keywords.error);
 
   return {
     title,
@@ -79,7 +89,7 @@ export async function loadStudyData(scope: {
       sortOrder: c.sort_order,
       body: c.body ?? '',
     })),
-    keywords: (keywords.data ?? []).map((k) => {
+    keywords: keywords.map((k) => {
       const stats = Array.isArray(k.keyword_stats) ? k.keyword_stats[0] : k.keyword_stats;
       return {
         id: k.id,

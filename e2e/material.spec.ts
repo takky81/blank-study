@@ -1,5 +1,12 @@
 import { test, expect, type Page } from './fixtures';
-import { ensureTestUser, seedSubject, seedMaterialWithKeyword, countRows, adminClient } from './db';
+import {
+  ensureTestUser,
+  seedSubject,
+  seedMaterialWithKeyword,
+  countRows,
+  adminClient,
+  seedManyKeywords,
+} from './db';
 
 /** 決定表「教材の管理」 spec/tables/03-material.jsonl */
 test.describe('教材の管理', () => {
@@ -186,5 +193,33 @@ test.describe('教材の管理', () => {
     await expect(page.getByRole('alert')).toBeVisible();
     await expect(page.getByText('テクノロジ系', { exact: true })).toBeVisible();
     expect(await countRows('materials', ownerId)).toBe(1);
+  });
+
+  test('列14 1000件を超えても一覧の件数と今日の問題数が頭打ちにならない', async ({
+    signedIn: page,
+  }) => {
+    const ownerId = await ensureTestUser();
+    const subjectId = await seedSubject(ownerId, '応用情報技術者');
+    const { materialId, chapterId } = await seedMaterialWithKeyword(ownerId, subjectId);
+    await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await page.goto(`/subjects/${subjectId}`);
+
+    // 元からある1件と合わせて 1002 件。未出題は今日の復習に数える
+    const row = rows(page).filter({ hasText: 'テクノロジ系' });
+    await expect(row).toContainText('キーワード 1002');
+    await expect(row).toContainText('今日 1002 問');
+  });
+
+  test('列15 1000件を超えても削除の確認に全件を示す', async ({ signedIn: page }) => {
+    const ownerId = await ensureTestUser();
+    const subjectId = await seedSubject(ownerId, '応用情報技術者');
+    const { materialId, chapterId } = await seedMaterialWithKeyword(ownerId, subjectId);
+    await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await page.goto(`/subjects/${subjectId}`);
+
+    await page.getByRole('button', { name: '削除' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('キーワード 1002 件');
+    await expect(dialog).toContainText('解答履歴 1 件');
   });
 });

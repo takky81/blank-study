@@ -9,3 +9,4 @@
 {"table":"保存と正規化","col":9,"conditions":{"true":["本文:空"]},"actions":{"true":["保存を押す"]},"results":{"true":["chapters.body:空のまま保存する"],"false":["画面:保存に失敗した旨を表示する"]},"unit":["save: 空の本文を許す"]}
 {"table":"保存と正規化","col":10,"conditions":{"true":["状態:未保存の変更がある"]},"actions":{"true":["別の章を選ぶ"]},"results":{"true":["画面:保存するか確認する"]},"e2e":["editor.spec: 未保存のまま章を移ると確認が出る"]}
 {"table":"保存と正規化","col":11,"conditions":{"true":["状態:未保存の変更がある"]},"actions":{"true":["ブラウザを閉じる"]},"results":{"true":["画面:離脱の確認を出す"]},"e2e":["editor.spec: 未保存のまま離れようとすると確認が出る"]}
+{"table": "保存と正規化", "col": 12, "conditions": {"true": ["キーワード:1回の取得件数の上限を超える"]}, "actions": {"true": ["保存を押す"]}, "results": {"true": ["keywords:本文にある記述をすべて出題対象に戻す"]}, "e2e": ["editor.spec: 1000件を超えても出題対象の同期が全件に当たる"]}

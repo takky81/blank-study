@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAll } from '@/lib/paged';
 import type { StatRow } from './aggregate';
 
 function fail(message: string, error: { message: string } | null): never {
@@ -29,25 +30,40 @@ export async function loadHistory(): Promise<HistoryData> {
       .from('chapters')
       .select('id, title, material_id, parent_id, sort_order')
       .order('sort_order'),
-    supabase
-      .from('keywords')
-      .select(
-        'id, answers, chapter_id, material_id, is_active, keyword_stats(total_count, correct_count, due_at)',
-      ),
-    supabase.from('answer_logs').select('answered_at, is_correct'),
+    // 行数上限で切られると、集計から漏れる（決定表「学習履歴の集計」列20）
+    fetchAll(async (from, to) => {
+      const page = await supabase
+        .from('keywords')
+        .select(
+          'id, answers, chapter_id, material_id, is_active, keyword_stats(total_count, correct_count, due_at)',
+          { count: 'exact' },
+        )
+        .order('id')
+        .range(from, to);
+      if (page.error) fail('キーワードの取得に失敗しました', page.error);
+      return { rows: page.data ?? [], total: page.count };
+    }),
+    fetchAll(async (from, to) => {
+      const page = await supabase
+        .from('answer_logs')
+        .select('answered_at, is_correct', { count: 'exact' })
+        // 分割して取るので、並びは一意に決まるものにする
+        .order('id')
+        .range(from, to);
+      if (page.error) fail('解答履歴の取得に失敗しました', page.error);
+      return { rows: page.data ?? [], total: page.count };
+    }),
   ]);
   for (const [message, result] of [
     ['科目の取得に失敗しました', subjects],
     ['教材の取得に失敗しました', materials],
     ['章の取得に失敗しました', chapters],
-    ['キーワードの取得に失敗しました', keywords],
-    ['解答履歴の取得に失敗しました', logs],
   ] as const) {
     if (result.error) fail(message, result.error);
   }
 
   const rows = new Map<string, StatRow>();
-  for (const k of keywords.data ?? []) {
+  for (const k of keywords) {
     const stats = Array.isArray(k.keyword_stats) ? k.keyword_stats[0] : k.keyword_stats;
     rows.set(k.id, {
       keywordId: k.id,
@@ -61,7 +77,7 @@ export async function loadHistory(): Promise<HistoryData> {
   }
 
   const keywordsOfChapter = (chapterId: string): string[] =>
-    (keywords.data ?? []).filter((k) => k.chapter_id === chapterId).map((k) => k.id as string);
+    keywords.filter((k) => k.chapter_id === chapterId).map((k) => k.id as string);
 
   const chapterNodes = (materialId: string, parentId: string | null): HistoryNode[] =>
     (chapters.data ?? [])
@@ -84,7 +100,7 @@ export async function loadHistory(): Promise<HistoryData> {
       .map((m) => {
         const chapterChildren = chapterNodes(m.id, null);
         // 章から外れたキーワードも教材の集計には含める
-        const loose = (keywords.data ?? [])
+        const loose = keywords
           .filter((k) => k.material_id === m.id && k.chapter_id === null)
           .map((k) => k.id as string);
         return {
@@ -109,7 +125,7 @@ export async function loadHistory(): Promise<HistoryData> {
   return {
     tree,
     rows,
-    logs: (logs.data ?? []).map((l) => ({
+    logs: logs.map((l) => ({
       answeredAt: new Date(l.answered_at),
       correct: l.is_correct,
     })),

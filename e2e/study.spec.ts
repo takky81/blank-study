@@ -1,5 +1,5 @@
 import { test, expect, type Page } from './fixtures';
-import { ensureTestUser, seedSubject, adminClient } from './db';
+import { ensureTestUser, seedSubject, adminClient, seedManyKeywords, setChapterBody } from './db';
 
 /**
  * 決定表「出題順」「解答形式の決定」「選択肢の生成」
@@ -509,6 +509,20 @@ test.describe('出題', () => {
     await expect(body(page).locator('table')).toBeVisible();
     await expect(body(page).locator('th').first()).toContainText('記号');
     await expect(page.getByLabel('解答')).toBeVisible();
+  });
+
+  test('列16 1000件を超えても全件が出題対象になる', async ({ signedIn: page }) => {
+    const { ownerId, materialId, chapterIds } = await seedMaterial([{ title: '光合成', body: '' }]);
+    const chapterId = chapterIds.get('光合成') as string;
+    const docIds = await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await setChapterBody(chapterId, docIds);
+
+    // 取得が打ち切られると、ここが 1000 問で頭打ちになる
+    await page.goto(`/materials/${materialId}/study`);
+    await expect(page.getByText('対象 1001 問')).toBeVisible();
+
+    await page.getByRole('button', { name: '開始する' }).click();
+    await expect(body(page)).toBeVisible();
   });
 
   test('解答形式 列1 定着した問題は記述で出る', async ({ signedIn: page }) => {

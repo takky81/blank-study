@@ -1,5 +1,11 @@
 import { test, expect } from './fixtures';
-import { ensureTestUser, seedSubject, seedMaterialWithKeyword, countRows } from './db';
+import {
+  ensureTestUser,
+  seedSubject,
+  seedMaterialWithKeyword,
+  countRows,
+  seedManyKeywords,
+} from './db';
 
 /** 決定表「科目の管理」 spec/tables/02-subject.jsonl */
 test.describe('科目の管理', () => {
@@ -147,5 +153,29 @@ test.describe('科目の管理', () => {
     await expect(page.getByRole('button', { name: '再試行' })).toBeVisible();
     await expect(page.getByText('世界史', { exact: true })).toBeVisible();
     expect(await countRows('subjects', ownerId)).toBe(1);
+  });
+
+  test('列13 1000件を超えても一覧のキーワード数が頭打ちにならない', async ({ signedIn: page }) => {
+    const ownerId = await ensureTestUser();
+    const subjectId = await seedSubject(ownerId, '応用情報技術者');
+    const { materialId, chapterId } = await seedMaterialWithKeyword(ownerId, subjectId);
+    await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await page.reload();
+
+    // 元からある1件と合わせて 1002 件
+    await expect(page.getByText('キーワード 1002 件')).toBeVisible();
+  });
+
+  test('列14 1000件を超えても削除の確認に全件を示す', async ({ signedIn: page }) => {
+    const ownerId = await ensureTestUser();
+    const subjectId = await seedSubject(ownerId, '応用情報技術者');
+    const { materialId, chapterId } = await seedMaterialWithKeyword(ownerId, subjectId);
+    await seedManyKeywords({ ownerId, materialId, chapterId, count: 1001 });
+    await page.reload();
+
+    await page.getByRole('button', { name: '削除' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('キーワード 1002 件');
+    await expect(dialog).toContainText('解答履歴 1 件');
   });
 });

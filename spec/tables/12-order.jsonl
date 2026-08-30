@@ -13,3 +13,4 @@
 {"table":"出題順","col":13,"conditions":{"true":["解答中:中断する"]},"actions":{"true":["中断を押す"]},"results":{"true":["遷移:直前の一覧画面へ","解答履歴:そこまでの解答を残す"],"false":["解答履歴:破棄する"]},"e2e":["study.spec: 中断してもそこまでの記録が残る"]}
 {"table":"出題順","col":14,"conditions":{"true":["出題順:自動","候補:未出題が複数ある"]},"actions":{"true":["次の問題を選ぶ"]},"results":{"true":["出題:未出題どうしは章の順序・章内の出現順で出す"]},"unit":["pickNext: 未出題の中の順序"],"note":"未出題には due_at が無いため出現順で決める"}
 {"table":"出題順","col":15,"conditions":{"true":["出題順:自動","候補:due_at が同じものが複数ある"]},"actions":{"true":["次の問題を選ぶ"]},"results":{"true":["出題:同じ due_at どうしは章の順序・章内の出現順で出す"]},"unit":["pickNext: 同着の順序を決める"]}
+{"table": "出題順", "col": 16, "conditions": {"true": ["候補:1回の取得件数の上限を超える"]}, "actions": {"true": ["出題設定画面を開く"]}, "results": {"true": ["出題対象:本文にある記述をすべて含める"]}, "unit": ["fetchAll: 上限を超えても全件を取る"], "e2e": ["study.spec: 1000件を超えても全件が出題対象になる"]}
