@@ -238,6 +238,26 @@ test.describe('編集画面', () => {
     await expect(preview(page)).toBeVisible();
     await expect(editor(page)).toBeHidden();
   });
+
+  test('列17 生テキストを巻き上げるとプレビューも動き、ページ全体は動かない', async ({
+    signedIn: page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const long = Array.from({ length: 120 }, (_, i) => `${i} 行目の本文`).join('\n\n');
+    await openChapter(page, { body: long });
+
+    const previewTop = () => preview(page).evaluate((el) => el.scrollTop);
+    expect(await previewTop()).toBe(0);
+
+    await editor(page).evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      el.dispatchEvent(new Event('scroll'));
+    });
+    await expect.poll(previewTop).toBeGreaterThan(0);
+
+    // 3ペインはそれぞれの中で巻き上げるので、ウィンドウ自体は動かない
+    expect(await page.evaluate(() => document.scrollingElement?.scrollTop ?? 0)).toBe(0);
+  });
 });
 
 test.describe('保存と正規化', () => {

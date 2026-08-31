@@ -106,9 +106,29 @@ export function EditorPage() {
   const [narrow, setNarrow] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const editorScrollRef = useRef<HTMLTextAreaElement>(null);
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+  // 片方を動かすともう片方が動き、それがまた戻ってくるのを止める
+  const syncing = useRef(false);
   // 保存が遅いときに二重に送らない（決定表「表示設定と共通の振る舞い」列12）
   const saveGuard = useRef(createSubmitGuard());
   const dirty = selectedId !== null && body !== savedBody;
+
+  /**
+   * 生テキストとプレビューの巻き上げ位置を割合で合わせる（決定表「編集画面の操作」列17）。
+   * 行の高さが違うので、位置ではなく全体に対する割合をそろえる。
+   */
+  function syncScroll(from: HTMLElement | null, to: HTMLElement | null) {
+    if (!from || !to || syncing.current) return;
+    const fromMax = from.scrollHeight - from.clientHeight;
+    const toMax = to.scrollHeight - to.clientHeight;
+    if (fromMax <= 0 || toMax <= 0) return;
+    syncing.current = true;
+    to.scrollTop = (from.scrollTop / fromMax) * toMax;
+    requestAnimationFrame(() => {
+      syncing.current = false;
+    });
+  }
 
   const byId = useMemo(() => {
     const map = new Map<string, KeywordFields>();
@@ -339,7 +359,8 @@ export function EditorPage() {
   const showPreview = selected !== null && (!narrow || tab === 'preview');
 
   return (
-    <div className="flex flex-col">
+    // ヘッダ(3.5rem)を除いた高さに収め、章・編集・プレビューを各ペインで巻き上げる（列17）
+    <div className="flex flex-col md:h-[calc(100dvh-3.5rem)] md:overflow-hidden">
       <div className="flex flex-wrap items-center gap-3 border-b-2 border-ink bg-panel px-6 py-2">
         <h1 className="text-[17px]">{place?.name}</h1>
         <span className="grow" />
@@ -394,9 +415,9 @@ export function EditorPage() {
       )}
 
       {/* 章 / 編集 / プレビュー の3ペイン（ワイヤーフレーム Editor） */}
-      <div className="flex min-h-[calc(100dvh-8rem)] flex-col md:flex-row">
+      <div className="flex min-h-[calc(100dvh-8rem)] flex-col md:min-h-0 md:grow md:flex-row">
         {showTree && (
-          <aside className="flex w-full flex-col border-ink bg-panel md:w-64 md:border-r-2">
+          <aside className="flex w-full min-w-0 flex-col border-ink bg-panel md:w-64 md:border-r-2">
             <div className="pane-hd">
               <span className="grow">章</span>
               <button
@@ -423,7 +444,7 @@ export function EditorPage() {
               />
             </div>
 
-            <div className="flex grow flex-col gap-2 p-2">
+            <div className="flex min-h-0 grow flex-col gap-2 overflow-y-auto p-2">
               {creating && (
                 <form
                   className="flex flex-col gap-2 rounded border border-line p-2"
@@ -490,8 +511,8 @@ export function EditorPage() {
             <p className="text-[13px] text-muted">左の一覧から章を選んでください。</p>
           </section>
         ) : (
-          <section className="flex grow flex-col">
-            <div className="flex flex-wrap items-center gap-2 border-b-[1.5px] border-line bg-subtle px-4 py-2">
+          <section className="flex min-w-0 grow flex-col">
+            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b-[1.5px] border-line bg-subtle px-4 py-2">
               {renaming ? (
                 <form
                   className="flex grow flex-wrap gap-2"
@@ -559,10 +580,12 @@ export function EditorPage() {
               )}
             </div>
 
-            <div className="flex grow flex-col lg:flex-row">
+            <div className="flex min-h-0 grow flex-col lg:flex-row">
               {showEdit && (
-                <div className="flex grow flex-col border-ink lg:basis-0 lg:border-r-2">
+                <div className="flex min-h-0 min-w-0 grow flex-col border-ink lg:basis-0 lg:border-r-2">
                   <BodyEditor
+                    scrollRef={editorScrollRef}
+                    onScroll={() => syncScroll(editorScrollRef.current, previewScrollRef.current)}
                     value={body}
                     onChange={(next) => {
                       setBody(next);
@@ -574,8 +597,10 @@ export function EditorPage() {
                 </div>
               )}
               {showPreview && (
-                <div ref={previewRef} className="flex grow flex-col lg:basis-0">
+                <div ref={previewRef} className="flex min-h-0 min-w-0 grow flex-col lg:basis-0">
                   <Preview
+                    scrollRef={previewScrollRef}
+                    onScroll={() => syncScroll(previewScrollRef.current, editorScrollRef.current)}
                     body={body}
                     answersOf={(docId) => byId.get(docId)?.answers ?? []}
                     onOpenBlank={openBlank}

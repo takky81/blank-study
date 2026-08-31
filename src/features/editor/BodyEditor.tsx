@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, type ReactNode, type RefObject } from 'react';
 import { scanKeywordTokens, parseKeywordToken } from '@/lib/keyword';
 
 /**
@@ -10,13 +10,19 @@ export function BodyEditor({
   onChange,
   onSelect,
   hidden = false,
+  scrollRef,
+  onScroll,
 }: {
   value: string;
   onChange: (next: string) => void;
   onSelect: (start: number, end: number) => void;
   hidden?: boolean;
+  /** プレビューと巻き上げ位置を合わせるための参照（列17） */
+  scrollRef?: RefObject<HTMLTextAreaElement | null>;
+  onScroll?: () => void;
 }) {
-  const areaRef = useRef<HTMLTextAreaElement>(null);
+  const ownRef = useRef<HTMLTextAreaElement>(null);
+  const areaRef = scrollRef ?? ownRef;
   const layerRef = useRef<HTMLDivElement>(null);
 
   const report = () => {
@@ -25,7 +31,7 @@ export function BodyEditor({
   };
 
   return (
-    <div hidden={hidden} className="relative grow overflow-hidden bg-panel">
+    <div hidden={hidden} className="relative min-h-0 grow overflow-hidden bg-panel">
       <div
         ref={layerRef}
         data-testid="editor-highlight"
@@ -45,6 +51,7 @@ export function BodyEditor({
         onMouseUp={report}
         onScroll={(e) => {
           if (layerRef.current) layerRef.current.scrollTop = e.currentTarget.scrollTop;
+          onScroll?.();
         }}
         className="relative h-full min-h-72 w-full resize-none bg-transparent p-4 font-mono text-[12.5px] leading-[2] text-transparent caret-ink outline-none"
       />
