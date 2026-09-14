@@ -19,15 +19,27 @@ export type PickOptions = {
   /** 直近に解答したキーワード。新しいものから並んでいなくてよい */
   recent: readonly string[];
   now: Date;
+  /** 同着の並べ替えに使う乱数。テストから差し替えられるようにする */
+  random?: () => number;
 };
 
-/** 未出題 → 期限の近い順 → 出現順（列1・列2・列3・列14・列15）。 */
-function autoOrder(a: Candidate, b: Candidate): number {
-  if (a.dueAt === null && b.dueAt === null) return a.position - b.position;
-  if (a.dueAt === null) return -1;
-  if (b.dueAt === null) return 1;
-  const diff = a.dueAt.getTime() - b.dueAt.getTime();
-  return diff !== 0 ? diff : a.position - b.position;
+/** 並べ替えのあいだだけ持つ、候補と同着用の乱数の組。 */
+type Keyed = { candidate: Candidate; shuffle: number };
+
+/**
+ * 未出題 → 期限の近い順 → ランダム（列1・列2・列3・列14・列15）。
+ *
+ * 同着をランダムにするため、比較のたびに乱数を引かず候補ごとに1つ持たせる。
+ * 引き直すと比較結果が揺れて並べ替えが壊れる。
+ */
+function autoOrder(a: Keyed, b: Keyed): number {
+  const x = a.candidate.dueAt;
+  const y = b.candidate.dueAt;
+  if (x === null && y === null) return a.shuffle - b.shuffle;
+  if (x === null) return -1;
+  if (y === null) return 1;
+  const diff = x.getTime() - y.getTime();
+  return diff !== 0 ? diff : a.shuffle - b.shuffle;
 }
 
 /**
@@ -38,13 +50,14 @@ function autoOrder(a: Candidate, b: Candidate): number {
  */
 export function pickNext(
   candidates: readonly Candidate[],
-  { order, recent }: PickOptions,
+  { order, recent, random = Math.random }: PickOptions,
 ): Candidate | null {
   if (candidates.length === 0) return null;
 
-  const sorted = [...candidates].sort(
-    order === 'auto' ? autoOrder : (a, b) => a.position - b.position,
-  );
+  const keyed: Keyed[] = candidates.map((candidate) => ({ candidate, shuffle: random() }));
+  const sorted = keyed
+    .sort(order === 'auto' ? autoOrder : (a, b) => a.candidate.position - b.candidate.position)
+    .map((k) => k.candidate);
 
   const avoid = new Set(recent.slice(-RECENT_LIMIT));
   const relaxed = candidates.length < RECENT_LIMIT;
