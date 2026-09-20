@@ -98,6 +98,77 @@ async function start(page: Page, materialId: string, options: { order?: '自動'
 const body = (page: Page) => page.getByTestId('study-body');
 
 test.describe('出題', () => {
+  test('出題設定 章の階層は初期状態で閉じ、個別または一括で開閉できる', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      { title: '生物', body: '生物の概要' },
+      {
+        title: '光合成',
+        parent: '生物',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+    ]);
+
+    await page.goto(`/materials/${materialId}/study`);
+
+    await expect(page.getByRole('checkbox', { name: '生物', exact: true })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'すべて解除' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'すべて解除' }).click();
+    await expect(page.getByRole('checkbox', { name: '生物', exact: true })).not.toBeChecked();
+    await expect(page.getByRole('button', { name: 'すべて選択' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'すべて選択' }).click();
+    await expect(page.getByRole('checkbox', { name: '生物', exact: true })).toBeChecked();
+
+    await page.getByRole('button', { name: 'すべて展開' }).click();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toBeChecked();
+    await expect(page.getByRole('button', { name: 'すべて閉じる' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'すべて閉じる' }).click();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toHaveCount(0);
+
+    await page.getByRole('button', { name: '生物を開く' }).click();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: '生物を閉じる' }).click();
+    await expect(page.getByRole('checkbox', { name: '光合成', exact: true })).toHaveCount(0);
+  });
+
+  test('出題設定 開始カードはPCでは通常表示、スマホではスクロール中も固定する', async ({
+    signedIn: page,
+  }) => {
+    const chapters: SeedChapter[] = Array.from({ length: 30 }, (_, index) => ({
+      title: `章 ${index + 1}`,
+      body: index === 0 ? '植物は {{id=aaaaaa}} を行う。' : 'キーワードのない本文',
+      keywords: index === 0 ? [{ docId: 'aaaaaa', answers: ['光合成'] }] : [],
+    }));
+    const { materialId } = await seedMaterial(chapters);
+
+    await page.goto(`/materials/${materialId}/study`);
+    const startCard = page.getByRole('button', { name: '開始する' }).locator('..');
+    await expect
+      .poll(() => startCard.evaluate((element) => getComputedStyle(element).position))
+      .toBe('static');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(startCard).toBeInViewport();
+    await expect
+      .poll(() => startCard.evaluate((element) => getComputedStyle(element).position))
+      .toBe('fixed');
+    const before = await startCard.boundingBox();
+
+    await page.evaluate(() => window.scrollTo(0, 700));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await expect(startCard).toBeInViewport();
+    const after = await startCard.boundingBox();
+    expect(before).not.toBeNull();
+    expect(after).not.toBeNull();
+    expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
+  });
+
   test('出題順 列11 対象が無ければ開始できない', async ({ signedIn: page }) => {
     const { materialId } = await seedMaterial([{ title: '光合成', body: 'キーワードのない本文' }]);
 

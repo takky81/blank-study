@@ -53,6 +53,8 @@ export function StudyPage() {
   const [order, setOrder] = useState<'auto' | 'sequential'>('auto');
   const [formatSetting, setFormatSetting] = useState<FormatSetting>('auto');
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  /** 出題範囲の章ツリーは、必要な枝だけを開けるよう初期状態ではすべて閉じる。 */
+  const [openChapters, setOpenChapters] = useState<Set<string>>(new Set());
 
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -78,6 +80,7 @@ export function StudyPage() {
     setError('');
     try {
       setData(await loadStudyData(scope));
+      setOpenChapters(new Set());
     } catch (e) {
       setError(e instanceof Error ? e.message : '読み込みに失敗しました');
     } finally {
@@ -347,14 +350,81 @@ export function StudyPage() {
   const canStart = candidates.length > 0;
 
   if (phase === 'setup') {
-    const tree = [...new Set(chapters.map((c) => c.materialId))].flatMap((materialId) =>
-      flatten(buildTree(chapters.filter((c) => c.materialId === materialId))),
+    const trees = [...new Set(chapters.map((c) => c.materialId))].map((materialId) =>
+      buildTree(chapters.filter((c) => c.materialId === materialId)),
     );
+    const tree = trees.flatMap((nodes) => flatten(nodes));
+    const expandableIds = tree.filter((node) => node.children.length > 0).map((node) => node.id);
+    const allExpanded =
+      expandableIds.length > 0 && expandableIds.every((id) => openChapters.has(id));
+    const allSelected = tree.length > 0 && tree.every((node) => !excluded.has(node.id));
 
     const untouched = candidates.filter((c) => (c.keyword.stats?.totalCount ?? 0) === 0).length;
 
+    const renderRangeNodes = (nodes: (typeof trees)[number]) =>
+      nodes.map((node) => {
+        const count = candidates.filter((c) => c.chapter.id === node.id).length;
+        const hasChildren = node.children.length > 0;
+        const expanded = openChapters.has(node.id);
+
+        return (
+          <li key={node.id} role="none">
+            <div
+              role="treeitem"
+              aria-level={node.depth + 1}
+              aria-expanded={hasChildren ? expanded : undefined}
+              className="flex h-11 items-center gap-2 rounded px-2 text-[14px]"
+              style={{ paddingLeft: `${8 + node.depth * 22}px` }}
+            >
+              {hasChildren ? (
+                <button
+                  type="button"
+                  aria-label={`${node.title}を${expanded ? '閉じる' : '開く'}`}
+                  aria-expanded={expanded}
+                  onClick={() =>
+                    setOpenChapters((prev) => {
+                      const next = new Set(prev);
+                      if (expanded) next.delete(node.id);
+                      else next.add(node.id);
+                      return next;
+                    })
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-[14px] text-muted hover:bg-hover"
+                >
+                  <span aria-hidden>{expanded ? '▾' : '▸'}</span>
+                </button>
+              ) : (
+                <span aria-hidden className="h-8 w-8 shrink-0" />
+              )}
+              <label className="flex min-w-0 grow items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={!excluded.has(node.id)}
+                  onChange={(e) =>
+                    setExcluded((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.delete(node.id);
+                      else next.add(node.id);
+                      return next;
+                    })
+                  }
+                  className="h-4.5 w-4.5 shrink-0 accent-ink"
+                />
+                <span className="truncate">{node.title}</span>
+              </label>
+              <span className="shrink-0 text-[13px] text-muted">{count} 問</span>
+            </div>
+            {hasChildren && expanded && (
+              <ul role="group" className="flex flex-col">
+                {renderRangeNodes(node.children)}
+              </ul>
+            )}
+          </li>
+        );
+      });
+
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 sm:px-10 sm:py-7">
+      <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 pb-40 sm:px-10 sm:py-7 md:pb-7">
         <h1 className="text-[22px]">{data?.title} の出題設定</h1>
 
         {error !== '' && (
@@ -368,50 +438,29 @@ export function StudyPage() {
 
         <div className="flex flex-col gap-5 lg:flex-row">
           <section className="card flex grow flex-col lg:basis-0">
-            <div className="pane-hd">
+            <div className="pane-hd h-auto min-h-11 flex-wrap py-2">
               <span className="grow">出題範囲</span>
               <button
                 type="button"
-                onClick={() => setExcluded(new Set())}
+                disabled={expandableIds.length === 0}
+                onClick={() => setOpenChapters(allExpanded ? new Set() : new Set(expandableIds))}
                 className="btn-s h-8 px-3 text-[12px]"
               >
-                すべて選択
+                {allExpanded ? 'すべて閉じる' : 'すべて展開'}
               </button>
               <button
                 type="button"
-                onClick={() => setExcluded(new Set(tree.map((node) => node.id)))}
+                disabled={tree.length === 0}
+                onClick={() =>
+                  setExcluded(allSelected ? new Set(tree.map((node) => node.id)) : new Set())
+                }
                 className="btn-s h-8 px-3 text-[12px]"
               >
-                すべて解除
+                {allSelected ? 'すべて解除' : 'すべて選択'}
               </button>
             </div>
-            <ul className="flex flex-col p-3">
-              {tree.map((node) => {
-                const count = candidates.filter((c) => c.chapter.id === node.id).length;
-                return (
-                  <li key={node.id} style={{ paddingLeft: `${node.depth * 22}px` }}>
-                    <div className="flex h-11 items-center gap-3 rounded px-2 text-[14px]">
-                      <label className="flex grow items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={!excluded.has(node.id)}
-                          onChange={(e) =>
-                            setExcluded((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.delete(node.id);
-                              else next.add(node.id);
-                              return next;
-                            })
-                          }
-                          className="h-4.5 w-4.5 accent-ink"
-                        />
-                        {node.title}
-                      </label>
-                      <span className="text-[13px] text-muted">{count} 問</span>
-                    </div>
-                  </li>
-                );
-              })}
+            <ul role="tree" aria-label="出題範囲" className="flex flex-col p-3">
+              {trees.flatMap((nodes) => renderRangeNodes(nodes))}
             </ul>
           </section>
 
@@ -475,7 +524,9 @@ export function StudyPage() {
               </div>
             </section>
 
-            <section className="card flex flex-wrap items-center gap-4 p-4">
+            <section
+              className="card fixed right-4 bottom-[72px] left-4 z-20 flex flex-wrap items-center gap-4 p-4 md:static"
+            >
               <div className="flex grow flex-col gap-1">
                 <span className="text-[15px]">対象 {candidates.length} 問</span>
                 <span className="text-[13px] text-muted">
