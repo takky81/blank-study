@@ -209,10 +209,11 @@ test.describe('出題', () => {
     expect(compact.clientHeight).toBeGreaterThanOrEqual(96);
     expect(compact.clientHeight).toBeLessThanOrEqual(compact.scrollHeight);
     expect(compact.scrollHeight).toBeGreaterThan(compact.clientHeight);
-    const submit = page.getByRole('button', { name: '解答する' });
+    const answerActions = page.getByTestId('answer-actions');
     const mobileNav = page.getByTestId('mobile-nav');
     const currentBlank = page.getByTestId('blank-aaaaaa');
-    await expect(submit).toBeInViewport();
+    await expect(page.getByRole('button', { name: '解答する' })).toHaveCount(0);
+    await expect(answerActions).toBeInViewport();
     await expect
       .poll(async () => {
         const bodyBox = await studyBody.boundingBox();
@@ -224,7 +225,7 @@ test.describe('出題', () => {
       .toBeLessThanOrEqual(2);
     await expect
       .poll(async () => {
-        const submitBox = await submit.boundingBox();
+        const submitBox = await answerActions.boundingBox();
         const navBox = await mobileNav.boundingBox();
         return (navBox?.y ?? 0) - ((submitBox?.y ?? 0) + (submitBox?.height ?? 0));
       })
@@ -272,10 +273,10 @@ test.describe('出題', () => {
       .poll(() => studyBody.evaluate((element) => element.clientHeight))
       .toBeLessThan(expandedHeight);
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect(submit).toBeInViewport();
+    await expect(answerActions).toBeInViewport();
     await expect
       .poll(async () => {
-        const submitBox = await submit.boundingBox();
+        const submitBox = await answerActions.boundingBox();
         const navBox = await mobileNav.boundingBox();
         return (submitBox?.y ?? 0) + (submitBox?.height ?? 0) <= (navBox?.y ?? 0);
       })
@@ -459,8 +460,8 @@ test.describe('出題', () => {
 
     await expect(page.getByRole('radio', { name: '光合成' })).toBeVisible();
     await expect(page.getByLabel('解答')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '解答する' })).toHaveCount(0);
     await page.getByRole('radio', { name: '光合成' }).check();
-    await page.getByRole('button', { name: '解答する' }).click();
     await expect(page.getByText('正解', { exact: true })).toBeVisible();
   });
 

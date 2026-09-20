@@ -290,9 +290,9 @@ export function StudyPage() {
 
   const answerValue = format === 'choice' ? choice : input;
 
-  async function submit() {
-    if (!current || !isAnswerable(answerValue)) return;
-    const isCorrect = judge(answerValue, current.keyword.answers);
+  async function submit(value = answerValue) {
+    if (!current || !isAnswerable(value) || isRecording) return;
+    const isCorrect = judge(value, current.keyword.answers);
     setCorrect(isCorrect);
     setRecording(true);
     setTotal((n) => n + 1);
@@ -308,7 +308,7 @@ export function StudyPage() {
       const request = recordAnswer({
         keywordId: current.keyword.id,
         format,
-        input: answerValue,
+        input: value,
         correct: isCorrect,
         expanded: expandedUsed,
         stats: current.keyword.stats,
@@ -780,7 +780,7 @@ export function StudyPage() {
       </div>
 
       {phase === 'answering' ? (
-        <div ref={answerActionsRef} className="flex flex-col gap-3">
+        <div ref={answerActionsRef} data-testid="answer-actions" className="flex flex-col gap-3">
           {format === 'choice' ? (
             <>
               <p className="text-[13px] text-muted">選択肢から選ぶ</p>
@@ -799,7 +799,11 @@ export function StudyPage() {
                         type="radio"
                         name="choice"
                         checked={choice === value}
-                        onChange={() => setChoice(value)}
+                        disabled={isRecording}
+                        onChange={() => {
+                          setChoice(value);
+                          void submit(value);
+                        }}
                         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       />
                       <span
@@ -830,23 +834,25 @@ export function StudyPage() {
               className="field h-13 text-[17px]"
             />
           )}
-          <div className="flex items-center gap-4">
-            <span className="text-[13px] text-muted">
-              {format === 'choice' ? '数字キーでも選べる' : 'Enter でも解答できる'}
-            </span>
-            <span className="grow" />
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={!isAnswerable(answerValue) || isRecording}
-              className="btn-p h-12 px-8"
-            >
-              {isRecording ? '記録しています…' : '解答する'}
-            </button>
-          </div>
+          {format === 'text' && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => void submit()}
+                disabled={!isAnswerable(answerValue) || isRecording}
+                className="btn-p h-12 px-8"
+              >
+                {isRecording ? '記録しています…' : '解答する'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div ref={answerActionsRef} className="flex flex-wrap items-center gap-4">
+        <div
+          ref={answerActionsRef}
+          data-testid="answer-actions"
+          className="flex flex-wrap items-center gap-4"
+        >
           {canRegisterAlt({ correct, format, input }) && (
             <>
               <button type="button" onClick={() => void registerAlt()} className="btn">
