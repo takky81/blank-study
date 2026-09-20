@@ -160,13 +160,167 @@ test.describe('出題', () => {
       .toBe('fixed');
     const before = await startCard.boundingBox();
 
-    await page.evaluate(() => window.scrollTo(0, 700));
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
     await expect(startCard).toBeInViewport();
     const after = await startCard.boundingBox();
     expect(before).not.toBeNull();
     expect(after).not.toBeNull();
     expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
+
+    const formatCard = page.getByText('解答形式', { exact: true }).locator('..');
+    const formatBox = await formatCard.boundingBox();
+    const gap = (after?.y ?? 0) - ((formatBox?.y ?? 0) + (formatBox?.height ?? 0));
+    expect(gap).toBeGreaterThanOrEqual(16);
+    expect(gap).toBeLessThanOrEqual(40);
+  });
+
+  test('解答画面 本文をコンパクトに表示し、下端のドラッグで拡大縮小できる', async ({
+    signedIn: page,
+  }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: `${'植物についての長い説明。'.repeat(60)} 植物は {{id=aaaaaa}} を行う。${'光合成についての長い説明。'.repeat(60)}`,
+        keywords: [
+          {
+            docId: 'aaaaaa',
+            answers: ['光合成'],
+            wrong: ['呼吸', '蒸散', '発酵'],
+          },
+        ],
+      },
+    ]);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/materials/${materialId}/study`);
+    await page.getByRole('button', { name: '開始する' }).click();
+
+    const studyBody = body(page);
+    await expect
+      .poll(() =>
+        page.locator('main').evaluate((element) => getComputedStyle(element).paddingBottom),
+      )
+      .toBe('64px');
+    const compact = await studyBody.evaluate((element) => ({
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    }));
+    expect(compact.clientHeight).toBeGreaterThanOrEqual(96);
+    expect(compact.clientHeight).toBeLessThanOrEqual(compact.scrollHeight);
+    expect(compact.scrollHeight).toBeGreaterThan(compact.clientHeight);
+    const submit = page.getByRole('button', { name: '解答する' });
+    const mobileNav = page.getByTestId('mobile-nav');
+    const currentBlank = page.getByTestId('blank-aaaaaa');
+    await expect(submit).toBeInViewport();
+    await expect
+      .poll(async () => {
+        const bodyBox = await studyBody.boundingBox();
+        const blankBox = await currentBlank.boundingBox();
+        const bodyCenter = (bodyBox?.y ?? 0) + (bodyBox?.height ?? 0) / 2;
+        const blankCenter = (blankBox?.y ?? 0) + (blankBox?.height ?? 0) / 2;
+        return Math.abs(bodyCenter - blankCenter);
+      })
+      .toBeLessThanOrEqual(2);
+    await expect
+      .poll(async () => {
+        const submitBox = await submit.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (navBox?.y ?? 0) - ((submitBox?.y ?? 0) + (submitBox?.height ?? 0));
+      })
+      .toBeLessThanOrEqual(26);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight))
+      .toBeLessThanOrEqual(0);
+
+    await expect
+      .poll(() => studyBody.evaluate((element) => getComputedStyle(element).resize))
+      .toBe('vertical');
+    await expect
+      .poll(() => studyBody.evaluate((element) => Number.parseFloat(getComputedStyle(element).maxHeight)))
+      .toBe(compact.scrollHeight);
+    const compactBox = await studyBody.boundingBox();
+    expect(compactBox).not.toBeNull();
+    await page.mouse.move(
+      (compactBox?.x ?? 0) + (compactBox?.width ?? 0) - 2,
+      (compactBox?.y ?? 0) + (compactBox?.height ?? 0) - 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      (compactBox?.x ?? 0) + (compactBox?.width ?? 0) - 2,
+      (compactBox?.y ?? 0) + (compactBox?.height ?? 0) + 100,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+    const expandedHeight = await studyBody.evaluate((element) => element.clientHeight);
+    expect(expandedHeight).toBeGreaterThan(compact.clientHeight);
+
+    const expandedBox = await studyBody.boundingBox();
+    expect(expandedBox).not.toBeNull();
+    await page.mouse.move(
+      (expandedBox?.x ?? 0) + (expandedBox?.width ?? 0) - 2,
+      (expandedBox?.y ?? 0) + (expandedBox?.height ?? 0) - 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      (expandedBox?.x ?? 0) + (expandedBox?.width ?? 0) - 2,
+      (expandedBox?.y ?? 0) + (expandedBox?.height ?? 0) - 100,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+    await expect
+      .poll(() => studyBody.evaluate((element) => element.clientHeight))
+      .toBeLessThan(expandedHeight);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(submit).toBeInViewport();
+    await expect
+      .poll(async () => {
+        const submitBox = await submit.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (submitBox?.y ?? 0) + (submitBox?.height ?? 0) <= (navBox?.y ?? 0);
+      })
+      .toBe(true);
+  });
+
+  test('解答画面 記述形式でも初期表示と最下部で解答ボタンがフッターに隠れない', async ({
+    signedIn: page,
+  }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: `${'植物についての長い説明。'.repeat(120)} 植物は {{id=aaaaaa}} を行う。`,
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+    ]);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/materials/${materialId}/study`);
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
+    await page.getByRole('button', { name: '開始する' }).click();
+
+    const submit = page.getByRole('button', { name: '解答する' });
+    const mobileNav = page.getByTestId('mobile-nav');
+    await expect(submit).toBeInViewport();
+    await expect
+      .poll(async () => {
+        const submitBox = await submit.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (navBox?.y ?? 0) - ((submitBox?.y ?? 0) + (submitBox?.height ?? 0));
+      })
+      .toBeLessThanOrEqual(26);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight))
+      .toBeLessThanOrEqual(0);
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(submit).toBeInViewport();
+    await expect
+      .poll(async () => {
+        const submitBox = await submit.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (submitBox?.y ?? 0) + (submitBox?.height ?? 0) <= (navBox?.y ?? 0);
+      })
+      .toBe(true);
   });
 
   test('出題順 列11 対象が無ければ開始できない', async ({ signedIn: page }) => {

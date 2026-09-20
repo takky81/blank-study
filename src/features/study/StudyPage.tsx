@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTrail } from '@/components/Trail';
 import { keywordScore, type Score } from './score';
@@ -55,6 +55,10 @@ export function StudyPage() {
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   /** 出題範囲の章ツリーは、必要な枝だけを開けるよう初期状態ではすべて閉じる。 */
   const [openChapters, setOpenChapters] = useState<Set<string>>(new Set());
+  const studyBodyRef = useRef<HTMLDivElement>(null);
+  const currentBlankRef = useRef<HTMLSpanElement>(null);
+  const answerActionsRef = useRef<HTMLDivElement>(null);
+  const [documentSize, setDocumentSize] = useState({ height: 160, maxHeight: 160 });
 
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -213,6 +217,45 @@ export function StudyPage() {
       })
     : 'text';
 
+  /** スマホでは、本文を下部ナビ直上までの空きに合わせて初期表示する。 */
+  useLayoutEffect(() => {
+    if (phase !== 'answering' && phase !== 'judged') return;
+    const frame = requestAnimationFrame(() => {
+      const body = studyBodyRef.current;
+      const actions = answerActionsRef.current;
+      if (!body || !actions) return;
+
+      const maxHeight = body.scrollHeight;
+      let height = Math.min(160, maxHeight);
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        const mobileNav = document.querySelector<HTMLElement>('[data-testid="mobile-nav"]');
+        if (mobileNav) {
+          const available =
+            mobileNav.getBoundingClientRect().top - actions.getBoundingClientRect().bottom - 22;
+          height = Math.min(maxHeight, Math.max(96, height + available));
+        }
+      }
+      setDocumentSize({ height, maxHeight });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [currentId, phase, format, rangeChapters.length]);
+
+  /** 初期表示では、解答対象の空欄を本文エリアの縦中央へ合わせる。 */
+  useLayoutEffect(() => {
+    if (phase !== 'answering') return;
+    const frame = requestAnimationFrame(() => {
+      const body = studyBodyRef.current;
+      const blank = currentBlankRef.current;
+      if (!body || !blank) return;
+
+      const bodyRect = body.getBoundingClientRect();
+      const blankRect = blank.getBoundingClientRect();
+      const blankTop = blankRect.top - bodyRect.top + body.scrollTop;
+      body.scrollTop = blankTop - (body.clientHeight - blankRect.height) / 2;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [currentId, phase, documentSize.height]);
+
   /** 次の1問を出す（決定表「出題順」）。 */
   const advance = useCallback(() => {
     const list: Candidate[] = candidates
@@ -232,6 +275,7 @@ export function StudyPage() {
     setInput('');
     setChoice('');
     setLevel(0);
+    setDocumentSize({ height: 160, maxHeight: 160 });
     setExpandedUsed(false);
   }, [candidates, order, answered, solved]);
 
@@ -424,7 +468,7 @@ export function StudyPage() {
       });
 
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 pb-40 sm:px-10 sm:py-7 md:pb-7">
+      <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 sm:px-10 sm:py-7">
         <h1 className="text-[22px]">{data?.title} の出題設定</h1>
 
         {error !== '' && (
@@ -524,24 +568,29 @@ export function StudyPage() {
               </div>
             </section>
 
-            <section
-              className="card fixed right-4 bottom-[72px] left-4 z-20 flex flex-wrap items-center gap-4 p-4 md:static"
-            >
-              <div className="flex grow flex-col gap-1">
-                <span className="text-[15px]">対象 {candidates.length} 問</span>
-                <span className="text-[13px] text-muted">
-                  {canStart ? `うち未出題 ${untouched} 問` : '出題できるキーワードがありません'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={begin}
-                disabled={!canStart}
-                className="btn-p h-12 px-8"
+            {/* スマホでは固定カードと同じ高さを通常レイアウトにも確保する。 */}
+            <div className="h-[84px] md:h-auto">
+              <section
+                className="card fixed right-4 bottom-[72px] left-4 z-20 flex flex-wrap items-center gap-4 p-4 md:static"
               >
-                開始する
-              </button>
-            </section>
+                <div className="flex grow flex-col gap-1">
+                  <span className="text-[15px]">対象 {candidates.length} 問</span>
+                  <span className="text-[13px] text-muted">
+                    {canStart
+                      ? `うち未出題 ${untouched} 問`
+                      : '出題できるキーワードがありません'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={begin}
+                  disabled={!canStart}
+                  className="btn-p h-12 px-8"
+                >
+                  開始する
+                </button>
+              </section>
+            </div>
           </div>
         </div>
       </div>
@@ -678,13 +727,22 @@ export function StudyPage() {
           </button>
         </div>
 
-        <div data-testid="study-body" className="flex flex-col gap-4 px-7 py-6 text-[17px]">
+        <div
+          key={currentId}
+          ref={studyBodyRef}
+          data-testid="study-body"
+          role="region"
+          aria-label="本文（下端をドラッグして高さを変更）"
+          style={{ height: `${documentSize.height}px`, maxHeight: `${documentSize.maxHeight}px` }}
+          className="flex min-h-24 resize-y flex-col gap-2 overflow-auto text-[16px]"
+        >
           {rangeChapters.map((chapter) => (
             <MarkdownView
               key={chapter.id}
               body={chapter.body}
               testId={`chapter-body-${chapter.id}`}
               empty=""
+              className="grow-0 overflow-y-visible px-2 py-1"
               renderBlank={(blank) => {
                 const docId = blank.docId ?? '';
                 const view = viewOfBlank(docId, viewContext);
@@ -696,6 +754,7 @@ export function StudyPage() {
                     : view.text;
                 return (
                   <span
+                    ref={docId === current.keyword.docId ? currentBlankRef : undefined}
                     data-testid={`blank-${docId}`}
                     data-color={view.color}
                     className={`mx-0.5 inline-flex h-8.5 min-w-24 items-center justify-center rounded border-2 px-3 align-middle text-[15px] ${COLOR_CLASS[view.color]}`}
@@ -721,11 +780,11 @@ export function StudyPage() {
       </div>
 
       {phase === 'answering' ? (
-        <div className="flex flex-col gap-3">
+        <div ref={answerActionsRef} className="flex flex-col gap-3">
           {format === 'choice' ? (
             <>
               <p className="text-[13px] text-muted">選択肢から選ぶ</p>
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul className="grid grid-cols-2 gap-3">
                 {built?.choices.map((value, i) => (
                   <li key={value}>
                     <label
@@ -787,7 +846,7 @@ export function StudyPage() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-4">
+        <div ref={answerActionsRef} className="flex flex-wrap items-center gap-4">
           {canRegisterAlt({ correct, format, input }) && (
             <>
               <button type="button" onClick={() => void registerAlt()} className="btn">

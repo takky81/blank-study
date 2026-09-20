@@ -1,5 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { parseMarkdown, type Blank, type Block, type Inline } from '@/lib/markdown';
+import { cn } from '@/lib/utils';
 
 /**
  * 本文の描画。編集画面のプレビューと解答画面の本文で使い回す。
@@ -14,6 +15,7 @@ export function MarkdownView({
   empty = '本文がまだありません。',
   scrollRef,
   onScroll,
+  className,
 }: {
   body: string;
   renderBlank: (blank: Blank) => ReactNode;
@@ -23,6 +25,7 @@ export function MarkdownView({
   /** 外から巻き上げ位置を読み書きするための参照 */
   scrollRef?: RefObject<HTMLDivElement | null>;
   onScroll?: () => void;
+  className?: string;
 }) {
   const blocks = parseMarkdown(body);
 
@@ -136,7 +139,10 @@ export function MarkdownView({
       onScroll={onScroll}
       data-testid={testId}
       hidden={hidden}
-      className="min-h-0 grow overflow-y-auto bg-panel px-5 py-4 text-[14px] leading-[2.1]"
+      className={cn(
+        'min-h-0 grow overflow-y-auto bg-panel px-5 py-4 text-[14px] leading-[2.1]',
+        className,
+      )}
     >
       {body.trim() === '' ? <p className="text-[13px] text-muted">{empty}</p> : blocks.map(block)}
     </div>
