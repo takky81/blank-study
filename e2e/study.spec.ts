@@ -380,6 +380,19 @@ test.describe('出題', () => {
     await expect(body(page)).not.toContainText('呼吸');
     await expect(body(page)).toContainText('〈生物〉');
     await expect(body(page)).toContainText('CPU');
+
+    const maskedKeyword = page.getByTestId('blank-bbbbbb');
+    await expect(maskedKeyword).toHaveCSS('height', '24px');
+    await expect(maskedKeyword).toHaveCSS('font-size', '12px');
+
+    const currentKeyword = page.getByTestId('blank-aaaaaa');
+    await expect(currentKeyword).toHaveCSS('height', '24px');
+    await expect(currentKeyword).toHaveCSS('font-size', '12px');
+
+    const visibleKeyword = page.getByTestId('blank-cccccc');
+    await expect(visibleKeyword).toHaveCSS('display', 'inline');
+    await expect(visibleKeyword).toHaveCSS('padding-left', '0px');
+    await expect(visibleKeyword).toHaveCSS('border-left-width', '0px');
   });
 
   test('判定 列1・表示 列4 正しく答えると正解になり正答が出る', async ({ signedIn: page }) => {

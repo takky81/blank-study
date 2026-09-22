@@ -18,7 +18,18 @@ const COLOR_CLASS: Record<BlankColor, string> = {
   yellow: 'border-blank-edge bg-blank text-ink',
   gray: 'border-mask-edge bg-mask text-ink-soft',
   orange: 'border-wrong-edge bg-wrong text-ink',
-  none: 'border-transparent bg-transparent px-0',
+  none: '',
+};
+
+const BLANK_CLASS: Record<BlankColor, string> = {
+  yellow:
+    'mx-0.5 inline-flex h-6 min-w-12 items-center justify-center rounded border px-1.5 align-middle text-[12px]',
+  gray:
+    'mx-0.5 inline-flex h-6 min-w-12 items-center justify-center rounded border px-1.5 align-middle text-[12px]',
+  orange:
+    'mx-0.5 inline-flex h-8.5 min-w-24 items-center justify-center rounded border-2 px-3 align-middle text-[15px]',
+  // 伏せないキーワードは本文の通常テキストと同じ見た目にする。
+  none: '',
 };
 
 /** 章の祖先をたどる。表示範囲を広げるのに使う。 */
@@ -757,7 +768,7 @@ export function StudyPage() {
                     ref={docId === current.keyword.docId ? currentBlankRef : undefined}
                     data-testid={`blank-${docId}`}
                     data-color={view.color}
-                    className={`mx-0.5 inline-flex h-8.5 min-w-24 items-center justify-center rounded border-2 px-3 align-middle text-[15px] ${COLOR_CLASS[view.color]}`}
+                    className={`${BLANK_CLASS[view.color]} ${COLOR_CLASS[view.color]}`}
                   >
                     {label}
                   </span>
