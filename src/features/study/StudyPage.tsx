@@ -237,7 +237,7 @@ export function StudyPage() {
       if (!body || !actions) return;
 
       const maxHeight = body.scrollHeight;
-      let height = Math.min(160, maxHeight);
+      let height = Math.min(body.clientHeight, maxHeight);
       if (window.matchMedia('(max-width: 767px)').matches) {
         const mobileNav = document.querySelector<HTMLElement>('[data-testid="mobile-nav"]');
         if (mobileNav) {
@@ -251,9 +251,9 @@ export function StudyPage() {
     return () => cancelAnimationFrame(frame);
   }, [currentId, phase, format, rangeChapters.length]);
 
-  /** 初期表示では、解答対象の空欄を本文エリアの縦中央へ合わせる。 */
+  /** 解答・判定結果の初期表示では、解答対象を本文エリアの縦中央へ合わせる。 */
   useLayoutEffect(() => {
-    if (phase !== 'answering') return;
+    if (phase !== 'answering' && phase !== 'judged') return;
     const frame = requestAnimationFrame(() => {
       const body = studyBodyRef.current;
       const blank = currentBlankRef.current;

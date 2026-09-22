@@ -324,6 +324,58 @@ test.describe('出題', () => {
       .toBe(true);
   });
 
+  test('結果画面 本文を最大化し、解答対象を中央に表示する', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: `${'植物についての長い説明。'.repeat(120)} 植物は {{id=aaaaaa}} を行う。${'光合成についての長い説明。'.repeat(120)}`,
+        keywords: [{ docId: 'aaaaaa', answers: ['光合成'] }],
+      },
+    ]);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/materials/${materialId}/study`);
+    await page.getByRole('radio', { name: '記述', exact: true }).check();
+    await page.getByRole('button', { name: '開始する' }).click();
+    await page.getByLabel('解答').fill('光合成');
+    await page.getByRole('button', { name: '解答する' }).click();
+    await expect(page.getByText('正解', { exact: true })).toBeVisible();
+
+    const studyBody = body(page);
+    const currentBlank = page.getByTestId('blank-aaaaaa');
+    const answerActions = page.getByTestId('answer-actions');
+    const mobileNav = page.getByTestId('mobile-nav');
+
+    await expect
+      .poll(() =>
+        studyBody.evaluate((element) => element.scrollHeight > element.clientHeight),
+      )
+      .toBe(true);
+    await expect
+      .poll(async () => {
+        const actionsBox = await answerActions.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (navBox?.y ?? 0) - ((actionsBox?.y ?? 0) + (actionsBox?.height ?? 0));
+      })
+      .toBeGreaterThanOrEqual(18);
+    await expect
+      .poll(async () => {
+        const actionsBox = await answerActions.boundingBox();
+        const navBox = await mobileNav.boundingBox();
+        return (navBox?.y ?? 0) - ((actionsBox?.y ?? 0) + (actionsBox?.height ?? 0));
+      })
+      .toBeLessThanOrEqual(26);
+    await expect
+      .poll(async () => {
+        const bodyBox = await studyBody.boundingBox();
+        const blankBox = await currentBlank.boundingBox();
+        const bodyCenter = (bodyBox?.y ?? 0) + (bodyBox?.height ?? 0) / 2;
+        const blankCenter = (blankBox?.y ?? 0) + (blankBox?.height ?? 0) / 2;
+        return Math.abs(bodyCenter - blankCenter);
+      })
+      .toBeLessThanOrEqual(2);
+  });
+
   test('出題順 列11 対象が無ければ開始できない', async ({ signedIn: page }) => {
     const { materialId } = await seedMaterial([{ title: '光合成', body: 'キーワードのない本文' }]);
 
