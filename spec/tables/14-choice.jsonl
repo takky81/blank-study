@@ -12,3 +12,4 @@
 {"table":"選択肢の生成","col":12,"conditions":{"true":["選択肢:組み立てが終わった"]},"actions":{"true":["問題を表示する"]},"results":{"true":["選択肢の並び:毎回無作為にする"]},"unit":["buildChoices: 正答の位置を固定しない"],"e2e":["study.spec: 正答の位置が毎回同じにならない"]}
 {"table":"選択肢の生成","col":13,"conditions":{"true":["キーワード:タグを持たない"]},"actions":{"true":["同じタグのキーワードを集める"]},"results":{"true":["候補:0件になる"],"false":["誤答:同じ章の同じタグから採る"]},"unit":["sameTag: タグが無ければ同タグは成立しない"],"note":"wrong_choices が無ければ記述形式に切り替わる"}
 {"table":"選択肢の生成","col":14,"conditions":{"true":["誤答の候補:is_active が false のキーワードから採れる"]},"actions":{"true":["同じタグのキーワードを集める"]},"results":{"false":["誤答:同じ章の同じタグから採る"]},"unit":["buildChoices: 非活性のキーワードは誤答に使わない"]}
+{"table":"選択肢の生成","col":15,"conditions":{"true":["出題形式:選択肢"]},"actions":{"true":["問題を表示する"]},"results":{"true":["選択肢:固定の「わからない」を追加する","「わからない」を選ぶ:不正解として記録する"]},"unit":["judgeChoice: 固定の「わからない」は必ず不正解にする"],"e2e":["study.spec: 固定の「わからない」を選べる"]}

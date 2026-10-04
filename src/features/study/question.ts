@@ -4,16 +4,24 @@
  * しきい値は docs/仕様書.md §5.2 を参照。
  */
 
-import { normalizeAnswer } from '@/lib/answer';
+import { judge, normalizeAnswer } from '@/lib/answer';
 
 /** 定着とみなす出題回数と正答率（仕様書 §5.2）。 */
 export const SETTLED_COUNT = 3;
 export const SETTLED_RATE = 0.9;
-/** 選択肢の数。正答1 + 誤答3。 */
+/** 問題から生成する選択肢の数。正答1 + 誤答3（固定の「わからない」は含まない）。 */
 export const CHOICE_COUNT = 4;
 
 export type AnswerFormat = 'choice' | 'text';
 export type FormatSetting = 'auto' | 'choice' | 'text';
+export type ChoiceSelection = { value: string; unknown: boolean };
+
+export const UNKNOWN_CHOICE_LABEL = 'わからない';
+
+/** 固定の「わからない」は、同名の正答があっても棄権として扱う。 */
+export function judgeChoice(selection: ChoiceSelection, answers: readonly string[]): boolean {
+  return !selection.unknown && judge(selection.value, answers);
+}
 
 export type FormatInput = {
   totalCount: number;

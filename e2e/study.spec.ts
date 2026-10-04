@@ -530,6 +530,33 @@ test.describe('出題', () => {
     await expect(page.getByText('正解', { exact: true })).toBeVisible();
   });
 
+  test('選択肢 列15 固定の「わからない」を選べる', async ({ signedIn: page }) => {
+    const { materialId } = await seedMaterial([
+      {
+        title: '光合成',
+        body: '植物は {{id=aaaaaa}} を行う。',
+        keywords: [
+          { docId: 'aaaaaa', answers: ['光合成'], wrong: ['呼吸', '蒸散', '発酵'] },
+        ],
+      },
+    ]);
+
+    await page.goto(`/materials/${materialId}/study`);
+    await page.getByRole('radio', { name: '選択肢', exact: true }).check();
+    await page.getByRole('button', { name: '開始する' }).click();
+
+    await expect(page.getByRole('radio')).toHaveCount(5);
+    await page.getByTestId('unknown-choice').check();
+    await expect(page.getByText('不正解', { exact: true })).toBeVisible();
+    await expect(page.getByText('あなたの解答').locator('..')).toContainText('わからない');
+
+    const log = await adminClient()
+      .from('answer_logs')
+      .select('input, is_correct')
+      .single();
+    expect(log.data).toMatchObject({ input: 'わからない', is_correct: false });
+  });
+
   test('別解 列1・列6 登録すると正解に変わり、次回から通る', async ({ signedIn: page }) => {
     const { materialId } = await seedMaterial([
       {

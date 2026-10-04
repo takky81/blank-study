@@ -4,11 +4,19 @@ import { useTrail } from '@/components/Trail';
 import { keywordScore, type Score } from './score';
 import { MarkdownView } from '@/components/MarkdownView';
 import { buildTree, flatten, type ChapterRow } from '@/features/chapters/tree';
-import { isAnswerable, judge } from '@/lib/answer';
+import { isAnswerable } from '@/lib/answer';
 import { loadStudyData, docIdsInBody, recordAnswer, registerAlternative } from './api';
 import type { StudyChapter, StudyData, StudyKeyword } from './api';
 import { pickNext, type Candidate } from './order';
-import { buildChoices, decideFormat, type AnswerFormat, type FormatSetting } from './question';
+import {
+  buildChoices,
+  decideFormat,
+  judgeChoice,
+  UNKNOWN_CHOICE_LABEL,
+  type AnswerFormat,
+  type ChoiceSelection,
+  type FormatSetting,
+} from './question';
 import { canExpandRange, expandRange, viewOfBlank, type BlankColor } from './range';
 import { addAlternative, canRegisterAlt } from './alt';
 
@@ -73,7 +81,7 @@ export function StudyPage() {
 
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [input, setInput] = useState('');
-  const [choice, setChoice] = useState('');
+  const [choice, setChoice] = useState<ChoiceSelection | null>(null);
   const [correct, setCorrect] = useState(false);
   /** 判定と一緒に見せるその問題の成績。記録できなかったときは出さない（列19） */
   const [score, setScore] = useState<Score | null>(null);
@@ -284,7 +292,7 @@ export function StudyPage() {
     setCurrentId(picked.keywordId);
     setPhase('answering');
     setInput('');
-    setChoice('');
+    setChoice(null);
     setLevel(0);
     setDocumentSize({ height: 160, maxHeight: 160 });
     setExpandedUsed(false);
@@ -299,11 +307,14 @@ export function StudyPage() {
     advance();
   }
 
-  const answerValue = format === 'choice' ? choice : input;
+  const answerValue = format === 'choice' ? (choice?.value ?? '') : input;
 
-  async function submit(value = answerValue) {
-    if (!current || !isAnswerable(value) || isRecording) return;
-    const isCorrect = judge(value, current.keyword.answers);
+  async function submit(selection?: ChoiceSelection) {
+    const submitted =
+      selection ?? (format === 'choice' ? choice : { value: input, unknown: false });
+    const value = submitted?.value ?? '';
+    if (!current || !submitted || !isAnswerable(value) || isRecording) return;
+    const isCorrect = judgeChoice(submitted, current.keyword.answers);
     setCorrect(isCorrect);
     setRecording(true);
     setTotal((n) => n + 1);
@@ -796,41 +807,49 @@ export function StudyPage() {
             <>
               <p className="text-[13px] text-muted">選択肢から選ぶ</p>
               <ul className="grid grid-cols-2 gap-3">
-                {built?.choices.map((value, i) => (
-                  <li key={value}>
-                    <label
-                      className={
-                        choice === value
-                          ? 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-subtle px-4 text-[16px]'
-                          : 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-panel px-4 text-[16px] hover:bg-hover'
-                      }
-                    >
-                      {/* 見た目は番号付きの札。選択の状態は札の側で示す */}
-                      <input
-                        type="radio"
-                        name="choice"
-                        checked={choice === value}
-                        disabled={isRecording}
-                        onChange={() => {
-                          setChoice(value);
-                          void submit(value);
-                        }}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      />
-                      <span
-                        aria-hidden
+                {[
+                  ...(built?.choices ?? []).map((value) => ({ value, unknown: false })),
+                  { value: UNKNOWN_CHOICE_LABEL, unknown: true },
+                ].map((option, i) => {
+                  const selected =
+                    choice?.unknown === option.unknown && choice?.value === option.value;
+                  return (
+                    <li key={option.unknown ? 'unknown-choice' : option.value}>
+                      <label
                         className={
-                          choice === value
-                            ? 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink bg-ink text-[12px] text-paper'
-                            : 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-edge text-[12px] text-ink-soft'
+                          selected
+                            ? 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-subtle px-4 text-[16px]'
+                            : 'relative flex min-h-13 items-center gap-3 rounded-md border-2 border-ink bg-panel px-4 text-[16px] hover:bg-hover'
                         }
                       >
-                        {i + 1}
-                      </span>
-                      {value}
-                    </label>
-                  </li>
-                ))}
+                        {/* 見た目は番号付きの札。選択の状態は札の側で示す */}
+                        <input
+                          type="radio"
+                          name="choice"
+                          checked={selected}
+                          disabled={isRecording}
+                          onChange={() => {
+                            setChoice(option);
+                            void submit(option);
+                          }}
+                          data-testid={option.unknown ? 'unknown-choice' : undefined}
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        />
+                        <span
+                          aria-hidden
+                          className={
+                            selected
+                              ? 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink bg-ink text-[12px] text-paper'
+                              : 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-edge text-[12px] text-ink-soft'
+                          }
+                        >
+                          {i + 1}
+                        </span>
+                        {option.value}
+                      </label>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           ) : (

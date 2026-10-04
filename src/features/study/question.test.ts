@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   decideFormat,
   buildChoices,
+  judgeChoice,
   sameTag,
   CHOICE_COUNT,
   SETTLED_COUNT,
   SETTLED_RATE,
+  UNKNOWN_CHOICE_LABEL,
   type ChoiceSource,
 } from './question';
 
@@ -179,5 +181,11 @@ describe('buildChoices（決定表「選択肢の生成」）', () => {
       ).choices.indexOf('光合成');
     const positions = new Set(Array.from({ length: 40 }, build));
     expect(positions.size).toBeGreaterThan(1);
+  });
+
+  it('列15 固定の「わからない」は必ず不正解にする', () => {
+    expect(judgeChoice({ value: UNKNOWN_CHOICE_LABEL, unknown: true }, ['光合成'])).toBe(false);
+    expect(judgeChoice({ value: UNKNOWN_CHOICE_LABEL, unknown: true }, ['わからない'])).toBe(false);
+    expect(judgeChoice({ value: '光合成', unknown: false }, ['光合成'])).toBe(true);
   });
 });
