@@ -120,7 +120,7 @@
   - _Depends: 3.3, 4.2_
   - _Requirements: 5.4, 5.5, 6.2, 6.7, 6.8, 7.5_
 
-- [ ] 5. DB原子性・大量件数・権限を検証する
+- [x] 5. DB原子性・大量件数・権限を検証する
 - [x] 5.1 (P) eligibilityの1,001件回帰を追加する
   - 1,001件を超えるkeywords/questions/statsと複数章本文出現をseedし、flag branch、統計branch、複数理由、末尾対象を検証する。
   - active-onlyのattempts/correct/wrong/accuracy/questionCount、statsなし、attempts 0、inactive/deleted除外を検証する。同一keywordの複数flag設問は1 targetへnestedされ、設問別requestKindsと統計理由が同居する。
@@ -139,7 +139,7 @@
   - _Depends: 4.2_
   - _Requirements: 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 5.3 (P) 新規RPCの4主体security適合テストを追加する
+- [x] 5.3 (P) 新規RPCの4主体security適合テストを追加する
   - DB catalogから公開user-data RPCを自動列挙し、eligibility/import RPCを含む全件がidentity所有のRpcSecurityMatrix fixtureに過不足なく存在することを検証する。
   - authenticated owner成功、cross-owner非開示、anon実行拒否を検証し、service roleはfixture準備・事後確認だけに使用する。
   - 公開RPCの`SECURITY INVOKER`、空search path、schema修飾、authenticated限定grantと、通常read/RPCのowner境界が一致する状態を完了条件とする。
