@@ -112,7 +112,7 @@ describe('QuestionExchangePage 出力', () => {
 });
 
 describe('QuestionExchangePage 取込preview', () => {
-  it('fileを選択して区分別件数と内容をpreviewし、commit未接続では確定できない', async () => {
+  it('fileを選択して区分別件数と内容をpreviewし、既定のcommit gatewayで確定可能になる', async () => {
     const p = setup();
     chooseFile();
     fireEvent.click(screen.getByRole('button', { name: 'previewを作成' }));
@@ -124,7 +124,7 @@ describe('QuestionExchangePage 取込preview', () => {
     expect(within(region).getByText('エラー 0件')).toBeInTheDocument();
     expect(within(region).getByText('旧い問い')).toBeInTheDocument();
     expect(within(region).getAllByText('新しい問い')).toHaveLength(2);
-    expect(within(region).getByRole('button', { name: '取込を確定' })).toBeDisabled();
+    expect(within(region).getByRole('button', { name: '取込を確定' })).toBeEnabled();
   });
 
   it('競合とerrorがあれば内容と位置を示し確定させない', async () => {
@@ -156,6 +156,9 @@ describe('QuestionExchangePage 取込preview', () => {
     expect(commitImport).toHaveBeenCalledWith(okPreview);
     d.resolve({ created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0 });
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('追加 1件、更新 1件、疑義解除 1件、解説依頼解除 0件'));
+    expect(screen.getByRole('status')).toHaveTextContent('最新の状態を再読込');
+    expect(screen.queryByRole('region', { name: '取込preview' })).not.toBeInTheDocument();
+    expect(screen.queryByText('選択中: return.json')).not.toBeInTheDocument();
   });
 
   it('commit失敗時はpreviewを保持してalertを示す', async () => {
@@ -166,6 +169,8 @@ describe('QuestionExchangePage 取込preview', () => {
     fireEvent.click(await screen.findByRole('button', { name: '取込を確定' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('stale');
     expect(screen.getByRole('region', { name: '取込preview' })).toBeInTheDocument();
+    expect(screen.getByText('旧い問い')).toBeInTheDocument();
+    expect(screen.getByText('選択中: return.json')).toBeInTheDocument();
   });
 
   it('取消でpreviewを消し何も書き込まない', async () => {

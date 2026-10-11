@@ -12,6 +12,7 @@ import {
   type EligibilityReason,
   type EligibilityTarget,
   type QuestionExchangeExportV1,
+  type QuestionExchangeCommitResult,
   type QuestionExchangeImportV1,
   type RequestKind,
 } from './types';
@@ -222,20 +223,77 @@ export async function readImportPreviewSnapshot(file: QuestionExchangeImportV1):
   return { questions, keywordIds: new Set(keywords.map((k) => k.id)) };
 }
 
+/** 確定時にRPCへ渡す検証済みenvelopeを保持するpreview。構文errorのpreviewはsourceを持たない。 */
+export type CommittableImportPreview = ImportPreview & { source?: QuestionExchangeImportV1 };
+
 /** 検証済みimportからpreviewを作る。読取失敗は操作文脈付きError。 */
-export async function buildImportPreview(file: QuestionExchangeImportV1): Promise<ImportPreview> {
+export async function buildImportPreview(file: QuestionExchangeImportV1): Promise<CommittableImportPreview> {
   try {
-    return planImportPreview(file, await readImportPreviewSnapshot(file));
+    return { ...planImportPreview(file, await readImportPreviewSnapshot(file)), source: file };
   } catch (cause) {
     throw contextError(PREVIEW_CONTEXT, cause);
   }
 }
 
 /** 選択fileを読み、構文error時はpath付きerror、成功時はpreviewを返す。DBは書き換えない。 */
-export async function previewQuestionExchange(selected: Blob): Promise<ImportPreview> {
+export async function previewQuestionExchange(selected: Blob): Promise<CommittableImportPreview> {
   const parsed = await readExchangeImportFile(selected);
   if (!parsed.ok) {
     return { items: parsed.errors.map((e) => ({ kind: 'error' as const, operationIndex: null, ...e })), canCommit: false };
   }
   return buildImportPreview(parsed.value);
+}
+
+// ---- atomic import gateway ----
+
+const COMMIT_CONTEXT = '設問交換の取込に失敗しました';
+
+type RpcError = { code?: unknown; message?: unknown; details?: unknown };
+
+function operationLabel(details: unknown): string {
+  const match = typeof details === 'string' ? /^\$\.operations\[(\d+)\]/.exec(details) : null;
+  return match ? `操作 ${Number(match[1]) + 1}: ` : '';
+}
+
+function commitError(error: RpcError): Error {
+  const where = operationLabel(error.details);
+  const raw = typeof error.message === 'string' ? error.message : '原因不明';
+  const reason = error.code === 'PT409'
+    ? `${where}previewの後に設問が更新されています（版の競合）。何も保存していません。最新の内容で再出力してください`
+    : error.code === 'P0002'
+      ? `${where}参照先のkeywordまたは設問が見つかりません。何も保存していません`
+      : error.code === '22023'
+        ? `${where}取込内容が不正です（${raw}）。何も保存していません`
+        : `データベースで取込を確定できませんでした（${raw}）。何も保存していません`;
+  return new Error(`${COMMIT_CONTEXT}: ${reason}`, { cause: error });
+}
+
+function mapCommitResult(data: unknown): QuestionExchangeCommitResult {
+  if (!isRecord(data)) throw new Error(`${COMMIT_CONTEXT}: 取込結果の形式が不正です`);
+  const { createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount } = data;
+  if (!isCount(createdCount) || !isCount(updatedCount) || !isCount(clearedDoubtCount) || !isCount(clearedExplanationRequestCount)) {
+    throw new Error(`${COMMIT_CONTEXT}: 取込結果の形式が不正です`);
+  }
+  return {
+    created: createdCount, updated: updatedCount,
+    doubtFlagsCleared: clearedDoubtCount, explanationRequestFlagsCleared: clearedExplanationRequestCount,
+  };
+}
+
+/**
+ * canCommit=trueかつ検証済みenvelopeを持つpreviewだけを`import_question_exchange`へ渡す。
+ * RPCは全operationを再検証し、stale/参照/内容errorでは何も保存しない。
+ */
+export async function commitQuestionExchange(preview: CommittableImportPreview): Promise<QuestionExchangeCommitResult> {
+  if (!preview.canCommit || preview.source === undefined) {
+    throw new Error(`${COMMIT_CONTEXT}: 確定可能なpreviewではありません`);
+  }
+  let response: { data: unknown; error: RpcError | null };
+  try {
+    response = await supabase.rpc('import_question_exchange', { p_payload: preview.source });
+  } catch (cause) {
+    throw contextError(COMMIT_CONTEXT, cause);
+  }
+  if (response.error) throw commitError(response.error);
+  return mapCommitResult(response.data);
 }

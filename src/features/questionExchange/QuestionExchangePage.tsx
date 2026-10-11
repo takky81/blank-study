@@ -1,26 +1,20 @@
 import { useRef, useState, type FormEvent } from 'react';
 
 import { createSubmitGuard } from '@/lib/submitGuard';
-import { exportEligibleQuestions, previewQuestionExchange, type EligibilityExportResult } from './api';
+import { commitQuestionExchange, exportEligibleQuestions, previewQuestionExchange, type EligibilityExportResult } from './api';
 import { validateEligibilityFilter } from './eligibility';
 import { downloadExchangeExport, type ExchangeDownloadResult } from './file';
 import type { ImportPreview, PreviewItem } from './preview';
-import type { EligibilityFilter, EligibilityFilterField, FieldError } from './types';
+import type { EligibilityFilter, EligibilityFilterField, FieldError, QuestionExchangeCommitResult } from './types';
 import type { QuestionContentDraft } from '../questions/types';
 
-/** 取込確定結果。import RPC gateway（task 4.3）が返す件数。 */
-export type QuestionExchangeCommitResult = {
-  created: number;
-  updated: number;
-  doubtFlagsCleared: number;
-  explanationRequestFlagsCleared: number;
-};
+export type { QuestionExchangeCommitResult } from './types';
 
 export type QuestionExchangePageProps = {
   exportEligible?: (filter: EligibilityFilter) => Promise<EligibilityExportResult>;
   download?: (result: EligibilityExportResult) => ExchangeDownloadResult;
   previewImport?: (file: Blob) => Promise<ImportPreview>;
-  /** 未注入の間は確定操作を無効にする。 */
+  /** 既定は`import_question_exchange` gateway。previewImportが返したpreviewをそのまま渡す。 */
   commitImport?: (preview: ImportPreview) => Promise<QuestionExchangeCommitResult>;
 };
 
@@ -85,7 +79,7 @@ export function QuestionExchangePage({
   exportEligible = exportEligibleQuestions,
   download = (result) => downloadExchangeExport(result),
   previewImport = previewQuestionExchange,
-  commitImport,
+  commitImport = commitQuestionExchange,
 }: QuestionExchangePageProps) {
   const [values, setValues] = useState<Record<EligibilityFilterField, string>>({
     minimumAttempts: '', maximumAccuracy: '', maximumQuestionCount: '',
@@ -143,7 +137,7 @@ export function QuestionExchangePage({
   };
 
   const runCommit = () => {
-    if (!commitImport || preview === null || !preview.canCommit) return;
+    if (preview === null || !preview.canCommit) return;
     const target = preview;
     void importGuard.current.run(async () => {
       setImportState({ kind: 'committing' });
@@ -216,7 +210,7 @@ export function QuestionExchangePage({
         <span className="min-w-0 grow [overflow-wrap:anywhere]">{importState.message}。ファイルを確認して再試行してください。</span>
         <button type="button" onClick={runPreview} className="btn-s border-warn text-warn">previewを再試行</button></div>}
       {importState.kind === 'committed' && <p role="status" className="text-[13px]">
-        取込を確定しました: 追加 {importState.result.created}件、更新 {importState.result.updated}件、疑義解除 {importState.result.doubtFlagsCleared}件、解説依頼解除 {importState.result.explanationRequestFlagsCleared}件</p>}
+        取込を確定しました: 追加 {importState.result.created}件、更新 {importState.result.updated}件、疑義解除 {importState.result.doubtFlagsCleared}件、解説依頼解除 {importState.result.explanationRequestFlagsCleared}件。previewを破棄しました。最新の状態を再読込するには、対象を再出力するか返却ファイルを選び直してください。</p>}
 
       {preview && counts && <section aria-label="取込preview" className="flex min-w-0 flex-col gap-3">
         <ul className="flex min-w-0 flex-wrap gap-2" aria-label="区分別件数">
@@ -232,7 +226,7 @@ export function QuestionExchangePage({
         {importState.kind === 'commit-error' && <div role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn [overflow-wrap:anywhere]">
           {importState.message}。previewは保持しています。再試行するか、取り消して再出力してください。</div>}
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={runCommit} disabled={!commitImport || !preview.canCommit || busyImport} className="btn-p">取込を確定</button>
+          <button type="button" onClick={runCommit} disabled={!preview.canCommit || busyImport} className="btn-p">取込を確定</button>
           <button type="button" onClick={cancelPreview} disabled={busyImport} className="btn">取消</button>
         </div>
       </section>}

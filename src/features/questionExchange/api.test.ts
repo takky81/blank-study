@@ -59,7 +59,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { buildImportPreview, exportEligibleQuestions, mapEligibilityRpcResult } from './api';
+import { buildImportPreview, commitQuestionExchange, exportEligibleQuestions, mapEligibilityRpcResult } from './api';
 import { parseExchangeExport, serializeExchangeExport } from './schema';
 
 const uuid = (n: number) => `11111111-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -217,8 +217,10 @@ describe('buildImportPreview', () => {
       kind: 'update' as const, keywordId: KW1, questionId, expectedVersion: 2, question: content,
       sourceRequestedFlags: [], resolvedFlags: [],
     }));
-    const preview = await buildImportPreview({ schemaVersion: 1, exchangeId: EX1, exportedAt: ts, operations });
+    const envelope = { schemaVersion: 1 as const, exchangeId: EX1, exportedAt: ts, operations };
+    const preview = await buildImportPreview(envelope);
     expect(preview.canCommit).toBe(true);
+    expect(preview.source).toBe(envelope);
     expect(preview.items.filter((i) => i.kind === 'update')).toHaveLength(250);
     expect(rpcCalls).toEqual([]);
     const questionReads = queryLog.filter((q) => q.table === 'structured_questions');
@@ -231,5 +233,54 @@ describe('buildImportPreview', () => {
     const op = { kind: 'create' as const, keywordId: KW1, question: { questionText: '新', modelAnswer: '答', choices: [], explanation: null } };
     await expect(buildImportPreview({ schemaVersion: 1, exchangeId: EX1, exportedAt: ts, operations: [op] }))
       .rejects.toThrow('設問交換のpreviewを作成できませんでした: network down');
+  });
+});
+
+describe('commitQuestionExchange', () => {
+  const content = { questionText: '新', modelAnswer: '答', choices: [], explanation: null };
+  const source = {
+    schemaVersion: 1 as const, exchangeId: EX1, exportedAt: ts,
+    operations: [
+      { kind: 'create' as const, keywordId: KW1, question: content },
+      { kind: 'update' as const, keywordId: KW1, questionId: Q1, expectedVersion: 2, question: content, sourceRequestedFlags: ['doubt' as const], resolvedFlags: ['doubt' as const] },
+    ],
+  };
+  const committable = { canCommit: true, items: [], source };
+
+  beforeEach(() => { rpcCalls.length = 0; });
+
+  it('canCommitのvalidated envelopeだけをimport RPCへ渡し、件数を画面型へ写像する', async () => {
+    rpcImpl = () => Promise.resolve({
+      data: { createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0 }, error: null,
+    });
+    await expect(commitQuestionExchange(committable)).resolves.toEqual({
+      created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0,
+    });
+    expect(rpcCalls).toEqual([['import_question_exchange', { p_payload: source }]]);
+  });
+
+  it.each([
+    ['canCommit=false', { ...committable, canCommit: false }],
+    ['envelopeなし', { canCommit: true, items: [] }],
+  ])('%sのpreviewはRPCを呼ばずに拒否する', async (_name, preview) => {
+    await expect(commitQuestionExchange(preview)).rejects.toThrow(/設問交換の取込に失敗しました/);
+    expect(rpcCalls).toEqual([]);
+  });
+
+  it.each([
+    ['PT409', 'version conflict', /操作 2.*previewの後に設問が更新されています/],
+    ['P0002', 'question not found', /操作 2.*参照先のkeywordまたは設問が見つかりません/],
+    ['22023', 'invalid question content', /操作 2.*取込内容が不正です.*invalid question content/],
+    ['XX000', 'boom', /データベースで取込を確定できませんでした.*boom/],
+  ])('RPC error %sを操作文脈付き日本語Errorにする', async (code, message, expected) => {
+    rpcImpl = () => Promise.resolve({ data: null, error: { code, message, details: '$.operations[1]' } });
+    await expect(commitQuestionExchange(committable)).rejects.toThrow(expected);
+  });
+
+  it('通信例外と不正な成功応答も日本語Errorにする', async () => {
+    rpcImpl = () => Promise.reject(new Error('offline'));
+    await expect(commitQuestionExchange(committable)).rejects.toThrow(/設問交換の取込に失敗しました.*offline/);
+    rpcImpl = () => Promise.resolve({ data: { createdCount: -1 }, error: null });
+    await expect(commitQuestionExchange(committable)).rejects.toThrow(/取込結果の形式が不正です/);
   });
 });

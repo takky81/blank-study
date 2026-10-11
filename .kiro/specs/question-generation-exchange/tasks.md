@@ -92,7 +92,7 @@
   - _Depends: 3.3; upstream `app-shell-and-responsive-experience` task 6.1 descriptor contract_
   - _Requirements: 7.1, 7.2, 7.6, 7.7, 7.12, 7.13, 7.14_
 
-- [ ] 4. 原子的import RPCとgatewayを実装する
+- [x] 4. 原子的import RPCとgatewayを実装する
 - [x] 4.1 atomic import RPCで全operationを再検証する
   - migration内の`import_question_exchange`で全keyword/question owner、関連、content、expectedVersion、duplicate、resolvedFlags subsetを変更前に検証する。
   - file/clientのowner値とpreview結果を信頼せず、`auth.uid()`とcurrent DB stateから判断し、stale時は全件を拒否する。
@@ -111,7 +111,7 @@
   - _Depends: 4.1_
   - _Requirements: 6.1, 6.3, 6.4, 6.5, 6.6, 6.7, 7.9, 7.10, 7.11_
 
-- [ ] 4.3 import RPC gatewayと画面のcommit状態を接続する
+- [x] 4.3 import RPC gatewayと画面のcommit状態を接続する
   - canCommit=trueのvalidated envelopeだけをRPCへ渡し、結果countを画面型へmappingする。
   - stale/参照/内容/DB failureを操作文脈付きErrorへ変換し、失敗時はpreviewを維持、成功時は最新状態を再読込する。
   - preview後に別更新されたcaseが自動上書きされず、成功時だけsummaryと再読込が観測できるE2Eを完了条件とする。

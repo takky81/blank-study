@@ -118,3 +118,11 @@ export type ImportValidationResult = {
   /** errorが0件かつoperationが1件以上の場合だけtrue。部分保存は行わない。 */
   canCommit: boolean;
 };
+
+/** 取込確定結果（画面表示用）。import RPCのcountを写像したもの。 */
+export type QuestionExchangeCommitResult = {
+  created: number;
+  updated: number;
+  doubtFlagsCleared: number;
+  explanationRequestFlagsCleared: number;
+};
