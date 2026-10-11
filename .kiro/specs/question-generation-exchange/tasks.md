@@ -93,7 +93,7 @@
   - _Requirements: 7.1, 7.2, 7.6, 7.7, 7.12, 7.13, 7.14_
 
 - [ ] 4. 原子的import RPCとgatewayを実装する
-- [ ] 4.1 atomic import RPCで全operationを再検証する
+- [x] 4.1 atomic import RPCで全operationを再検証する
   - migration内の`import_question_exchange`で全keyword/question owner、関連、content、expectedVersion、duplicate、resolvedFlags subsetを変更前に検証する。
   - file/clientのowner値とpreview結果を信頼せず、`auth.uid()`とcurrent DB stateから判断し、stale時は全件を拒否する。
   - create/updateの混在payloadが全検証後だけbank所有の`private.apply_structured_question_content(uuid, uuid, bigint, jsonb, jsonb)`へ進み、primitive自身も`auth.uid()` owner、keyword、question、期待版、内容、flag不変条件を再検証するDB integration testを完了条件とし、exchange内に重複する業務mutationを作らない。
@@ -180,3 +180,4 @@
 
 ## Implementation Notes
 - keyword export: displayText = answers[0]、modelAnswer = answers.join("、")（design未定義のため2.2で決定）。eligibility RPCはPostgREST max_rows=1000回避のため単一jsonb配列を返す。新規公開RPCは e2e/rpc-security-matrix.ts の末尾へ追加する（既存specが位置indexを参照）。
+- import_question_exchange のエラー: 22023=検証エラー、P0002=未知/他owner参照（同一表現）、PT409(HTTP 409)=stale版。40001はPostgRESTが再試行してtimeoutするため使わない。成功は {createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount}。private primitiveへのUSAGE/EXECUTEはbank migration 000004/000005で付与済み。

@@ -12,6 +12,8 @@ export const RPC_SECURITY_MATRIX = [
   'sync_active_keywords(p_material_id uuid, p_doc_ids text[])',
   // question-generation-exchange: owner付きeligibility集計（4主体の権限テストはtask 5.3で追加）
   'get_question_exchange_candidates(p_minimum_attempts numeric, p_maximum_accuracy numeric, p_maximum_question_count numeric)',
+  // question-generation-exchange: atomic import orchestration（task 4.1）
+  'import_question_exchange(p_payload jsonb)',
 ] as const;
 
 /** 公開schemaでauthenticatedがEXECUTEできる非trigger関数をcatalogから列挙するSQL。 */
