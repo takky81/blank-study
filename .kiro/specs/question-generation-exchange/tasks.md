@@ -102,7 +102,7 @@
   - _Depends: 1.3, 3.2; upstream `structured-question-bank` mutation/version contract_
   - _Requirements: 4.3, 4.4, 4.5, 4.6, 4.7, 5.4, 5.5, 6.1, 7.1, 7.3, 7.9, 7.10, 7.11_
 
-- [ ] 4.2 create/updateと選択的flag解除を同一transactionで確定する
+- [x] 4.2 create/updateと選択的flag解除を同一transactionで確定する
   - `SECURITY INVOKER`の公開import orchestration RPCから、API非公開`private` schemaに対するauthenticatedの最小`USAGE`／正確なsignatureへの`EXECUTE`を使い、bank primitiveを同一transaction内で呼ぶ。新規設問は安定IDを割り当て、更新はexpectedVersion一致時だけ内容と版を進める。
   - export時requestedかつoperationでresolvedとされたflagだけを解除し、未指定flagとfile外設問を維持する。
   - bank所有の共有conformance fixtureを変更せず消費し、通常編集とimportの内容検証・版increment・flag保持が一致し、成功結果がcreated/updated/各flag cleared countを返すことを完了条件とする。

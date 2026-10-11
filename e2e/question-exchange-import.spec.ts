@@ -5,6 +5,7 @@ import { expect, test } from '@playwright/test';
 
 import { adminClient, ensureTestUser, resetData, seedMaterialWithKeyword, seedSubject } from './db';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, TEST_USER } from './env';
+import { questionContentCases } from './question-bank-conformance-fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -161,4 +162,131 @@ test.describe('AtomicImportRPCValidation', () => {
     expect(() => call(ownerId, `'${q.id}', '${keywordId}', ${q.version}, '{"question_text":" ","model_answer":"y","choices":[]}'::jsonb, '{}'::jsonb`)).toThrow(/question_text is required/);
     expect(call(ownerId, `'${q.id}', '${keywordId}', ${q.version + 1}, ${body}, '{}'::jsonb`)).toContain('version-conflict');
   });
+});
+
+function sqlAsAdmin(sql: string): string {
+  return execFileSync('docker', [
+    'exec', 'supabase_db_blank-study', 'psql', '-U', 'postgres', '-d', 'postgres', '-tA', '-v', 'ON_ERROR_STOP=1', '-c', sql,
+  ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+}
+
+function toExchangeContent(c: Record<string, unknown>) {
+  return { questionText: c.question_text, modelAnswer: c.model_answer, choices: c.choices, explanation: c.explanation };
+}
+
+const PRIMITIVE = 'private.apply_structured_question_content(uuid,uuid,bigint,jsonb,jsonb)';
+const IMPORT_RPC = 'public.import_question_exchange(jsonb)';
+
+test.describe('AtomicImportRPCMutation', () => {
+  let ownerId = '';
+  let materialId = '';
+  let keywordId = '';
+  let user: SupabaseClient;
+
+  test.beforeEach(async () => {
+    ownerId = await ensureTestUser();
+    await resetData(ownerId);
+    const subjectId = await seedSubject(ownerId, '交換import確定');
+    ({ materialId, keywordId } = await seedMaterialWithKeyword(ownerId, subjectId, 'xm0001'));
+    user = await signIn();
+  });
+
+  test.afterEach(async () => {
+    await resetData(ownerId);
+  });
+
+  test('private schemaのUSAGEと正確なsignatureのEXECUTEはauthenticatedだけに許可される', () => {
+    const row = JSON.parse(sqlAsAdmin(`select json_build_object(
+      'usage', json_build_object(
+        'authenticated', has_schema_privilege('authenticated', 'private', 'USAGE'),
+        'anon', has_schema_privilege('anon', 'private', 'USAGE'),
+        'public', has_schema_privilege('public', 'private', 'USAGE'),
+        'createAuthenticated', has_schema_privilege('authenticated', 'private', 'CREATE')),
+      'primitive', json_build_object(
+        'authenticated', has_function_privilege('authenticated', '${PRIMITIVE}', 'EXECUTE'),
+        'anon', has_function_privilege('anon', '${PRIMITIVE}', 'EXECUTE'),
+        'public', has_function_privilege('public', '${PRIMITIVE}', 'EXECUTE')),
+      'otherPrivateExecutable', (select coalesce(json_agg(p.oid::regprocedure::text), '[]'::json)
+        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'private' and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+          and p.oid <> '${PRIMITIVE}'::regprocedure),
+      'import', json_build_object(
+        'invoker', (select not prosecdef from pg_proc where oid = '${IMPORT_RPC}'::regprocedure),
+        'authenticated', has_function_privilege('authenticated', '${IMPORT_RPC}', 'EXECUTE'),
+        'anon', has_function_privilege('anon', '${IMPORT_RPC}', 'EXECUTE'),
+        'public', has_function_privilege('public', '${IMPORT_RPC}', 'EXECUTE')));`));
+    expect(row).toEqual({
+      usage: { authenticated: true, anon: false, public: false, createAuthenticated: false },
+      primitive: { authenticated: true, anon: false, public: false },
+      otherPrivateExecutable: [],
+      import: { invoker: true, authenticated: true, anon: false, public: false },
+    });
+  });
+
+  test('未解除flag・未要求flag・file外設問を維持し、片flag/両flag解除のcountを正しく返す', async () => {
+    const flags = { doubt_flag: true, explanation_request_flag: true };
+    const both = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 0 });
+    const onlyExplanation = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 1 });
+    const unresolved = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 2 });
+    const outside = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 3 });
+    const outsideBefore = (await dbSnapshot([ownerId])).find((r) => r.id === outside.id);
+    const update = (q: { id: string; version: number }, source: string[], resolved: string[]) => ({
+      kind: 'update', keywordId, questionId: q.id, expectedVersion: q.version, question: content,
+      sourceRequestedFlags: source, resolvedFlags: resolved,
+    });
+    const result = await user.rpc('import_question_exchange', payload([
+      { kind: 'create', keywordId, question: content },
+      { kind: 'create', keywordId, question: { ...content, questionText: '二つ目の新規' } },
+      update(both, ['doubt', 'explanation-request'], ['doubt', 'explanation-request']),
+      update(onlyExplanation, ['explanation-request'], ['explanation-request']),
+      update(unresolved, ['doubt', 'explanation-request'], []),
+    ]));
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual({ createdCount: 2, updatedCount: 3, clearedDoubtCount: 1, clearedExplanationRequestCount: 2 });
+
+    const rows = await dbSnapshot([ownerId]);
+    expect(rows).toHaveLength(6);
+    const byId = (id: string) => rows.find((r) => r.id === id);
+    expect(byId(both.id)).toMatchObject({ version: both.version + 1, doubt_flag: false, explanation_request_flag: false });
+    expect(byId(onlyExplanation.id)).toMatchObject({ version: onlyExplanation.version + 1, doubt_flag: true, explanation_request_flag: false });
+    expect(byId(unresolved.id)).toMatchObject({ version: unresolved.version + 1, ...flags, question_text: '取込後の問い' });
+    expect(byId(outside.id)).toEqual(outsideBefore);
+    const seeded = [both.id, onlyExplanation.id, unresolved.id, outside.id];
+    const created = rows.filter((r) => !seeded.includes(r.id));
+    expect(created).toHaveLength(2);
+    expect(created.every((r) => r.version === 1 && !r.doubt_flag && !r.explanation_request_flag)).toBe(true);
+  });
+
+  for (const fixture of questionContentCases) {
+    test(`bank共有fixture「${fixture.name}」で通常編集とimportの内容検証・版・flag保持が一致する`, async () => {
+      const flags = { doubt_flag: true, explanation_request_flag: true };
+      const editQ = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 0 });
+      const importQ = await seedQuestion(ownerId, materialId, keywordId, { ...flags, sort_order: 1 });
+      const edited = await user.rpc('mutate_structured_question', {
+        p_command: 'update-content', p_question_id: editQ.id, p_expected_version: editQ.version, p_content: fixture.content,
+      });
+      const imported = await user.rpc('import_question_exchange', payload([{
+        kind: 'update', keywordId, questionId: importQ.id, expectedVersion: importQ.version,
+        question: toExchangeContent(fixture.content), sourceRequestedFlags: ['doubt'], resolvedFlags: [],
+      }]));
+      const pick = (r: Record<string, unknown> | undefined) => r && ({
+        question_text: r.question_text, model_answer: r.model_answer, choices: r.choices, explanation: r.explanation,
+        version: r.version, doubt_flag: r.doubt_flag, explanation_request_flag: r.explanation_request_flag,
+      });
+      const rows = await dbSnapshot([ownerId]);
+      const editRow = pick(rows.find((r) => r.id === editQ.id));
+      const importRow = pick(rows.find((r) => r.id === importQ.id));
+      if (fixture.valid) {
+        expect(edited.error).toBeNull();
+        expect(imported.error).toBeNull();
+        expect(importRow).toEqual(editRow);
+        expect(importRow).toEqual({ ...fixture.expected, version: importQ.version + 1, ...flags });
+      } else {
+        expect(edited.error).not.toBeNull();
+        expect(imported.error).not.toBeNull();
+        expect(importRow).toEqual(editRow);
+        expect(importRow).toMatchObject({ version: importQ.version, question_text: '古い問い', ...flags });
+      }
+    });
+  }
 });
