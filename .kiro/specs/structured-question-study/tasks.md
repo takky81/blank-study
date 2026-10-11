@@ -124,7 +124,7 @@
   - _Depends: 1.2, 3.2_
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.2, 6.5, 6.6_
 
-- [ ] 6.3 (P) 新規RPCの4主体セキュリティ適合テストを追加する
+- [x] 6.3 (P) 新規RPCの4主体セキュリティ適合テストを追加する
   - DB catalogから公開user-data RPCを自動列挙し、`record_structured_question_answer`を含む全件がRpcSecurityMatrix fixtureに過不足なく存在することを検証する。
   - owner成功、cross-owner拒否、anon拒否、service roleはfixture準備・事後確認限定とする。
   - 通常読取とRPCが他利用者の設問・履歴・statsを漏らさず、grantがauthenticatedだけに限定されることを検証する。

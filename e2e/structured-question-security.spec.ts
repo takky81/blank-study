@@ -7,16 +7,11 @@ import { expect, test } from '@playwright/test';
 
 import { adminClient, ensureTestUser, resetData, seedMaterialWithKeyword, seedSubject } from './db';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, TEST_USER } from './env';
+import { RPC_SECURITY_MATRIX } from './rpc-security-matrix';
 
 const CONTENT = { question_text: 'RLSで保護される設問', model_answer: 'owner', choices: ['other'], explanation: null };
 const UPDATED_CONTENT = { ...CONTENT, question_text: '所有者だけが保存できる設問' };
-const RPC_MATRIX = [
-  'import_material(p_subject_id uuid, p_material_id uuid, p_material_name text, p_parent_id uuid, p_chapters jsonb, p_keywords jsonb)',
-  'material_summary(p_due_before timestamp with time zone)',
-  'mutate_structured_question(p_command text, p_question_id uuid, p_keyword_id uuid, p_expected_version bigint, p_content jsonb, p_flag_patch jsonb)',
-  'reorder_structured_questions(p_keyword_id uuid, p_ordered jsonb)',
-  'sync_active_keywords(p_material_id uuid, p_doc_ids text[])',
-] as const;
+const RPC_MATRIX = RPC_SECURITY_MATRIX;
 const COMMANDS = ['create', 'update-content', 'set-flags', 'set-active', 'delete'] as const;
 
 type Snapshot = {
@@ -110,7 +105,7 @@ test.describe.serial('QuestionRpcSecurityConformance', () => {
       { identity: 'private.apply_structured_question_content(p_question_id uuid, p_keyword_id uuid, p_expected_version bigint, p_content jsonb, p_flag_patch jsonb)', invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: true, serviceRoleExecute: false },
       { identity: 'private.lock_structured_question_keyword_set()', invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: false, serviceRoleExecute: false },
       { identity: `public.${RPC_MATRIX[2]}`, invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: true, serviceRoleExecute: false },
-      { identity: `public.${RPC_MATRIX[3]}`, invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: true, serviceRoleExecute: false },
+      { identity: `public.${RPC_MATRIX[4]}`, invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: true, serviceRoleExecute: false },
       { identity: 'public.set_structured_question_version()', invoker: true, config: ['search_path=""'], publicExecute: false, anonExecute: false, authenticatedExecute: false, serviceRoleExecute: false },
     ]);
     expect(JSON.parse(queryCatalog(`select jsonb_build_object(
