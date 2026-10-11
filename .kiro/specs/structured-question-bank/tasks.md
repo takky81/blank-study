@@ -22,7 +22,7 @@
   - _Boundary: QuestionReorderRPC_
   - _Requirements: 3.3, 5.3, 5.4, 5.6_
 
-- [ ] 1.4 RLSとRPC grantを設問永続化へ適用する
+- [x] 1.4 RLSとRPC grantを設問永続化へ適用する
   - ownerの`USING`／`WITH CHECK`、公開RPCのauthenticated限定grant、invoker権限、空のsearch pathを適用する。
   - `private` schemaをSupabase/PostgREST exposed schemasから除外し、authenticatedにはschema `USAGE`と`EXECUTE ON FUNCTION private.apply_structured_question_content(uuid, uuid, bigint, jsonb, jsonb)`だけを付与し、`PUBLIC`／`anon`からrevokeする。
   - 通常Data APIとRPCが同じowner境界を通り、他利用者の設問やkeywordを参照・変更できない構成にする。
