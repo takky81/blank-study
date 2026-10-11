@@ -54,7 +54,7 @@
   - _Depends: 1.2, 2.2_
   - _Requirements: 2.1, 2.3, 2.6, 3.1, 3.6_
 
-- [ ] 3. browser export/uploadとpreviewを実装する
+- [x] 3. browser export/uploadとpreviewを実装する
 - [x] 3.1 (P) JSON download/upload adapterを実装する
   - schema v1をUTF-8 JSON Blobとして安全なfilenameでdownloadし、選択fileをUTF-8文字列として読み取るadapterを作る。
   - 対象0件ではdownloadせず、invalid encoding/JSONは書込み前のpath付きerrorへ変換する。
@@ -82,7 +82,7 @@
   - _Depends: 3.1, 3.2; upstream `app-shell-and-responsive-experience` submit guard/shared UI_
   - _Requirements: 1.2, 1.6, 3.6, 3.7, 5.1, 5.3, 5.4, 5.6, 6.8, 7.5, 7.6, 7.7_
 
-- [ ] 3.4 交換画面のroute adapterをapp-shellへ引き渡す
+- [x] 3.4 交換画面のroute adapterをapp-shellへ引き渡す
   - feature-local `QuestionExchangeRoute.tsx`を実装し、`questions.exchange`、`/question-exchange`、`nav.questions.exchange`、`設問交換`、`wide`をapp-shellへ提供する。未認証は既存login flowへ委ねる。
   - 任意の階層UUID検索parameterと許可済み`returnTo`を検証し、正常終了／取消は検証済み復帰先、不正paramは書込みなしのerrorと`/questions`復帰にする。
   - `src/App.tsx`、feature route registry、共通navigationは変更せず、最終登録とwide／narrow導線の合成を`app-shell-and-responsive-experience` task 6.2へ引き渡す。
