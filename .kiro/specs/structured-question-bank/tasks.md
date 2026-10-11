@@ -81,7 +81,7 @@
   - _Requirements: 1.1, 1.5, 2.7, 3.8, 5.4, 7.3, 7.4, 7.5, 7.6, 7.7_
 
 - [ ] 4. アプリと下流consumerへ接続する
-- [ ] 4.1 設問管理画面のroute adapterをapp-shellへ引き渡す
+- [x] 4.1 設問管理画面のroute adapterをapp-shellへ引き渡す
   - feature-local `QuestionBankRoute.tsx`を実装し、`questions.bank`、`/questions`、`nav.questions.bank`、`設問`、`wide,narrow`と任意の階層UUID・許可済み`returnTo`を提供する。
   - `src/App.tsx`、feature route registry、共通navigationは変更せず、最終登録とwide／narrow導線の合成を`app-shell-and-responsive-experience` task 6.2へ引き渡す。
   - 直接表示・search付き再読込、階層開始、正常終了／取消の復帰、不正UUID・親子不一致・許可外`returnTo`の書込みなしerrorと`/`復帰をadapter contract testへ追加する。
