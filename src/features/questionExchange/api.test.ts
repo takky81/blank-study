@@ -128,12 +128,28 @@ describe('mapEligibilityRpcResult', () => {
     }]);
   });
 
+  it('DBのjsonb化で15有効桁へ丸められたaccuracyはcorrect/attemptsの厳密値へ置き換える', () => {
+    const [target] = mapEligibilityRpcResult([{
+      ...rpcTarget(KW1), metrics: { attempts: 3, correct: 2, wrong: 1, accuracy: 0.666666666666667, questionCount: 1 },
+    }]);
+    expect(target!.metrics.accuracy).toBe(2 / 3);
+  });
+
+  it('attempts 0のaccuracyはnullのまま写像する', () => {
+    const [target] = mapEligibilityRpcResult([{
+      ...rpcTarget(KW1), metrics: { attempts: 0, correct: 0, wrong: 0, accuracy: null, questionCount: 1 },
+    }]);
+    expect(target!.metrics.accuracy).toBeNull();
+  });
+
   it.each([
     ['配列でない', { keywordId: KW1 }],
     ['未知の理由', [{ ...rpcTarget(KW1), reasons: ['unknown'] }]],
     ['metrics欠落', [{ ...rpcTarget(KW1), metrics: { attempts: 1 } }]],
     ['不正なrequestKind', [rpcTarget(KW1, [{ questionId: Q1, requestKinds: ['x'] }])]],
     ['keywordId空', [rpcTarget('')]],
+    ['accuracyがcorrect/attemptsと矛盾', [{ ...rpcTarget(KW1), metrics: { attempts: 4, correct: 1, wrong: 3, accuracy: 0.5, questionCount: 1 } }]],
+    ['attempts 0でaccuracyが数値', [{ ...rpcTarget(KW1), metrics: { attempts: 0, correct: 0, wrong: 0, accuracy: 0, questionCount: 1 } }]],
   ])('%sの応答は日本語Errorにする', (_label, data) => {
     expect(() => mapEligibilityRpcResult(data)).toThrow(/抽出結果の形式が不正です/);
   });

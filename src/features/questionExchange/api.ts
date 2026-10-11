@@ -62,6 +62,11 @@ function mapTarget(value: unknown): EligibilityTarget | null {
   const { attempts, correct, wrong, accuracy, questionCount } = value.metrics;
   if (!isCount(attempts) || !isCount(correct) || !isCount(wrong) || !isCount(questionCount)) return null;
   if (!(accuracy === null || (typeof accuracy === 'number' && accuracy >= 0 && accuracy <= 1))) return null;
+  // RPCのaccuracyはfloat8→jsonb変換で15有効桁へ丸められるため、出力値は件数から厳密に導出する。
+  // RPC値は整合性検証だけに使い、1e-9を超えて矛盾する応答や attempts 0 の非null値は不正とする。
+  const exactAccuracy = attempts > 0 ? correct / attempts : null;
+  if (exactAccuracy === null ? accuracy !== null
+    : accuracy === null || Math.abs(accuracy - exactAccuracy) > 1e-9) return null;
   const reasons = enumList<EligibilityReason>(value.reasons, REASON_ORDER);
   if (reasons === null || reasons.length === 0 || !Array.isArray(value.flaggedQuestions)) return null;
   const flaggedQuestions: { questionId: string; requestKinds: RequestKind[] }[] = [];
@@ -73,7 +78,7 @@ function mapTarget(value: unknown): EligibilityTarget | null {
   }
   return {
     keywordId: value.keywordId,
-    metrics: { attempts, correct, wrong, accuracy, questionCount },
+    metrics: { attempts, correct, wrong, accuracy: exactAccuracy, questionCount },
     reasons,
     flaggedQuestions,
   };

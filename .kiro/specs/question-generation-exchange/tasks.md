@@ -121,7 +121,7 @@
   - _Requirements: 5.4, 5.5, 6.2, 6.7, 6.8, 7.5_
 
 - [ ] 5. DB原子性・大量件数・権限を検証する
-- [ ] 5.1 (P) eligibilityの1,001件回帰を追加する
+- [x] 5.1 (P) eligibilityの1,001件回帰を追加する
   - 1,001件を超えるkeywords/questions/statsと複数章本文出現をseedし、flag branch、統計branch、複数理由、末尾対象を検証する。
   - active-onlyのattempts/correct/wrong/accuracy/questionCount、statsなし、attempts 0、inactive/deleted除外を検証する。同一keywordの複数flag設問は1 targetへnestedされ、設問別requestKindsと統計理由が同居する。
   - 結果件数、schema v1所定の全安定順、理由集合、metrics、全階層path/章本文、questions、flaggedQuestions、穴埋め履歴非混入がgolden fixtureへ欠落・重複なしで一致する状態を完了条件とする。
