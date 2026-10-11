@@ -1,6 +1,14 @@
 import { fetchAll } from '@/lib/paged';
 import { supabase } from '@/lib/supabase';
-import type { StructuredQuestion } from './types';
+import type {
+  DeleteQuestionResult,
+  MutationResult,
+  QuestionDraft,
+  QuestionFlagPatch,
+  QuestionVersionToken,
+  ReorderQuestionResult,
+  StructuredQuestion,
+} from './types';
 
 const QUESTION_COLUMNS =
   'id, owner_id, material_id, keyword_id, question_text, model_answer, choices, explanation, sort_order, is_active, doubt_flag, explanation_request_flag, version, created_at, updated_at';
@@ -68,4 +76,185 @@ async function readQuestions(
     return { rows: (page.data ?? []) as StructuredQuestionRow[], total: page.count };
   });
   return rows.map(mapStructuredQuestionRow);
+}
+
+export async function saveQuestion(
+  draft: QuestionDraft,
+  id?: string,
+  expectedVersion?: number,
+): Promise<MutationResult> {
+  return mutateQuestion('保存', {
+    p_command: id === undefined ? 'create' : 'update-content',
+    p_question_id: id ?? null,
+    p_keyword_id: id === undefined ? draft.keywordId : null,
+    p_expected_version: expectedVersion ?? null,
+    p_content: {
+      question_text: draft.questionText,
+      model_answer: draft.modelAnswer,
+      choices: [...draft.choices],
+      explanation: draft.explanation,
+    },
+    p_flag_patch: null,
+  });
+}
+
+export async function setQuestionFlags(
+  id: string,
+  expectedVersion: number,
+  flags: QuestionFlagPatch,
+): Promise<MutationResult> {
+  const patch: Record<string, boolean> = {};
+  if (flags.doubtFlag !== undefined) patch.doubt_flag = flags.doubtFlag;
+  if (flags.explanationRequestFlag !== undefined) {
+    patch.explanation_request_flag = flags.explanationRequestFlag;
+  }
+  return mutateQuestion('フラグ更新', mutationArgs('set-flags', id, expectedVersion, patch));
+}
+
+export async function setQuestionActive(
+  id: string,
+  expectedVersion: number,
+  active: boolean,
+): Promise<MutationResult> {
+  return mutateQuestion(
+    '有効状態更新',
+    mutationArgs('set-active', id, expectedVersion, { is_active: active }),
+  );
+}
+
+export async function reorderQuestions(
+  keywordId: string,
+  ordered: readonly QuestionVersionToken[],
+): Promise<ReorderQuestionResult> {
+  const data = await callRpc('並べ替え', 'reorder_structured_questions', {
+    p_keyword_id: keywordId,
+    p_ordered: ordered.map(({ id, version }) => ({ id, version })),
+  });
+  const conflict = parseConflict(data, '並べ替え');
+  if (conflict) return conflict;
+  if (!isRecord(data) || data.kind !== 'saved' || !Array.isArray(data.questions)) {
+    throw operationError('並べ替え');
+  }
+  try {
+    return data.questions.map(parseStructuredQuestionRow);
+  } catch (cause) {
+    throw operationError('並べ替え', cause);
+  }
+}
+
+export async function deleteQuestion(
+  id: string,
+  expectedVersion: number,
+): Promise<DeleteQuestionResult> {
+  const data = await callRpc('削除', 'mutate_structured_question',
+    mutationArgs('delete', id, expectedVersion, null));
+  const conflict = parseConflict(data, '削除');
+  if (conflict) return conflict;
+  if (isRecord(data)
+    && data.kind === 'deleted'
+    && data.id === id
+    && isPositiveInteger(data.version)
+    && data.version === expectedVersion) return 'deleted';
+  throw operationError('削除');
+}
+
+type Operation = '保存' | 'フラグ更新' | '有効状態更新' | '並べ替え' | '削除';
+
+function mutationArgs(
+  command: 'set-flags' | 'set-active' | 'delete',
+  id: string,
+  expectedVersion: number,
+  flagPatch: Record<string, boolean> | null,
+): Record<string, unknown> {
+  return {
+    p_command: command,
+    p_question_id: id,
+    p_keyword_id: null,
+    p_expected_version: expectedVersion,
+    p_content: null,
+    p_flag_patch: flagPatch,
+  };
+}
+
+async function mutateQuestion(
+  operation: Extract<Operation, '保存' | 'フラグ更新' | '有効状態更新'>,
+  args: Record<string, unknown>,
+): Promise<MutationResult> {
+  const data = await callRpc(operation, 'mutate_structured_question', args);
+  const conflict = parseConflict(data, operation);
+  if (conflict) return conflict;
+  if (!isRecord(data) || data.kind !== 'saved') throw operationError(operation);
+  try {
+    return { kind: 'saved', question: parseStructuredQuestionRow(data.question) };
+  } catch (cause) {
+    throw operationError(operation, cause);
+  }
+}
+
+async function callRpc(
+  operation: Operation,
+  name: 'mutate_structured_question' | 'reorder_structured_questions',
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  try {
+    const response = await supabase.rpc(name, args);
+    if (response.error) throw response.error;
+    return response.data;
+  } catch (cause) {
+    if (cause instanceof Error && cause.message === `設問の${operation}に失敗しました`) throw cause;
+    throw operationError(operation, cause);
+  }
+}
+
+function operationError(operation: Operation, cause?: unknown): Error {
+  return new Error(`設問の${operation}に失敗しました`, cause === undefined ? undefined : { cause });
+}
+
+function parseConflict(
+  value: unknown,
+  operation: Operation,
+): { kind: 'version-conflict'; current: StructuredQuestion } | null {
+  if (!isRecord(value) || value.kind !== 'version-conflict') return null;
+  try {
+    return { kind: 'version-conflict', current: parseStructuredQuestionRow(value.current) };
+  } catch (cause) {
+    throw operationError(operation, cause);
+  }
+}
+
+function parseStructuredQuestionRow(value: unknown): StructuredQuestion {
+  if (!isStructuredQuestionRow(value)) throw new TypeError('invalid structured question row');
+  return mapStructuredQuestionRow(value);
+}
+
+function isStructuredQuestionRow(value: unknown): value is StructuredQuestionRow {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string'
+    && typeof value.owner_id === 'string'
+    && typeof value.material_id === 'string'
+    && typeof value.keyword_id === 'string'
+    && typeof value.question_text === 'string'
+    && typeof value.model_answer === 'string'
+    && Array.isArray(value.choices)
+    && value.choices.every((choice) => typeof choice === 'string')
+    && (value.explanation === null || typeof value.explanation === 'string')
+    && isInteger(value.sort_order)
+    && typeof value.is_active === 'boolean'
+    && typeof value.doubt_flag === 'boolean'
+    && typeof value.explanation_request_flag === 'boolean'
+    && isInteger(value.version)
+    && typeof value.created_at === 'string'
+    && typeof value.updated_at === 'string';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return isInteger(value) && value > 0;
 }

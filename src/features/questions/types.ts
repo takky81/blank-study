@@ -43,3 +43,18 @@ export type QuestionFieldError =
 export type QuestionContentValidationResult =
   | { valid: true; draft: QuestionContentDraft }
   | { valid: false; errors: readonly QuestionFieldError[] };
+
+export type VersionConflict = { kind: 'version-conflict'; current: StructuredQuestion };
+
+export type MutationResult =
+  | { kind: 'saved'; question: StructuredQuestion }
+  | VersionConflict;
+
+export type QuestionFlagPatch = {
+  doubtFlag?: boolean;
+  explanationRequestFlag?: boolean;
+};
+
+export type DeleteQuestionResult = 'deleted' | VersionConflict;
+
+export type ReorderQuestionResult = readonly StructuredQuestion[] | VersionConflict;

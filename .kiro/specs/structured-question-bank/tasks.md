@@ -47,7 +47,7 @@
   - _Depends: 1.1_
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 3.1, 7.1, 7.2_
 
-- [ ] 2.3 設問mutation gatewayと競合結果を実装する
+- [x] 2.3 設問mutation gatewayと競合結果を実装する
   - 保存、flag、有効状態、並べ替え、削除を設問RPCへ接続し、DB結果をsaved／version-conflictの判別可能な型へ変換する。
   - 通信・DB失敗を操作文脈付き日本語Errorへ変換し、競合では現在版を保持する。
   - 各操作を再取得すると確定内容・順序・flag・版が一致する。
