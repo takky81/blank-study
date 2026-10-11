@@ -10,6 +10,8 @@ export const RPC_SECURITY_MATRIX = [
   'record_structured_question_answer(p_question_id uuid, p_expected_question_version bigint, p_answer text, p_mode text, p_answered_at timestamp with time zone)',
   'reorder_structured_questions(p_keyword_id uuid, p_ordered jsonb)',
   'sync_active_keywords(p_material_id uuid, p_doc_ids text[])',
+  // question-generation-exchange: owner付きeligibility集計（4主体の権限テストはtask 5.3で追加）
+  'get_question_exchange_candidates(p_minimum_attempts numeric, p_maximum_accuracy numeric, p_maximum_question_count numeric)',
 ] as const;
 
 /** 公開schemaでauthenticatedがEXECUTEできる非trigger関数をcatalogから列挙するSQL。 */

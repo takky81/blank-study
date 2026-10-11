@@ -27,7 +27,7 @@
   - _Requirements: 4.2, 4.4, 4.5, 4.6, 4.7, 6.6_
 
 - [ ] 2. DB側eligibility集計とexport projectionを追加する
-- [ ] 2.1 owner付きeligibility RPCを実装する
+- [x] 2.1 owner付きeligibility RPCを実装する
   - `20261011020000_create_question_generation_exchange.sql`を追加し、questionsと専用statsをkeyword単位で集計する`get_question_exchange_candidates`を定義する。
   - `auth.uid()`を起点に固定式を評価し、穴埋め履歴を参照しない。常にkeyword単位で1 targetを返し、複数flag設問を`flaggedQuestions[]`へ設問別requestKinds付きで入れ、統計理由を同じtargetへ統合する。
   - owner入力を受け取らず、1,000件を超えてもDB内集計結果が欠落しないRPC結果を完了条件とする。
