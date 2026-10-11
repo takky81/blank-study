@@ -2,11 +2,15 @@ import { fetchAll } from '@/lib/paged';
 import { supabase } from '@/lib/supabase';
 import type {
   DeleteQuestionResult,
+  ConsumerFlagMutationResult,
+  FlagMutationContract,
   MutationResult,
   QuestionDraft,
   QuestionFlagPatch,
   QuestionVersionToken,
   ReorderQuestionResult,
+  StructuredQuestionReadContract,
+  StructuredQuestionConsumerView,
   StructuredQuestion,
 } from './types';
 
@@ -156,6 +160,43 @@ export async function deleteQuestion(
     && isPositiveInteger(data.version)
     && data.version === expectedVersion) return 'deleted';
   throw operationError('削除');
+}
+
+export const structuredQuestionReadContract: StructuredQuestionReadContract = {
+  async listQuestionsByMaterial(materialId) {
+    const questions = await listQuestionsByMaterial(materialId);
+    return Object.freeze(questions.map(toConsumerView));
+  },
+};
+
+export const flagMutationContract: FlagMutationContract = {
+  async setQuestionFlags(id, expectedVersion, flags) {
+    return toConsumerFlagMutationResult(await setQuestionFlags(id, expectedVersion, flags));
+  },
+};
+
+function toConsumerFlagMutationResult(result: MutationResult): ConsumerFlagMutationResult {
+  return result.kind === 'saved'
+    ? Object.freeze({ kind: 'saved', question: toConsumerView(result.question) })
+    : Object.freeze({ kind: 'version-conflict', current: toConsumerView(result.current) });
+}
+
+function toConsumerView(question: StructuredQuestion): StructuredQuestionConsumerView {
+  return Object.freeze({
+    id: question.id,
+    materialId: question.materialId,
+    keywordId: question.keywordId,
+    questionText: question.questionText,
+    modelAnswer: question.modelAnswer,
+    choices: Object.freeze([...question.choices]),
+    explanation: question.explanation,
+    sortOrder: question.sortOrder,
+    isActive: question.isActive,
+    doubtFlag: question.doubtFlag,
+    explanationRequestFlag: question.explanationRequestFlag,
+    version: question.version,
+    updatedAt: question.updatedAt,
+  });
 }
 
 type Operation = '保存' | 'フラグ更新' | '有効状態更新' | '並べ替え' | '削除';

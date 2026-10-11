@@ -58,3 +58,35 @@ export type QuestionFlagPatch = {
 export type DeleteQuestionResult = 'deleted' | VersionConflict;
 
 export type ReorderQuestionResult = readonly StructuredQuestion[] | VersionConflict;
+
+export type StructuredQuestionConsumerView = Readonly<{
+  id: QuestionId;
+  materialId: string;
+  keywordId: string;
+  questionText: string;
+  modelAnswer: string;
+  choices: readonly string[];
+  explanation: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  doubtFlag: boolean;
+  explanationRequestFlag: boolean;
+  version: number;
+  updatedAt: string;
+}>;
+
+export type ConsumerFlagMutationResult =
+  | Readonly<{ kind: 'saved'; question: StructuredQuestionConsumerView }>
+  | Readonly<{ kind: 'version-conflict'; current: StructuredQuestionConsumerView }>;
+
+export type StructuredQuestionReadContract = {
+  listQuestionsByMaterial(materialId: string): Promise<readonly StructuredQuestionConsumerView[]>;
+};
+
+export type FlagMutationContract = {
+  setQuestionFlags(
+    id: QuestionId,
+    expectedVersion: number,
+    flags: QuestionFlagPatch,
+  ): Promise<ConsumerFlagMutationResult>;
+};

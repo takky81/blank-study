@@ -90,7 +90,7 @@
   - _Depends: 3.3; upstream `app-shell-and-responsive-experience` task 6.1 descriptor contract_
   - _Requirements: 1.1, 1.5, 6.1, 6.4, 7.4, 7.8, 7.9, 7.10_
 
-- [ ] 4.2 下流向け設問・版・flag契約を統合検証する
+- [x] 4.2 下流向け設問・版・flag契約を統合検証する
   - study/exchangeが利用する教材全件読取、安定ID、version token、flag mutationをfeature公開境界から提供する。
   - 結果画面consumer相当の呼出しで疑義と解説追加を独立設定でき、既存解説があっても追加flagを設定できる。
   - 下流が設問テーブルへ独自書込をせず、公開契約だけで必要な状態を取得・更新できることが型と統合テストで確認できる。
