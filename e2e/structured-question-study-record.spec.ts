@@ -39,7 +39,9 @@ test('回答記録RPCは1回答分のlogとstatsだけを確定し、版不一�
   const stats = await user.from('structured_question_stats')
     .select('asked_count, correct_count, consecutive_correct, interval_days, ease_factor, due_at');
   expect(stats.data).toHaveLength(1);
-  expect(stats.data![0]).toMatchObject({ asked_count: 1, correct_count: 1, consecutive_correct: 1, interval_days: 1 });
-  expect(Number(stats.data![0].ease_factor)).toBeCloseTo(2.6);
-  expect(recorded.data.stats).toMatchObject(stats.data![0]);
+  const row = stats.data?.[0];
+  if (row === undefined) throw new Error('stats row missing');
+  expect(row).toMatchObject({ asked_count: 1, correct_count: 1, consecutive_correct: 1, interval_days: 1 });
+  expect(Number(row.ease_factor)).toBeCloseTo(2.6);
+  expect(recorded.data.stats).toMatchObject(row);
 });
