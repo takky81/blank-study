@@ -151,7 +151,7 @@
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.8, 7.10, 7.11_
 
 - [ ] 6. 利用者経路と最終品質ゲートを完了する
-- [ ] 6.1 exportからpreviewまでの手動AI交換経路をE2Eで検証する
+- [x] 6.1 exportからpreviewまでの手動AI交換経路をE2Eで検証する
   - filter入力からJSON download、外部で編集したfixture upload、新規/更新preview、cancelまでを直列E2Eで実行する。
   - flag単独と統計AND群、0件、invalid JSON/schema、duplicate、unknown参照、不正選択肢、delete命令を含める。
   - export artifactをgolden fixtureと比較し、sourceRequestedFlags改変を拒否する。外部AI通信が発生せず、各caseが期待するartifactまたは保存不可表示になる状態を完了条件とする。
