@@ -28,6 +28,8 @@ export type QuestionResultPanelProps = {
   /** flag更新が保存されたときの最新設問（新しい版）。 */
   onQuestionUpdated: (question: StructuredQuestionConsumerView) => void;
   setFlags?: QuestionFlagSetter;
+  /** 回答が未記録のとき。警告と明示再試行を出し、次問へは進ませない。 */
+  unrecorded?: { message: string | null; retrying: boolean; onRetry: () => void };
 };
 
 type FlagName = 'doubtFlag' | 'explanationRequestFlag';
@@ -51,6 +53,7 @@ export function QuestionResultPanel({
   onFinish,
   onQuestionUpdated,
   setFlags = flagMutationContract.setQuestionFlags,
+  unrecorded,
 }: QuestionResultPanelProps) {
   // flag保存で得た最新版をここで保持し、続くflag更新に使う。
   const [question, setQuestion] = useState<ResultQuestion>(initialQuestion);
@@ -123,9 +126,21 @@ export function QuestionResultPanel({
           </p>
         )}
       </fieldset>
+      {unrecorded && unrecorded.message !== null && !unrecorded.retrying && (
+        <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
+          この回答は未記録です。{unrecorded.message}。記録してから次の問題へ進めます
+        </p>
+      )}
       <div className="flex flex-wrap gap-3">
-        <button type="button" className="btn-p h-12 px-8" onClick={onNext}>次の問題へ</button>
-        <button type="button" className="btn-s h-11 px-4" onClick={onFinish}>学習を終える</button>
+        {unrecorded ? (
+          <button type="button" className="btn-p h-12 px-8" onClick={unrecorded.onRetry} disabled={unrecorded.retrying}>
+            {unrecorded.retrying ? '記録しています…' : '記録を再試行'}
+          </button>
+        ) : (
+          <button type="button" className="btn-p h-12 px-8" onClick={onNext}>次の問題へ</button>
+        )}
+        <button type="button" className="btn-s h-11 px-4" onClick={onFinish}
+          disabled={unrecorded?.retrying ?? false}>学習を終える</button>
       </div>
     </div>
   );

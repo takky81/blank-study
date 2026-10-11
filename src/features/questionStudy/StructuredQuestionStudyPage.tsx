@@ -11,7 +11,8 @@ import {
   type RecordQuestionAnswerInput,
   type RecordQuestionAnswerResult,
 } from './api';
-import type { StructuredQuestionConsumerView } from '@/features/questions/types';
+import { listQuestionsByKeyword } from '@/features/questions/api';
+import type { StructuredQuestion, StructuredQuestionConsumerView } from '@/features/questions/types';
 import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPanel';
 import type { QuestionStudyCandidate, QuestionStudyScope } from './candidates';
 import {
@@ -39,8 +40,29 @@ export type StructuredQuestionStudyPageProps = {
   recordAnswer?: (input: RecordQuestionAnswerInput) => Promise<RecordQuestionAnswerResult>;
   scopeOptions?: QuestionScopeOptionsLoader;
   setFlags?: QuestionFlagSetter;
+  /** 設問version競合時に現在設問の最新版を読み直す。出題できなくなったら null。 */
+  reloadQuestion?: (question: StructuredQuestion) => Promise<StructuredQuestion | null>;
   now?: () => Date;
 };
+
+/** 公開の設問readから同じ設問の最新版を探す。無効・削除済みなら null。 */
+async function reloadQuestionFromApi(question: StructuredQuestion): Promise<StructuredQuestion | null> {
+  const list = await listQuestionsByKeyword(question.keywordId);
+  const found = list.find((q) => q.id === question.id);
+  return found && found.isActive ? found : null;
+}
+
+/** 出題できなくなった設問をsessionから外す。記録済み件数は変えない。 */
+function dropQuestion(session: QuestionSession, questionId: string): QuestionSession {
+  const candidates = session.candidates.filter((c) => c.question.id !== questionId);
+  const total = candidates.length;
+  const completed = session.result.answered >= total;
+  return {
+    ...session,
+    candidates,
+    result: { ...session.result, total, completed, ended: session.result.ended || completed },
+  };
+}
 
 type ChoiceItem = { value: string; unknown: boolean };
 
@@ -50,25 +72,24 @@ type Current = {
   choices: readonly ChoiceItem[];
 };
 
-/** 記録の状態。4.3 で failed/conflict の再試行・再読込を差し込む。 */
+/** 判定済み回答の記録状態。failed の間は次問へ進めず、明示再試行だけを受け付ける。 */
 export type RecordStatus =
   | { kind: 'recording' }
   | { kind: 'recorded' }
-  | { kind: 'failed'; message: string }
-  | { kind: 'question-conflict' };
+  | { kind: 'failed'; message: string };
 
 type View =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'empty' }
   | { kind: 'setup'; candidates: readonly QuestionStudyCandidate[] }
-  | { kind: 'answering'; session: QuestionSession; current: Current; record: RecordStatus | null }
+  | { kind: 'answering'; session: QuestionSession; current: Current; busy: boolean; notice: string | null }
   | {
     kind: 'judged';
     session: QuestionSession;
     current: Current;
-    questionVersion: number;
-    answer: string;
+    /** 再試行で同じ内容を送り直すための記録入力（設問version・回答・形式を含む）。 */
+    input: RecordQuestionAnswerInput;
     isCorrect: boolean;
     record: RecordStatus;
   }
@@ -101,6 +122,7 @@ export function StructuredQuestionStudyPage({
   recordAnswer = recordQuestionAnswer,
   scopeOptions = questionScopeOptionsLoader,
   setFlags,
+  reloadQuestion = reloadQuestionFromApi,
   now = () => new Date(),
 }: StructuredQuestionStudyPageProps) {
   const narrow = useNarrow();
@@ -125,7 +147,7 @@ export function StructuredQuestionStudyPage({
     return () => { active = false; };
   }, [scope, loadCandidates]);
 
-  const advance = (session: QuestionSession) => {
+  const advance = (session: QuestionSession, notice: string | null = null) => {
     const next = pickNextQuestion(session, now());
     setWritten('');
     setSelected(null);
@@ -133,7 +155,7 @@ export function StructuredQuestionStudyPage({
       setView({ kind: 'done', session: session.result.ended ? session : finishQuestionSession(session) });
       return;
     }
-    setView({ kind: 'answering', session, current: prepare(next, requestedMode), record: null });
+    setView({ kind: 'answering', session, current: prepare(next, requestedMode), busy: false, notice });
   };
 
   const begin = (candidates: readonly QuestionStudyCandidate[]) => advance(startQuestionSession(candidates, order));
@@ -152,27 +174,81 @@ export function StructuredQuestionStudyPage({
       answer = written;
       isCorrect = judgeQuestionAnswer(written, question.modelAnswer);
     }
+    const input: RecordQuestionAnswerInput = {
+      questionId: question.id,
+      expectedQuestionVersion: question.version,
+      answer,
+      mode: current.mode,
+      answeredAt: now().toISOString(),
+    };
     void guard.run(async () => {
-      setView({ kind: 'answering', session, current, record: { kind: 'recording' } });
-      const result = await recordAnswer({
-        questionId: question.id,
-        expectedQuestionVersion: question.version,
-        answer,
-        mode: current.mode,
-        answeredAt: now().toISOString(),
+      setView({ kind: 'answering', session, current, busy: true, notice: null });
+      await sendRecord(session, current, input, isCorrect);
+    });
+  };
+
+  /** 記録を送り、結果に応じて画面を確定する。成功時だけsessionへ1回分を反映する。 */
+  const sendRecord = async (
+    session: QuestionSession, current: Current, input: RecordQuestionAnswerInput, isCorrect: boolean,
+  ) => {
+    let result: RecordQuestionAnswerResult;
+    try {
+      result = await recordAnswer(input);
+    } catch {
+      result = { kind: 'failed', message: '回答を記録できませんでした' };
+    }
+    // 途中終了した後に届いた応答で画面を戻さない。
+    const ended = (prev: View) => prev.kind === 'done';
+    if (result.kind === 'recorded') {
+      const { stats } = result;
+      setView((prev) => ended(prev) ? prev : {
+        kind: 'judged',
+        session: recordQuestionSessionAnswer(session, input.questionId, isCorrect, stats),
+        current, input, isCorrect, record: { kind: 'recorded' },
       });
-      if (result.kind === 'recorded') {
-        setView({
-          kind: 'judged',
-          session: recordQuestionSessionAnswer(session, question.id, isCorrect, result.stats),
-          current, questionVersion: question.version, answer, isCorrect, record: { kind: 'recorded' },
-        });
-      } else {
-        const record: RecordStatus = result.kind === 'failed'
-          ? { kind: 'failed', message: result.message }
-          : { kind: 'question-conflict' };
-        setView({ kind: 'answering', session, current, record });
-      }
+      return;
+    }
+    if (result.kind === 'failed') {
+      const message = result.message;
+      setView((prev) => ended(prev) ? prev : {
+        kind: 'judged', session, current, input, isCorrect, record: { kind: 'failed', message },
+      });
+      return;
+    }
+    // 設問version競合: 古い判定は記録せず捨て、最新版を読み直して再回答させる。
+    setView((prev) => ended(prev) ? prev : { kind: 'answering', session, current, busy: true, notice: null });
+    let latest: StructuredQuestion | null;
+    try {
+      latest = await reloadQuestion(current.candidate.question);
+    } catch {
+      setView((prev) => ended(prev) ? prev : {
+        kind: 'answering', session, current, busy: false,
+        notice: '設問が更新されましたが、再読み込みできませんでした。もう一度解答してください',
+      });
+      return;
+    }
+    setWritten('');
+    setSelected(null);
+    if (!latest || !latest.isActive) {
+      advance(dropQuestion(session, input.questionId), '設問が出題できなくなったため、記録せずに飛ばしました');
+      return;
+    }
+    const candidate = { ...current.candidate, question: latest };
+    const updated: QuestionSession = {
+      ...session,
+      candidates: session.candidates.map((c) => (c.question.id === candidate.question.id ? candidate : c)),
+    };
+    setView((prev) => ended(prev) ? prev : {
+      kind: 'answering', session: updated, current: prepare(candidate, requestedMode), busy: false,
+      notice: '設問が更新されました。最新の内容でもう一度解答してください',
+    });
+  };
+
+  /** 未記録の判定を同じ入力のまま送り直す。 */
+  const retry = (session: QuestionSession, current: Current, input: RecordQuestionAnswerInput, isCorrect: boolean) => {
+    void guard.run(async () => {
+      setView({ kind: 'judged', session, current, input, isCorrect, record: { kind: 'recording' } });
+      await sendRecord(session, current, input, isCorrect);
     });
   };
 
@@ -251,7 +327,7 @@ export function StructuredQuestionStudyPage({
 
   const { session, current } = view;
   const { question } = current.candidate;
-  const recording = view.kind === 'answering' && view.record?.kind === 'recording';
+  const recording = view.kind === 'answering' && view.busy;
   const canSubmit = !recording && (current.mode === 'choice' ? selected !== null : canSubmitWrittenAnswer(written));
   const progress = (
     <p className="text-[13px] text-muted" aria-label="進行状況">
@@ -293,9 +369,9 @@ export function StructuredQuestionStudyPage({
                 value={written} disabled={recording} onChange={(event) => setWritten(event.target.value)} />
             </label>
           )}
-          {view.record && view.record.kind !== 'recording' && (
+          {view.notice && (
             <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
-              {view.record.kind === 'failed' ? view.record.message : '設問が更新されたため記録できませんでした'}
+              {view.notice}
             </p>
           )}
           <div className="flex flex-wrap gap-3">
@@ -305,7 +381,12 @@ export function StructuredQuestionStudyPage({
           </div>
         </form>
       ) : (
-        <QuestionResultPanel key={question.id} question={question} answer={view.answer} isCorrect={view.isCorrect}
+        <QuestionResultPanel key={question.id} question={question} answer={view.input.answer} isCorrect={view.isCorrect}
+          unrecorded={view.record.kind === 'recorded' ? undefined : {
+            message: view.record.kind === 'failed' ? view.record.message : null,
+            retrying: view.record.kind === 'recording',
+            onRetry: () => retry(session, current, view.input, view.isCorrect),
+          }}
           onNext={() => advance(session)} onFinish={() => finish(session)} setFlags={setFlags}
           onQuestionUpdated={(updated) => updateJudgedQuestion(updated)} />
       )}

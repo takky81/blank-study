@@ -150,13 +150,87 @@ describe('StructuredQuestionStudyPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('正解');
   });
 
-  it('記録に失敗したらエラーを表示し件数を進めない', async () => {
+  it('記録に失敗しても判定結果を保持し、未記録警告と再試行を示して次問へ進めない', async () => {
+    setup([candidate(base), candidate({ ...base, id: 'q2', sortOrder: 1 })],
+      vi.fn().mockResolvedValue({ kind: 'failed', message: '回答を記録できませんでした' }));
+    await start('記述式');
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('未記録');
+    expect(screen.getByRole('alert')).toHaveTextContent('回答を記録できませんでした');
+    expect(screen.getByRole('status')).toHaveTextContent('正解');
+    expect(screen.getByText('光合成とは？')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '記録を再試行' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '次の問題へ' })).not.toBeInTheDocument();
+    expect(screen.getByText('0 / 2 問')).toBeInTheDocument();
+  });
+
+  it('再試行は同じ入力を1回だけ送り、成功時だけ件数を1回進めて次問へ進める', async () => {
+    const pending = deferred<RecordQuestionAnswerResult>();
+    const record = vi.fn<(...a: unknown[]) => Promise<RecordQuestionAnswerResult>>()
+      .mockResolvedValueOnce({ kind: 'failed', message: '回答を記録できませんでした' })
+      .mockReturnValueOnce(pending.promise);
+    setup([candidate(base), candidate({ ...base, id: 'q2', sortOrder: 1 })], record);
+    await start('記述式');
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    const retry = await screen.findByRole('button', { name: '記録を再試行' });
+    fireEvent.click(retry);
+    fireEvent.click(retry);
+    expect(record).toHaveBeenCalledTimes(2);
+    expect(record.mock.calls[1]?.[0]).toEqual(record.mock.calls[0]?.[0]);
+    pending.resolve({ kind: 'recorded', logId: 'l', stats });
+    fireEvent.click(await screen.findByRole('button', { name: '次の問題へ' }));
+    expect(await screen.findByText('1 / 2 問')).toBeInTheDocument();
+    expect(screen.queryByText('未記録')).not.toBeInTheDocument();
+  });
+
+  it('記録失敗のまま学習を終えると記録済みの件数だけで終了する', async () => {
     setup([candidate(base)], vi.fn().mockResolvedValue({ kind: 'failed', message: '回答を記録できませんでした' }));
     await start('記述式');
     fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
     fireEvent.click(screen.getByRole('button', { name: '解答する' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('回答を記録できませんでした');
+    await screen.findByRole('button', { name: '記録を再試行' });
+    fireEvent.click(screen.getByRole('button', { name: '学習を終える' }));
+    expect(await screen.findByText('正解 0 / 0 問')).toBeInTheDocument();
+  });
+
+  it('設問競合では現在設問を再読込し、新しい版で再回答できる', async () => {
+    const record = vi.fn<(...a: unknown[]) => Promise<RecordQuestionAnswerResult>>()
+      .mockResolvedValueOnce({ kind: 'question-conflict' })
+      .mockResolvedValueOnce({ kind: 'recorded', logId: 'l', stats });
+    const reloadQuestion = vi.fn().mockResolvedValue({ ...base, version: 4, questionText: '光合成とは何か？' });
+    render(<StructuredQuestionStudyPage initialScope={scope} onExit={vi.fn()}
+      loadCandidates={vi.fn().mockResolvedValue([candidate(base)])} recordAnswer={record} reloadQuestion={reloadQuestion} />);
+    await start('記述式');
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByText('光合成とは何か？')).toBeInTheDocument();
+    expect(reloadQuestion).toHaveBeenCalledWith(expect.objectContaining({ id: 'q1', version: 3 }));
+    expect(screen.getByRole('alert')).toHaveTextContent('設問が更新されました');
+    expect(screen.getByLabelText('解答')).toHaveValue('');
     expect(screen.getByText('0 / 1 問')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('正解');
+    expect(record).toHaveBeenCalledTimes(2);
+    expect(record.mock.calls[1]?.[0]).toMatchObject({ questionId: 'q1', expectedQuestionVersion: 4 });
+  });
+
+  it('設問競合で再読込した設問が無効なら記録せずに飛ばす', async () => {
+    const record = vi.fn<(...a: unknown[]) => Promise<RecordQuestionAnswerResult>>()
+      .mockResolvedValueOnce({ kind: 'question-conflict' });
+    const reloadQuestion = vi.fn().mockResolvedValue(null);
+    render(<StructuredQuestionStudyPage initialScope={scope} onExit={vi.fn()}
+      loadCandidates={vi.fn().mockResolvedValue([candidate(base), candidate({ ...base, id: 'q2', sortOrder: 1, questionText: '呼吸とは？' })])}
+      recordAnswer={record} reloadQuestion={reloadQuestion} />);
+    await start('記述式');
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByText('呼吸とは？')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('出題できなくなった');
+    expect(screen.getByText('0 / 1 問')).toBeInTheDocument();
+    expect(record).toHaveBeenCalledTimes(1);
   });
 
   it('途中終了すると記録済みの件数で終了し、戻る操作でonExitを呼ぶ', async () => {
