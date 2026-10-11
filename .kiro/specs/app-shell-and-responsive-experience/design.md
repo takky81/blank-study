@@ -4,7 +4,7 @@
 
 本仕様は、認証済みの個人学習者に対して、保護画面のルーティング、共通ヘッダーと現在地、テーマ、画面幅に応じたナビゲーション、共通操作部品、表示状態、および GitHub Pages のサブパス到達性を提供する。`App` を薄い配線境界とし、小さな共有 UI／純粋ロジック／CSS token を下流 feature が再利用する現行構造を固定する。
 
-これは既存実装のベースライン設計であり、新しい画面、UI フレームワーク、状態管理、データモデル、依存関係を導入しない。読み込みや不存在の判定、文言、データ操作は各業務 feature が所有し、本仕様は利用者が観測する最低限の表示・復帰契約だけを定義する。
+これは既存実装のベースライン設計へfeature route registryの統合契約を追加するものであり、新しい業務画面、UI フレームワーク、状態管理、データモデル、外部依存関係を導入しない。読み込みや不存在の判定、文言、データ操作は各業務 feature が所有し、本仕様は利用者が観測する最低限の表示・復帰契約とroute compositionだけを定義する。
 
 ### 目標
 
@@ -13,6 +13,7 @@
 - `ConfirmDialog`、`ConflictDialog`、`RowActions`、`submitGuard` を feature 非依存の共通所有物として固定する。
 - 読み込み、空、失敗、再試行、不存在、処理中を業務画面が満たす最低品質として定義する。
 - 決定表21列、コード、ワイヤーフレーム、ユニットテスト、E2E、配信 workflow を要件へ追跡可能にする。
+- feature-local route adapterを一つのregistryで検証し、共通routeとnavigationへ合成する所有境界を固定する。
 
 ### 非目標
 
@@ -34,6 +35,7 @@
 - `ConfirmDialog`、`ConflictDialog`、`RowActions` の feature 非依存 props と、`src/lib/submitGuard.ts` の非同期重複防止契約。
 - 読み込み、空、失敗、再試行、不存在、処理中について下流画面が満たす `DisplayStateContract`。
 - production base、Router basename、GitHub Pages の 404 フォールバックからなるサブパス配信契約。
+- feature route registry、共通 navigation composition、および `src/App.tsx` での最終登録。下流 feature はローカル adapter だけを提供する。
 
 ### Out of Boundary
 
@@ -50,6 +52,7 @@
 - ブラウザの `matchMedia`、`localStorage`、history、DOM class、GitHub Pages の静的配信。
 - Tailwind CSS 4 の既存 breakpoint と utility、および `src/index.css` の custom properties／共通 class。
 - 下流 feature は共有部品と契約へ依存できるが、共有部品から feature API または feature 型へ新たに依存しない。
+- 下流 feature の route adapter は安定した descriptor を export できる。registry は React element と route/navigation metadata だけを受け取り、業務型を解釈しない。
 
 ### Revalidation Triggers
 
@@ -75,7 +78,8 @@
 ```mermaid
 graph TB
     IdentityGate --> AppShell
-    AppShell --> ConsumerPages
+    AppShell --> FeatureRouteRegistry
+    FeatureRouteRegistry --> ConsumerPages
     AppShell --> ThemePreferences
     AppShell --> ResponsiveSignal
     AppShell --> BreadcrumbTrail
@@ -92,7 +96,7 @@ graph TB
 - **採用パターン**: 薄いアプリケーションシェル＋props 駆動の共有 UI＋下流実装契約。`ConsumerPages` は利用側を示す論理ノードであり、本仕様は feature Page のファイルを所有しない。
 - **依存方向**: 純粋ロジック／token → 共通 UI → `App`／Page → 業務 feature。共有層から Page、feature API、Supabase への逆依存を作らない。
 - **維持する既存パターン**: named export、厳密な TypeScript、context によるパンくず、MediaQuery 購読、CSS custom properties、決定表と列番号による回帰追跡。
-- **新規コンポーネント**: なし。`DisplayStateContract` と `SubpathDeployment` は既存実装を説明する設計境界であり、新しいランタイム抽象化ではない。
+- **新規コンポーネント**: `FeatureRouteRegistry`だけを薄いcomposition境界として追加する。`DisplayStateContract` と `SubpathDeployment` は既存実装を説明する設計境界であり、新しいランタイム抽象化ではない。
 
 ### 技術スタック
 
@@ -112,6 +116,8 @@ graph TB
 ```text
 src/
 ├── App.tsx                              # IdentityGate（上流）とAppShell: 認証後ルート、共通レイアウト
+├── app/
+│   └── featureRoutes.ts                  # FeatureRouteRegistry: route/navigation descriptorの検証と合成
 ├── components/
 │   ├── Trail.tsx                        # BreadcrumbTrail: Crumb context と現在地表示
 │   ├── RowActions.tsx                   # CollapsibleActions: 広幅直列／狭幅メニュー
@@ -198,12 +204,16 @@ flowchart TD
 | 7.4 | 面の濃度順 | VisualTokens | Luminance ordering |
 | 8.1 | asset と route の同一 base | SubpathDeployment、AppShell | Base contract |
 | 8.2, 8.3 | 直リンク／再読込の SPA 復帰 | SubpathDeployment | 404 fallback |
+| 9.1, 9.2, 9.3 | feature adapterの登録と所有境界 | FeatureRouteRegistry、AppShell | Route descriptor composition |
+| 9.4, 9.5, 9.8, 9.9 | 共通導線、固定descriptor、復帰許可list | FeatureRouteRegistry、AppShell | Navigation composition |
+| 9.6, 9.7, 9.10, 9.11 | 直リンク、再読込、不正parameter、descriptor重複拒否 | FeatureRouteRegistry、SubpathDeployment | Registry validation |
 
 ## コンポーネントとインターフェース
 
 | コンポーネント | 層 | 意図 | 対応要件 | 主要依存 | 契約 |
 |---|---|---|---|---|---|
-| AppShell | アプリ境界 | 認証後のルートと共通レイアウトを接続する | 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.2, 3.1, 3.2, 3.3, 3.5, 8.1 | IdentityGate P0、BrowserRouter P0 | State |
+| AppShell | アプリ境界 | 認証後のルートと共通レイアウトを接続する | 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.2, 3.1, 3.2, 3.3, 3.5, 8.1, 9.2, 9.4, 9.5 | IdentityGate P0、BrowserRouter P0 | State |
+| FeatureRouteRegistry | アプリ境界 | feature-local adapterを検証しrouteと共通navigationへ合成する | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7 | BrowserRouter P0、feature route adapters P0 | Service |
 | ThemePreferences | 共通ロジック | テーマを解決、反転、読書きする | 2.1, 2.2, 2.3, 2.4, 2.5, 7.1 | localStorage P1 | Service |
 | ResponsiveSignal | 共通ロジック | 768px境界を購読する | 3.1, 3.2, 3.3, 3.4, 3.5 | matchMedia P0 | Service、State |
 | BreadcrumbTrail | 共通 UI | Page の現在地をヘッダーへ表示する | 1.4 | Router Link P1 | State |
@@ -229,11 +239,54 @@ flowchart TD
 | `/materials/:materialId/study` | StudyPage | 教材単位 |
 | `/subjects/:subjectId/study` | StudyPage | 科目単位 |
 | `/history` | HistoryPage | 学習履歴 |
+| `/questions` | QuestionBankPage | `questions.bank`。任意の階層文脈と復帰先はsearch parameter |
+| `/question-study` | StructuredQuestionStudyPage | `questions.study`。scope文脈と復帰先はsearch parameter |
+| `/question-exchange` | QuestionExchangePage | `questions.exchange`。任意の階層filter文脈と復帰先はsearch parameter |
 | `*` | `/` | replace 遷移 |
 
 - **状態**: 上流から得たセッション、初期 theme、`narrow`。セッションの意味は本仕様で再定義しない。
 - **不変条件**: `BrowserRouter.basename` は build が公開する base と同じ値を使う。狭幅本文には固定下部ナビ分の余白を置く。
 - **統合**: 下流 Page を import してルートへ配置するが、Page のデータ取得や業務型を解釈しない。
+
+#### FeatureRouteRegistry
+
+```typescript
+type FeatureNavigationDescriptor = {
+  id: string;
+  label: string;
+  to: string;
+  placements: readonly ('wide' | 'narrow')[];
+};
+
+type FeatureRouteDescriptor = {
+  id: string;
+  path: string;
+  element: React.ReactElement;
+  requiresAuth: true;
+  navigation?: FeatureNavigationDescriptor;
+};
+
+function composeFeatureRoutes(
+  descriptors: readonly FeatureRouteDescriptor[],
+): readonly FeatureRouteDescriptor[];
+```
+
+- `src/App.tsx`と`src/app/featureRoutes.ts`は本仕様だけが変更を所有する。下流featureは自身のディレクトリ内でdescriptorを返すroute adapterを実装し、AppShellへ引き渡す。
+- registryは`id`、`path`、navigation `id`の重複を起動前検証で拒否し、渡されたReact elementのpropsや業務型を解釈しない。
+- 構造化設問バンク、構造化設問学習、設問交換の3 adapterを認証済みrouteへ登録し、navigation descriptorが指定したwide／narrow導線へ同じ`to`を合成する。
+- 未認証保護、basename、未知URL fallbackは既存AppShell契約を再利用し、feature adapterへ複製しない。
+
+**構造化設問route descriptorの固定値**:
+
+| route ID | path | search parameter | navigation ID / label / placement | 開始文脈 | 正常終了・取消時の既定復帰先 |
+|---|---|---|---|---|---|
+| `questions.bank` | `/questions` | `subjectId?`, `materialId?`, `chapterId?`, `keywordId?`（UUID）、`returnTo?` | `nav.questions.bank` / `設問` / `wide,narrow` | 指定された最深の有効階層。全省略は設問バンク一覧 | `/` |
+| `questions.study` | `/question-study` | `scope?=subject\|material\|chapter\|keyword`, `scopeId?`（UUID）、`returnTo?` | `nav.questions.study` / `設問学習` / `wide,narrow` | `scope`と`scopeId`は両方指定または両方省略。省略時は対象選択 | `/questions` |
+| `questions.exchange` | `/question-exchange` | `subjectId?`, `materialId?`, `chapterId?`, `keywordId?`（UUID）、`returnTo?` | `nav.questions.exchange` / `設問交換` / `wide` | 指定階層を初期filterとする。全省略は全体条件 | `/questions` |
+
+`returnTo`はpercent-decode後の相対app pathが`/`、`/subjects/{UUID}`、`/materials/{UUID}/edit`、`/questions`のいずれかに完全一致するときだけ採用する。scheme、host、`//`、`.`／`..` segment、fragment、入れ子queryを認めない。許可外または省略時は上表の既定復帰先を使う。bank/exchangeの階層IDは複数指定時にcatalog上の親子関係をfeature adapterが検証する。studyの片側だけのscope指定、未知scope、不正UUIDもfeature-local parameter errorとし、route自体は`/`へ置換しない。
+
+AppShellはsearch stringを改変せずpageへ渡し、registry/navigation/`src/App.tsx`だけを所有する。各featureは固定値をexportするlocal adapter、parameterの構文・階層検証、開始状態、error表示、検証済み復帰操作を所有する。
 
 ### 共通ロジック
 

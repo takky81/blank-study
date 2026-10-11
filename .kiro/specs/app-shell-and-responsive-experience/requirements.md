@@ -6,7 +6,7 @@
 
 ## 境界コンテキスト
 
-- **対象**: 認証済み領域のルートと共通ヘッダー、現在地表示、履歴導線、テーマ切替と端末保存、画面幅に応じたナビゲーション、共通操作メニュー、確認ダイアログ、読み込み／空／失敗／消失状態、再試行、二重送信防止、ブラウザ履歴、配色と操作領域、サブパス配信と SPA フォールバック
+- **対象**: 認証済み領域のルートとfeature route registry、共通ヘッダー、現在地表示、履歴導線、共通navigation composition、テーマ切替と端末保存、画面幅に応じたナビゲーション、共通操作メニュー、確認ダイアログ、読み込み／空／失敗／消失状態、再試行、二重送信防止、ブラウザ履歴、配色と操作領域、サブパス配信と SPA フォールバック
 - **対象外**: ログイン資格情報とセッションの判定、各画面のデータ規則・固有文言・永続化、学習中断時の解答履歴保存、編集画面や学習画面に固有の適応レイアウト、ワイヤーフレームの全面改訂、専用アプリサーバー
 - **隣接する期待**: `identity-and-access` が認証済みセッションを提供する。各業務 feature は、本仕様のルート、共通部品、表示状態、および外観の契約を利用しつつ、自身のデータ取得、業務エラー、保存結果を所有する。GitHub Pages はビルド済みアプリと消失 URL 用フォールバックを配信する。
 
@@ -112,3 +112,21 @@
 1. While アプリが GitHub Pages のリポジトリサブパスで配信されている, the アプリケーションシェル shall 静的資産と画面 URL を同じサブパス基準で解決する
 2. When 利用者がサブパス配下の既存画面 URL を直接開く, the アプリケーションシェル shall SPA の入口を読み込み、その画面を表示する
 3. When 利用者がサブパス配下の既存画面を再読み込みする, the アプリケーションシェル shall 消失 URL 用フォールバックから SPA の入口へ復帰する
+
+### Requirement 9: Feature route の登録と共通導線への合成
+
+**目的:** 機能開発者として、業務 feature がシェルを直接変更せずに画面と導線を追加できるようにしたい。これにより、ルート、認証、ナビゲーション、および未知 URL の規則を一か所で維持できる。
+
+#### 受入基準
+
+1. When 業務 feature が feature-local route adapter を提供する, the アプリケーションシェル shall 安定した route descriptor を feature route registry へ登録できる
+2. The アプリケーションシェル shall `src/App.tsx`、feature route registry、および共通 navigation composition の変更を唯一所有する
+3. The feature route registry shall path、描画要素、認証要否、および任意の navigation descriptor だけを受け取り、feature の業務データ型または API を解釈しない
+4. When navigation descriptor を持つ登録済み feature route がある, the アプリケーションシェル shall 広幅と狭幅の該当共通導線へ同じ到達先を重複なく合成する
+5. When 構造化設問バンク、構造化設問学習、および設問交換の adapter が提供される, the アプリケーションシェル shall 3画面を認証済みルートへ登録し、各 feature が指定した開始・復帰文脈へ到達可能にする
+6. When 登録済み feature URL を直接開くまたは再読み込みする, the アプリケーションシェル shall 既存の認証、basename、および SPA fallback 契約を適用して同じ画面を表示する
+7. If feature route descriptor 同士の path または navigation ID が重複する, the アプリケーションシェル shall 構成時の検証で拒否し、先勝ちによる到達不能を作らない
+8. The アプリケーションシェル shall 設問バンクをroute ID `questions.bank`・path `/questions`・navigation `nav.questions.bank`／`設問`／`wide,narrow`、設問学習を`questions.study`・`/question-study`・`nav.questions.study`／`設問学習`／`wide,narrow`、設問交換を`questions.exchange`・`/question-exchange`・`nav.questions.exchange`／`設問交換`／`wide`として登録する
+9. The アプリケーションシェル shall feature routeの`returnTo`をpercent-decode後の`/`、`/subjects/{UUID}`、`/materials/{UUID}/edit`、`/questions`だけに制限し、許可外または省略時は各feature所定の安全な復帰先を使う
+10. When 構造化設問feature routeを直接表示または再読み込みする, the アプリケーションシェル shall pathとsearch parameterを保持し、feature-local adapterによる開始文脈検証と復帰導線を同じ結果で表示する
+11. If 構造化設問feature routeの検索parameterが不正である, the アプリケーションシェル shall 未知URLとして`/`へ置換せず当該featureを表示し、feature-local parameter errorと安全な復帰導線を利用可能にする
