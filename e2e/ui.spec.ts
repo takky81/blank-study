@@ -69,8 +69,8 @@ test.describe('表示設定と共通の振る舞い', () => {
 
     await page.setViewportSize(MOBILE);
     await expect(page.getByTestId('mobile-nav')).toBeVisible();
-    await expect(page.getByTestId('mobile-nav').getByRole('link', { name: '学習' })).toBeVisible();
-    await expect(page.getByTestId('mobile-nav').getByRole('link', { name: '履歴' })).toBeVisible();
+    await expect(page.getByTestId('mobile-nav').getByRole('link', { name: '学習', exact: true })).toBeVisible();
+    await expect(page.getByTestId('mobile-nav').getByRole('link', { name: '履歴', exact: true })).toBeVisible();
   });
 
   test('列6 狭い画面ではダイアログが全画面になる', async ({ signedIn: page }) => {

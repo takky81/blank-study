@@ -143,4 +143,15 @@ describe('feature route import boundary', () => {
     expect(source).toContain('featureNavigation.wide.map');
     expect(source).toContain('featureNavigation.narrow.map');
   });
+
+  it('AppShellが3つの構造化設問route adapterをregistryへ登録する', () => {
+    const source = readFileSync(resolve('src/App.tsx'), 'utf8');
+
+    expect(source).toMatch(/QUESTION_BANK_ROUTE_DESCRIPTOR,\s*QUESTION_STUDY_ROUTE_DESCRIPTOR,\s*QUESTION_EXCHANGE_ROUTE_DESCRIPTOR/);
+    expect(source).toContain("from '@/features/questions/QuestionBankRoute'");
+    expect(source).toContain("from '@/features/questionStudy/QuestionStudyRoute'");
+    expect(source).toContain("from '@/features/questionExchange/QuestionExchangeRoute'");
+    // AppShellは業務型を解釈しない
+    expect(source).not.toMatch(/keywordId|scopeId|QuestionStudyScope|QuestionExchangeHierarchy/);
+  });
 });

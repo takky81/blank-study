@@ -130,7 +130,7 @@
   - _Depends: 5.1_
   - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 6. Feature route registryで構造化設問の画面と導線を統合する
+- [x] 6. Feature route registryで構造化設問の画面と導線を統合する
 - [x] 6.1 feature非依存のroute registryとnavigation compositionを実装する
   - `src/app/featureRoutes.ts`にpath、React element、認証要否、任意のnavigation情報だけを扱うdescriptorと合成処理を実装し、業務データ型やfeature APIへ依存させない。
   - route ID、path、navigation IDの重複を拒否し、wide／narrowの指定先へ同じ導線を一度だけ合成するunit testを追加する。
@@ -138,7 +138,7 @@
   - `src/App.tsx`とregistryの変更所有者をapp-shellに限定し、feature側がシェルへ直接routeを追加しない構造を型とimport境界で確認する。
   - _Boundary: FeatureRouteRegistry, AppShell_
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.7, 9.9_
-- [ ] 6.2 3つの構造化設問route adapterをAppShellへ登録する
+- [x] 6.2 3つの構造化設問route adapterをAppShellへ登録する
   - `QuestionBankRoute`を`questions.bank`／`/questions`／`nav.questions.bank`／`設問`／`wide,narrow`、`QuestionStudyRoute`を`questions.study`／`/question-study`／`nav.questions.study`／`設問学習`／`wide,narrow`、`QuestionExchangeRoute`を`questions.exchange`／`/question-exchange`／`nav.questions.exchange`／`設問交換`／`wide`としてregistryへ登録する。
   - 各URLの直接表示、search付き再読み込み、未認証時の既存login flow、basename、wide／narrow導線、正常終了・取消時の許可済み`returnTo`または既定復帰先をE2Eで検証する。
   - bank/exchangeの階層UUID・親子不一致、studyのscope/scopeId片側欠落・未知scope・不正UUID、全routeの許可外`returnTo`で、`/`へ未知route置換せずfeature-local errorと安全な復帰導線が出ることを検証する。

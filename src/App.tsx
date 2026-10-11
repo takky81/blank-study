@@ -17,10 +17,17 @@ import {
   composeFeatureRoutes,
   type FeatureRouteDescriptor,
 } from '@/app/featureRoutes';
+import { QUESTION_BANK_ROUTE_DESCRIPTOR } from '@/features/questions/QuestionBankRoute';
+import { QUESTION_STUDY_ROUTE_DESCRIPTOR } from '@/features/questionStudy/QuestionStudyRoute';
+import { QUESTION_EXCHANGE_ROUTE_DESCRIPTOR } from '@/features/questionExchange/QuestionExchangeRoute';
 
-// feature-local adapter は各統合タスクでここへ追加する。
-// App が唯一の consumer になることで、feature から router を直接変更させない。
-const featureRouteDescriptors: readonly FeatureRouteDescriptor[] = [];
+// feature-local adapter の登録先。App が唯一の consumer になることで、
+// feature から router を直接変更させない。開始・復帰文脈の解釈は各 adapter が担う。
+const featureRouteDescriptors: readonly FeatureRouteDescriptor[] = [
+  QUESTION_BANK_ROUTE_DESCRIPTOR,
+  QUESTION_STUDY_ROUTE_DESCRIPTOR,
+  QUESTION_EXCHANGE_ROUTE_DESCRIPTOR,
+];
 const featureRoutes = composeFeatureRoutes(featureRouteDescriptors);
 const featureNavigation = composeFeatureNavigation(featureRoutes);
 
