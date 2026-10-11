@@ -32,6 +32,22 @@
     }
   },
   {
+    "name": "full-width-yen-remains-distinct-from-backslash",
+    "valid": true,
+    "content": {
+      "question_text": "円記号とバックスラッシュを区別する",
+      "model_answer": "￥",
+      "choices": ["\\"],
+      "explanation": null
+    },
+    "expected": {
+      "question_text": "円記号とバックスラッシュを区別する",
+      "model_answer": "￥",
+      "choices": ["\\"],
+      "explanation": null
+    }
+  },
+  {
     "name": "blank-choice",
     "valid": false,
     "content": {
@@ -58,6 +74,16 @@
       "question_text": "正答重複",
       "model_answer": "Ａ",
       "choices": ["a"],
+      "explanation": null
+    }
+  },
+  {
+    "name": "full-width-backslash-duplicates-ascii-backslash",
+    "valid": false,
+    "content": {
+      "question_text": "全角バックスラッシュは半角化する",
+      "model_answer": "＼",
+      "choices": ["\\"],
       "explanation": null
     }
   },
