@@ -73,7 +73,7 @@
   - _Depends: 1.3; upstream `structured-question-bank` read/version contract_
   - _Requirements: 4.3, 4.7, 5.1, 5.2, 5.3, 5.4, 5.6, 7.3_
 
-- [ ] 3.3 exchange画面の条件入力、出力、upload、previewを接続する
+- [x] 3.3 exchange画面の条件入力、出力、upload、previewを接続する
   - filter field、export、file input、区分別件数と内容、cancel/commitをQuestionExchangePageへ統合する。
   - shared submit guardでexport/importの二重送信を防ぎ、loading/empty/errorを区別してfileとpreviewを再試行可能に保持する。
   - narrow/wide双方で横スクロールなしに主要操作へ到達し、label、focus、alert、keyboard操作を確認できるcomponent testを完了条件とする。
