@@ -23,7 +23,7 @@
   - _Requirements: 1.7, 8.1, 8.2, 8.8_
 
 - [ ] 2. 候補・形式・セッションの純粋ポリシーを実装する
-- [ ] 2.1 (P) 階層範囲から重複なし候補を射影する
+- [x] 2.1 (P) 階層範囲から重複なし候補を射影する
   - 科目、教材、章、keywordの範囲を認可済み階層と章本文出現へ解決し、有効な設問だけを候補にする。
   - 同じkeywordが複数章に出てもquestion IDで重複排除し、代表位置を全出現の最小`(subjectOrder, materialOrder, chapterOrder, bodyOccurrenceIndex)`に固定する。keyword直接scopeはquestion `(sortOrder,id)`だけで一意順を作る。
   - 空、存在しない範囲、権限外を区別しすぎず、画面が安全な空状態または戻り先を選べる結果を返す。
