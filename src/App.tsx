@@ -12,6 +12,17 @@ import { loadTheme, nextTheme, resolveTheme, saveTheme, type Theme } from '@/lib
 import { useNarrow } from '@/lib/useNarrow';
 import { TrailProvider, Trail } from '@/components/Trail';
 import { RowActions } from '@/components/RowActions';
+import {
+  composeFeatureNavigation,
+  composeFeatureRoutes,
+  type FeatureRouteDescriptor,
+} from '@/app/featureRoutes';
+
+// feature-local adapter は各統合タスクでここへ追加する。
+// App が唯一の consumer になることで、feature から router を直接変更させない。
+const featureRouteDescriptors: readonly FeatureRouteDescriptor[] = [];
+const featureRoutes = composeFeatureRoutes(featureRouteDescriptors);
+const featureNavigation = composeFeatureNavigation(featureRoutes);
 
 /**
  * セッションの有無で画面を振り分ける。
@@ -63,6 +74,12 @@ export function App() {
             <span className="grow" />
             {/* 狭い画面では右側の操作を畳む（決定表「表示設定と共通の振る舞い」列8） */}
             <RowActions label="ヘッダの操作">
+              {!narrow &&
+                featureNavigation.wide.map((item) => (
+                  <Link key={item.id} to={item.to} className="btn-s shrink-0 no-underline">
+                    {item.label}
+                  </Link>
+                ))}
               <Link to="/history" className="btn-s shrink-0 no-underline">
                 学習履歴
               </Link>
@@ -95,6 +112,9 @@ export function App() {
               <Route path="/materials/:materialId/study" element={<StudyPage />} />
               <Route path="/subjects/:subjectId/study" element={<StudyPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              {featureRoutes.map((route) => (
+                <Route key={route.id} path={route.path} element={route.element} />
+              ))}
               {/* 列13: 存在しない URL は一覧へ戻す */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -117,6 +137,15 @@ export function App() {
             >
               履歴
             </Link>
+            {featureNavigation.narrow.map((item) => (
+              <Link
+                key={item.id}
+                to={item.to}
+                className="flex h-14 grow items-center justify-center text-[14px] text-ink no-underline"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
       </TrailProvider>
