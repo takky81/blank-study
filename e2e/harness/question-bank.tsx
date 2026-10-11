@@ -25,8 +25,11 @@ const ordered = (questions: readonly StructuredQuestion[]) => [...questions].sor
 function AuthenticatedQuestionBankHarness() {
   const [routeKey, setRouteKey] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [darkTheme, setDarkTheme] = useState(false);
+  const [saveCallCount, setSaveCallCount] = useState(0);
   const failNextRead = useRef(false);
   const conflictNextSave = useRef(false);
+  const delayNextSave = useRef(false);
 
   const api = useMemo<QuestionBankApi>(() => ({
     async listQuestionsByKeyword(requestedKeywordId) {
@@ -37,6 +40,11 @@ function AuthenticatedQuestionBankHarness() {
       return ordered(readState().questions.filter((question) => question.keywordId === requestedKeywordId));
     },
     async saveQuestion(draft: QuestionDraft, id?: string, expectedVersion?: number) {
+      setSaveCallCount((count) => count + 1);
+      if (delayNextSave.current) {
+        delayNextSave.current = false;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
       const state = readState();
       if (id === undefined) {
         const question: StructuredQuestion = {
@@ -100,6 +108,13 @@ function AuthenticatedQuestionBankHarness() {
       </button>
       <button type="button" className="btn-s" onClick={() => { failNextRead.current = true; }}>次の読込を失敗させる</button>
       <button type="button" className="btn-s" onClick={() => { conflictNextSave.current = true; }}>次の保存を競合させる</button>
+      <button type="button" className="btn-s" onClick={() => { delayNextSave.current = true; }}>次の保存を遅延させる</button>
+      <button type="button" className="btn-s" onClick={() => {
+        const next = !darkTheme;
+        setDarkTheme(next);
+        document.documentElement.classList.toggle('dark', next);
+      }}>{darkTheme ? 'ライトテーマにする' : 'ダークテーマにする'}</button>
+      <span aria-live="polite">保存呼出回数: {saveCallCount}</span>
       <button type="button" className="btn-s" onClick={() => setRouteKey((value) => value + 1)}>設問バンクを再表示</button>
     </aside>
     {QUESTION_BANK_ROUTE_DESCRIPTOR.requiresAuth && !isAuthenticated
