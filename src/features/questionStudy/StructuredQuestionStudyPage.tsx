@@ -274,7 +274,7 @@ export function StructuredQuestionStudyPage({
   if (!scope) {
     return shell(<ScopePicker loader={scopeOptions} onSelect={setScope} onExit={onExit} />);
   }
-  if (view.kind === 'loading') return <p className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
+  if (view.kind === 'loading') return <p role="status" aria-busy="true" className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
   if (view.kind === 'error') {
     return shell(<>
       <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">{view.message}</p>
@@ -472,7 +472,7 @@ function ScopePicker({ loader, onSelect, onExit }: {
     <>
       <h1 className="text-[22px]">出題範囲を選んでください</h1>
       {error && <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">{error}</p>}
-      {options.subject === null && !error && <p className="text-[13px] text-muted">読み込んでいます…</p>}
+      {options.subject === null && !error && <p role="status" aria-busy="true" className="text-[13px] text-muted">読み込んでいます…</p>}
       {select('subject', '科目', '科目を選ぶ')}
       {select('material', '教材', '教材全体')}
       {select('chapter', '章', '章を指定しない')}
