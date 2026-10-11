@@ -11,6 +11,8 @@ import {
   type RecordQuestionAnswerInput,
   type RecordQuestionAnswerResult,
 } from './api';
+import type { StructuredQuestionConsumerView } from '@/features/questions/types';
+import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPanel';
 import type { QuestionStudyCandidate, QuestionStudyScope } from './candidates';
 import {
   buildQuestionChoiceOptions,
@@ -36,6 +38,7 @@ export type StructuredQuestionStudyPageProps = {
   loadCandidates?: (scope: QuestionStudyScope) => Promise<readonly QuestionStudyCandidate[]>;
   recordAnswer?: (input: RecordQuestionAnswerInput) => Promise<RecordQuestionAnswerResult>;
   scopeOptions?: QuestionScopeOptionsLoader;
+  setFlags?: QuestionFlagSetter;
   now?: () => Date;
 };
 
@@ -97,6 +100,7 @@ export function StructuredQuestionStudyPage({
   loadCandidates = loadQuestionStudyCandidates,
   recordAnswer = recordQuestionAnswer,
   scopeOptions = questionScopeOptionsLoader,
+  setFlags,
   now = () => new Date(),
 }: StructuredQuestionStudyPageProps) {
   const narrow = useNarrow();
@@ -169,6 +173,15 @@ export function StructuredQuestionStudyPage({
           : { kind: 'question-conflict' };
         setView({ kind: 'answering', session, current, record });
       }
+    });
+  };
+
+  /** flag保存後の最新版を判定済み表示へ反映する。記録済み回答は旧版のまま。 */
+  const updateJudgedQuestion = (updated: StructuredQuestionConsumerView) => {
+    setView((prev) => {
+      if (prev.kind !== 'judged' || prev.current.candidate.question.id !== updated.id) return prev;
+      const candidate = { ...prev.current.candidate, question: { ...prev.current.candidate.question, ...updated } };
+      return { ...prev, current: { ...prev.current, candidate } };
     });
   };
 
@@ -249,12 +262,16 @@ export function StructuredQuestionStudyPage({
   return shell(<>
     <div className="flex flex-wrap items-center justify-between gap-3">
       {progress}
-      <button type="button" className="btn-s h-11 px-4" onClick={() => finish(session)} disabled={recording}>
-        学習を終える
-      </button>
+      {view.kind === 'answering' && (
+        <button type="button" className="btn-s h-11 px-4" onClick={() => finish(session)} disabled={recording}>
+          学習を終える
+        </button>
+      )}
     </div>
     <section className="card flex min-w-0 flex-col gap-4 p-4">
-      <h1 className="text-[18px] whitespace-pre-wrap break-words">{question.questionText}</h1>
+      {view.kind === 'answering' && (
+        <h1 className="text-[18px] whitespace-pre-wrap break-words">{question.questionText}</h1>
+      )}
       {view.kind === 'answering' ? (
         <form className="flex min-w-0 flex-col gap-4"
           onSubmit={(event) => { event.preventDefault(); if (canSubmit) submit(session, current); }}>
@@ -288,15 +305,9 @@ export function StructuredQuestionStudyPage({
           </div>
         </form>
       ) : (
-        <div className="flex min-w-0 flex-col gap-4">
-          <div role="status" aria-live="polite" className="flex flex-col gap-2 text-[14px]">
-            <p className="text-[18px]">{view.isCorrect ? '正解' : '不正解'}</p>
-            <p className="break-words">模範解答: {question.modelAnswer}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button type="button" className="btn-p h-12 px-8" onClick={() => advance(session)}>次の問題へ</button>
-          </div>
-        </div>
+        <QuestionResultPanel key={question.id} question={question} answer={view.answer} isCorrect={view.isCorrect}
+          onNext={() => advance(session)} onFinish={() => finish(session)} setFlags={setFlags}
+          onQuestionUpdated={(updated) => updateJudgedQuestion(updated)} />
       )}
     </section>
   </>);

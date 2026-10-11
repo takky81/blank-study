@@ -167,4 +167,19 @@ describe('StructuredQuestionStudyPage', () => {
     fireEvent.click(screen.getByRole('button', { name: '戻る' }));
     expect(onExit).toHaveBeenCalled();
   });
+  it('判定後の結果画面で解説と見直しフラグを扱い、flag失敗でも判定結果を保持する', async () => {
+    const setFlags = vi.fn().mockRejectedValue(new Error('x'));
+    const load = vi.fn().mockResolvedValue([candidate({ ...base, explanation: '光で糖を作る' })]);
+    render(<StructuredQuestionStudyPage initialScope={scope} onExit={vi.fn()} loadCandidates={load}
+      recordAnswer={vi.fn().mockResolvedValue({ kind: 'recorded', logId: 'l', stats })} setFlags={setFlags} />);
+    await start('記述式');
+    fireEvent.change(screen.getByRole('textbox', { name: '解答' }), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByText('光で糖を作る')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: '解説の追加を希望する' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('フラグを保存できませんでした');
+    expect(setFlags).toHaveBeenCalledWith('q1', 3, { explanationRequestFlag: true });
+    expect(screen.getByText('正解')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '次の問題へ' })).toBeInTheDocument();
+  });
 });
