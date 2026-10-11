@@ -1,6 +1,6 @@
 # 実装計画
 
-- [ ] 1. 交換schemaとeligibility純粋契約を実装する
+- [x] 1. 交換schemaとeligibility純粋契約を実装する
 - [x] 1.1 (P) eligibility閾値と固定論理式を型安全に実装する
   - 最低出題回数、最大正答率、最大設問数の入力型、範囲検証、field errorを定義する。
   - 疑義 OR 解説追加 OR（誤答1以上 AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下）を共有fixtureで表現する。keyword集計はactive設問だけのsum、差分、比率、active countを使い、statsなし／attempts 0を統計対象外にする。
@@ -17,7 +17,7 @@
   - _Boundary: ExchangeSchema, ExchangeCodec_
   - _Requirements: 3.1〜3.5, 3.8〜3.12, 4.1, 4.2, 4.6_
 
-- [ ] 1.3 import operationの内容・重複検証を上流契約へ接続する
+- [x] 1.3 import operationの内容・重複検証を上流契約へ接続する
   - outer operationのkeywordIdと、keywordIdを持たないQuestionContentDraftを用い、内外不一致を型/schema上表現不能にする。question bank所有のQuestionContentPolicyを利用し通常編集と同じ規則で検証する。
   - 同じquestion IDの複数update、keyword/question不一致、sourceRequestedFlagsを超えるresolved flagsを保存不可errorへ分類する。
   - 有効operationが混在しても1 errorで全体のcanCommitがfalseになるunit testを完了条件とする。

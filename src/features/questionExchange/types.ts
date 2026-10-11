@@ -109,3 +109,12 @@ export type ExchangeSchemaError = { path: string; message: string };
 export type ExchangeParseResult<T> =
   | { ok: true; value: T }
   | { ok: false; errors: readonly ExchangeSchemaError[] };
+
+/** import operation検証で検出した保存不可error。operationIndexはfile全体のerrorではnull。 */
+export type ImportValidationError = { operationIndex: number | null; path: string; message: string };
+
+export type ImportValidationResult = {
+  errors: readonly ImportValidationError[];
+  /** errorが0件かつoperationが1件以上の場合だけtrue。部分保存は行わない。 */
+  canCommit: boolean;
+};
