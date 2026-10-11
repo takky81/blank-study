@@ -1,0 +1,74 @@
+[
+  {
+    "name": "trim-and-preserve-choice-order",
+    "valid": true,
+    "content": {
+      "question_text": "  TCP/IPとは？  ",
+      "model_answer": "  通信プロトコル群  ",
+      "choices": ["OSI", "HTTP"],
+      "explanation": "  階層化された通信規約  "
+    },
+    "expected": {
+      "question_text": "TCP/IPとは？",
+      "model_answer": "通信プロトコル群",
+      "choices": ["OSI", "HTTP"],
+      "explanation": "階層化された通信規約"
+    }
+  },
+  {
+    "name": "blank-explanation-becomes-null",
+    "valid": true,
+    "content": {
+      "question_text": "DNSの役割は？",
+      "model_answer": "名前解決",
+      "choices": [],
+      "explanation": "   "
+    },
+    "expected": {
+      "question_text": "DNSの役割は？",
+      "model_answer": "名前解決",
+      "choices": [],
+      "explanation": null
+    }
+  },
+  {
+    "name": "blank-choice",
+    "valid": false,
+    "content": {
+      "question_text": "空選択肢",
+      "model_answer": "答え",
+      "choices": ["   "],
+      "explanation": null
+    }
+  },
+  {
+    "name": "normalized-duplicate-choice",
+    "valid": false,
+    "content": {
+      "question_text": "重複選択肢",
+      "model_answer": "別解",
+      "choices": ["Ａ", "a"],
+      "explanation": null
+    }
+  },
+  {
+    "name": "choice-duplicates-model-answer",
+    "valid": false,
+    "content": {
+      "question_text": "正答重複",
+      "model_answer": "Ａ",
+      "choices": ["a"],
+      "explanation": null
+    }
+  },
+  {
+    "name": "invalid-choices-json-shape",
+    "valid": false,
+    "content": {
+      "question_text": "不正JSON形状",
+      "model_answer": "答え",
+      "choices": { "not": "an array" },
+      "explanation": null
+    }
+  }
+]

@@ -8,7 +8,7 @@
   - _Boundary: QuestionPersistence_
   - _Requirements: 1.2, 1.3, 1.4, 2.2, 2.3, 2.6, 3.3, 3.4, 3.5, 5.1, 5.2, 6.2, 6.3, 6.5, 6.6_
 
-- [ ] 1.2 期待版付き単一設問変更を原子的にする
+- [x] 1.2 期待版付き単一設問変更を原子的にする
   - `private.apply_structured_question_content(p_question_id uuid, p_keyword_id uuid, p_expected_version bigint, p_content jsonb, p_flag_patch jsonb)`を`SECURITY INVOKER`、空search path、完全修飾名で作り、primitive自身が`auth.uid()` owner、keyword/question整合性、期待版、内容、単一version increment、未指定flag保持を再検証する。作成、内容更新、flag更新、有効状態、削除の単一公開command RPCから利用する。
   - stale版では内容を変えず現在版を返し、同じ期待版の二重更新は片方だけ成功する。
   - _Boundary: QuestionMutationRPC_
