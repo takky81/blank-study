@@ -26,7 +26,7 @@
   - _Depends: 1.2; upstream `structured-question-bank` tasks 2.1, 5.1_
   - _Requirements: 4.2, 4.4, 4.5, 4.6, 4.7, 6.6_
 
-- [ ] 2. DB側eligibility集計とexport projectionを追加する
+- [x] 2. DB側eligibility集計とexport projectionを追加する
 - [x] 2.1 owner付きeligibility RPCを実装する
   - `20261011020000_create_question_generation_exchange.sql`を追加し、questionsと専用statsをkeyword単位で集計する`get_question_exchange_candidates`を定義する。
   - `auth.uid()`を起点に固定式を評価し、穴埋め履歴を参照しない。常にkeyword単位で1 targetを返し、複数flag設問を`flaggedQuestions[]`へ設問別requestKinds付きで入れ、統計理由を同じtargetへ統合する。
@@ -45,7 +45,7 @@
   - _Depends: 2.1; upstream `learning-content-catalog` paging contract and `markdown-keyword-authoring` body membership contract_
   - _Requirements: 2.3, 2.4, 2.5, 3.2〜3.4, 3.8〜3.12_
 
-- [ ] 2.3 eligibility RPC gatewayと操作文脈付きerrorを実装する
+- [x] 2.3 eligibility RPC gatewayと操作文脈付きerrorを実装する
   - feature APIでfilterをRPC入力へ変換し、DB rowをQuestionExchangeExportV1へ型安全にmappingする。
   - 0件、通信失敗、2ページ目相当の補助読取失敗を不完全artifactと区別し、失敗時にdownload可能値を返さない。
   - owner対象だけの安定したenvelopeまたは再試行可能な日本語Errorが得られるunit/integration testを完了条件とする。
