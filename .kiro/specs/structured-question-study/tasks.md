@@ -90,7 +90,7 @@
   - _Requirements: 5.6, 6.3, 6.4, 6.5, 6.6_
 
 - [ ] 5. アプリ経路と下流統計契約へ接続する
-- [ ] 5.1 構造化設問学習のroute adapterをapp-shellへ引き渡す
+- [x] 5.1 構造化設問学習のroute adapterをapp-shellへ引き渡す
   - feature-local `QuestionStudyRoute.tsx`を実装し、`questions.study`、`/question-study`、`nav.questions.study`、`設問学習`、`wide,narrow`とscope pair・許可済み`returnTo`を提供する。
   - `src/App.tsx`、feature route registry、共通navigationは変更せず、最終登録とwide／narrow導線の合成を`app-shell-and-responsive-experience` task 6.2へ引き渡す。
   - 直接表示・search付き再読込、各scope開始、正常終了の復帰、scope片側欠落・未知scope・不正UUID・許可外`returnTo`の記録なしerrorと`/questions`復帰をadapter contract testへ追加する。
