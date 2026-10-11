@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { resolveFeatureReturnTo } from '@/app/featureRoutes';
 import { supabase } from '@/lib/supabase';
 import { QuestionExchangePage } from './QuestionExchangePage';
 
@@ -108,10 +107,21 @@ function parseRouteSearch(search: string): { hierarchy: QuestionExchangeHierarch
   if (returnValues.length > 1) return null;
   const raw = returnValues[0];
   if (raw === undefined || raw === '') return { hierarchy, returnTo: DEFAULT_RETURN_TO };
-  // 共有allowlistで許可外は空文字fallbackとなり、error扱いにする。
-  const returnTo = resolveFeatureReturnTo(raw, '');
-  if (returnTo === '') return null;
+  const returnTo = resolveReturnTo(raw);
+  if (returnTo === null) return null;
   return { hierarchy, returnTo };
+}
+
+/** app-shellのreturnTo許可listと同じ規則。registryはApp.tsxだけが消費するためfeature内に持つ。 */
+function resolveReturnTo(value: string): string | null {
+  if (value === '/' || value === '/questions') return value;
+  if (value.includes('?') || value.includes('#') || value.includes('\\') || value.startsWith('//')) return null;
+  if (value.split('/').some((segment) => segment === '.' || segment === '..')) return null;
+  const subject = value.match(/^\/subjects\/([^/]+)$/)?.[1];
+  if (subject && UUID_PATTERN.test(subject)) return `/subjects/${subject.toLowerCase()}`;
+  const material = value.match(/^\/materials\/([^/]+)\/edit$/)?.[1];
+  if (material && UUID_PATTERN.test(material)) return `/materials/${material.toLowerCase()}/edit`;
+  return null;
 }
 
 /** owner-scoped（RLS）読取で上位から下位までの親子関係を照合する。 */

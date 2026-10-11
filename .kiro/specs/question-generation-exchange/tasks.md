@@ -150,7 +150,7 @@
   - _Depends: 2.1, 4.2; upstream `identity-and-access` task 6.7_
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.8, 7.10, 7.11_
 
-- [ ] 6. 利用者経路と最終品質ゲートを完了する
+- [x] 6. 利用者経路と最終品質ゲートを完了する
 - [x] 6.1 exportからpreviewまでの手動AI交換経路をE2Eで検証する
   - filter入力からJSON download、外部で編集したfixture upload、新規/更新preview、cancelまでを直列E2Eで実行する。
   - flag単独と統計AND群、0件、invalid JSON/schema、duplicate、unknown参照、不正選択肢、delete命令を含める。
@@ -169,7 +169,7 @@
   - _Depends: 4.3, 5.2, 5.3, 6.1_
   - _Requirements: 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.10, 7.11_
 
-- [ ] 6.3 全品質ゲートと上流契約を再検証する
+- [x] 6.3 全品質ゲートと上流契約を再検証する
   - bank、study、catalog/authoring、app-shell、identityの上流task完了を確認し、新migrationをlocal Supabaseへ適用する。
   - typecheck、questionExchange unit、全unit、決定表coverage、production build、exchange E2Eと上流bank/study回帰を実行する。
   - schema/version、専用stats、本文membership、paging、submit guard、RpcSecurityMatrixの再検証がすべて成功する状態を完了条件とする。
@@ -181,3 +181,4 @@
 ## Implementation Notes
 - keyword export: displayText = answers[0]、modelAnswer = answers.join("、")（design未定義のため2.2で決定）。eligibility RPCはPostgREST max_rows=1000回避のため単一jsonb配列を返す。新規公開RPCは e2e/rpc-security-matrix.ts の末尾へ追加する（既存specが位置indexを参照）。
 - import_question_exchange のエラー: 22023=検証エラー、P0002=未知/他owner参照（同一表現）、PT409(HTTP 409)=stale版。40001はPostgRESTが再試行してtimeoutするため使わない。成功は {createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount}。private primitiveへのUSAGE/EXECUTEはbank migration 000004/000005で付与済み。
+- route adapterは `@/app/featureRoutes` をimportしない（App.tsxだけがregistryを消費する境界テストあり）。returnTo許可listはfeature内に持つ。
