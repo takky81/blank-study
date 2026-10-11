@@ -239,6 +239,12 @@ describe('structured question mutation API', () => {
     ['フラグ更新', () => setQuestionFlags('question-0001', 1, { doubtFlag: true }), { kind: 'saved', question: null }],
     ['有効状態更新', () => setQuestionActive('question-0001', 1, false), { kind: 'version-conflict' }],
     ['有効状態更新', () => setQuestionActive('question-0001', 1, false), { kind: 'version-conflict', current: [] }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, sort_order: -1 } }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, version: 0 } }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, version: Number.MAX_SAFE_INTEGER + 1 } }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, updated_at: 'not-a-date' } }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, updated_at: '2026-02-30T00:00:00Z' } }],
+    ['保存', () => saveQuestion(draft), { kind: 'saved', question: { ...savedRow, created_at: null } }],
     ['並べ替え', () => reorderQuestions('keyword-1', []), null],
     ['並べ替え', () => reorderQuestions('keyword-1', []), []],
     ['並べ替え', () => reorderQuestions('keyword-1', []), { kind: 'unknown' }],
@@ -319,5 +325,17 @@ describe('structured question read API', () => {
   it('存在しないkeywordとRLSで非表示のkeywordを同じ空配列として扱う', async () => {
     sourceRows = [row(1, { keyword_id: 'authorized-keyword' })];
     expect(await listQuestionsByKeyword('missing-or-hidden')).toEqual([]);
+  });
+
+  it.each([
+    ['unsafe integer', { version: Number.MAX_SAFE_INTEGER + 1 }],
+    ['negative sort order', { sort_order: -1 }],
+    ['zero version', { version: 0 }],
+    ['invalid updated date', { updated_at: 'not-a-date' }],
+    ['impossible calendar date', { updated_at: '2026-02-30T00:00:00Z' }],
+    ['null explanation以外のnull', { question_text: null }],
+  ])('不正なDB行(%s)を公開型として返さない', async (_label, overrides) => {
+    sourceRows = [row(1, overrides as Partial<DbRow>)];
+    await expect(listQuestionsByKeyword('keyword-1')).rejects.toThrow('設問の取得に失敗しました');
   });
 });

@@ -79,7 +79,11 @@ async function readQuestions(
     }
     return { rows: (page.data ?? []) as StructuredQuestionRow[], total: page.count };
   });
-  return rows.map(mapStructuredQuestionRow);
+  try {
+    return rows.map(parseStructuredQuestionRow);
+  } catch (cause) {
+    throw new Error('設問の取得に失敗しました', { cause });
+  }
 }
 
 export async function saveQuestion(
@@ -279,13 +283,13 @@ function isStructuredQuestionRow(value: unknown): value is StructuredQuestionRow
     && Array.isArray(value.choices)
     && value.choices.every((choice) => typeof choice === 'string')
     && (value.explanation === null || typeof value.explanation === 'string')
-    && isInteger(value.sort_order)
+    && isNonNegativeInteger(value.sort_order)
     && typeof value.is_active === 'boolean'
     && typeof value.doubt_flag === 'boolean'
     && typeof value.explanation_request_flag === 'boolean'
-    && isInteger(value.version)
-    && typeof value.created_at === 'string'
-    && typeof value.updated_at === 'string';
+    && isPositiveInteger(value.version)
+    && isTimestamp(value.created_at)
+    && isTimestamp(value.updated_at);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -298,4 +302,28 @@ function isInteger(value: unknown): value is number {
 
 function isPositiveInteger(value: unknown): value is number {
   return isInteger(value) && value > 0;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return isInteger(value) && value >= 0;
+}
+
+function isTimestamp(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if (!match) return false;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText, , offsetHourText, offsetMinuteText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const calendarDate = new Date(Date.UTC(year, month - 1, day));
+  const validCalendarDate = calendarDate.getUTCFullYear() === year
+    && calendarDate.getUTCMonth() === month - 1
+    && calendarDate.getUTCDate() === day;
+  return validCalendarDate
+    && Number(hourText) <= 23
+    && Number(minuteText) <= 59
+    && Number(secondText) <= 59
+    && (offsetHourText === undefined || Number(offsetHourText) <= 23)
+    && (offsetMinuteText === undefined || Number(offsetMinuteText) <= 59);
 }

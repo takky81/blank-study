@@ -99,7 +99,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 7.2_
 
 - [ ] 5. 設問バンクの回帰と品質ゲートを完成する
-- [ ] 5.1 (P) 入力・mapping・競合の単体テストを追加する
+- [x] 5.1 (P) 入力・mapping・競合の単体テストを追加する
   - 空白、重複、模範解答との重複、解説null、選択肢順、DB行mapping、競合unionを境界値込みで検証する。
   - 共有正答正規化の変更を検出する回帰を含め、対象単体テストがすべて成功する。
   - _Boundary: QuestionContentPolicyTests, StructuredQuestionApiUnitTests_

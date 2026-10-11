@@ -47,7 +47,7 @@ describe('validateQuestionDraft', () => {
   });
 
   it('共有正答正規化後に重複する選択肢の位置を報告する', () => {
-    expect(validateQuestionDraft(validInput({ choices: ['ＣＰＵ', ' cpu '] }))).toContainEqual({
+    expect(validateQuestionDraft(validInput({ choices: ['ＣＰＵ１！', ' cpu1! '] }))).toContainEqual({
       field: 'choices',
       index: 1,
       message: '選択肢2が重複しています。',
@@ -56,7 +56,7 @@ describe('validateQuestionDraft', () => {
 
   it('共有正答正規化後に模範解答と重複する選択肢を報告する', () => {
     expect(
-      validateQuestionDraft(validInput({ modelAnswer: 'CPU', choices: [' Ｃｐｕ '] })),
+      validateQuestionDraft(validInput({ modelAnswer: 'CPU1!', choices: [' Ｃｐｕ１！ '] })),
     ).toContainEqual({
       field: 'choices',
       index: 0,
