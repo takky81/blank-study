@@ -160,7 +160,7 @@
   - _Depends: 3.4, 5.1_
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.1, 5.6_
 
-- [ ] 6.2 原子的commitと競合経路をE2Eで検証する
+- [x] 6.2 原子的commitと競合経路をE2Eで検証する
   - create/update混在、片flag/両flag解除、file外flag維持、成功summaryと再読込を検証する。
   - preview後編集によるstale、foreign owner、failure injectionで自動上書き・部分保存・意図しないflag解除がないことを確認する。
   - narrow/wide、keyboard、focus、alert、二重送信防止を含む利用者経路が成功する状態を完了条件とする。

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import { createSubmitGuard } from '@/lib/submitGuard';
 import { commitQuestionExchange, exportEligibleQuestions, previewQuestionExchange, type EligibilityExportResult } from './api';
@@ -93,6 +93,12 @@ export function QuestionExchangePage({
   const importGuard = useRef(createSubmitGuard());
   const inputRefs = useRef<Partial<Record<EligibilityFilterField, HTMLInputElement | null>>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const importErrorRef = useRef<HTMLDivElement | null>(null);
+
+  // 処理中に確定・previewボタンが無効化されfocusが失われるため、失敗時はalertへfocusを移す。
+  useEffect(() => {
+    if (importState.kind === 'preview-error' || importState.kind === 'commit-error') importErrorRef.current?.focus();
+  }, [importState]);
 
   const runExport = () => {
     const input = {
@@ -206,7 +212,7 @@ export function QuestionExchangePage({
       </div>
       {file && <p className="text-[13px] text-ink-soft [overflow-wrap:anywhere]">選択中: {file.name}</p>}
       {importState.kind === 'previewing' && <p role="status" aria-live="polite" className="text-[13px] text-muted">previewを作成中…</p>}
-      {importState.kind === 'preview-error' && <div role="alert" className="flex flex-wrap items-center gap-3 rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn">
+      {importState.kind === 'preview-error' && <div role="alert" ref={importErrorRef} tabIndex={-1} className="flex flex-wrap items-center gap-3 rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn">
         <span className="min-w-0 grow [overflow-wrap:anywhere]">{importState.message}。ファイルを確認して再試行してください。</span>
         <button type="button" onClick={runPreview} className="btn-s border-warn text-warn">previewを再試行</button></div>}
       {importState.kind === 'committed' && <p role="status" className="text-[13px]">
@@ -223,7 +229,7 @@ export function QuestionExchangePage({
             <h3 className="text-[13px] font-bold">{KIND_LABELS[item.kind]}</h3><PreviewItemView item={item} /></li>)}
         </ol>
         {importState.kind === 'committing' && <p role="status" aria-live="polite" className="text-[13px] text-muted">取込中…</p>}
-        {importState.kind === 'commit-error' && <div role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn [overflow-wrap:anywhere]">
+        {importState.kind === 'commit-error' && <div role="alert" ref={importErrorRef} tabIndex={-1} className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn [overflow-wrap:anywhere]">
           {importState.message}。previewは保持しています。再試行するか、取り消して再出力してください。</div>}
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={runCommit} disabled={!preview.canCommit || busyImport} className="btn-p">取込を確定</button>
