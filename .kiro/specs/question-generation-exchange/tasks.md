@@ -130,7 +130,7 @@
   - _Depends: 2.2, 2.3_
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 5.2 (P) import transaction内部失敗のrollbackを検証する
+- [x] 5.2 (P) import transaction内部失敗のrollbackを検証する
   - valid create/update処理後にDB constraintで確実に失敗するfailure injection payloadまたはtest-only transaction fixtureを用意する。
   - authenticated利用者として実RPCを呼び、前後でquestions、version、両flagが全件不変で途中作成行もないことを管理用clientで確認する。
   - 通信abortではなくRPC内部例外による全rollbackが観測できる状態を完了条件とする。
