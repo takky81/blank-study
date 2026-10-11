@@ -2,6 +2,8 @@ import { fetchAll } from '@/lib/paged';
 import { supabase } from '@/lib/supabase';
 import { listQuestionsByMaterial } from '@/features/questions/api';
 import type { StructuredQuestion } from '@/features/questions/types';
+import { readExchangeImportFile } from './file';
+import { planImportPreview, type ImportPreview, type ImportPreviewSnapshot } from './preview';
 import { projectEligibilityExport, type ExchangeCatalog } from './projection';
 import { REASON_ORDER, REQUEST_KIND_ORDER, serializeExchangeExport } from './schema';
 import {
@@ -10,6 +12,7 @@ import {
   type EligibilityReason,
   type EligibilityTarget,
   type QuestionExchangeExportV1,
+  type QuestionExchangeImportV1,
   type RequestKind,
 } from './types';
 
@@ -184,4 +187,55 @@ export async function exportEligibleQuestions(
   } catch (cause) {
     throw contextError(READ_CONTEXT, cause);
   }
+}
+
+// ---- import preview read adapter ----
+
+const PREVIEW_CONTEXT = '設問交換のpreviewを作成できませんでした';
+
+const PREVIEW_QUESTION_COLUMNS =
+  'id, owner_id, material_id, keyword_id, question_text, model_answer, choices, explanation, sort_order, is_active, doubt_flag, explanation_request_flag, version, updated_at';
+
+type PreviewQuestionRow = {
+  id: string; owner_id: string; material_id: string; keyword_id: string; question_text: string; model_answer: string;
+  choices: string[]; explanation: string | null; sort_order: number; is_active: boolean; doubt_flag: boolean;
+  explanation_request_flag: boolean; version: number; updated_at: string;
+};
+
+/**
+ * importが参照するkeyword/questionの現在snapshotをSELECTだけで取得する（書込みなし）。
+ * RLSで他ownerの行は返らないため、foreign参照は未知と同じ扱いになる。
+ */
+export async function readImportPreviewSnapshot(file: QuestionExchangeImportV1): Promise<ImportPreviewSnapshot> {
+  const keywordIds = file.operations.map((o) => o.keywordId);
+  const questionIds = file.operations.flatMap((o) => (o.kind === 'update' ? [o.questionId] : []));
+  const [keywords, rows] = await Promise.all([
+    readPagedIn<{ id: string }>('keywords', 'id', 'id', keywordIds, ['id']),
+    readPagedIn<PreviewQuestionRow>('structured_questions', PREVIEW_QUESTION_COLUMNS, 'id', questionIds, ['id']),
+  ]);
+  const questions = new Map<string, StructuredQuestion>(rows.map((r) => [r.id, {
+    id: r.id, ownerId: r.owner_id, materialId: r.material_id, keywordId: r.keyword_id, questionText: r.question_text,
+    modelAnswer: r.model_answer, choices: r.choices, explanation: r.explanation, sortOrder: r.sort_order,
+    isActive: r.is_active, doubtFlag: r.doubt_flag, explanationRequestFlag: r.explanation_request_flag,
+    version: r.version, updatedAt: r.updated_at,
+  }]));
+  return { questions, keywordIds: new Set(keywords.map((k) => k.id)) };
+}
+
+/** 検証済みimportからpreviewを作る。読取失敗は操作文脈付きError。 */
+export async function buildImportPreview(file: QuestionExchangeImportV1): Promise<ImportPreview> {
+  try {
+    return planImportPreview(file, await readImportPreviewSnapshot(file));
+  } catch (cause) {
+    throw contextError(PREVIEW_CONTEXT, cause);
+  }
+}
+
+/** 選択fileを読み、構文error時はpath付きerror、成功時はpreviewを返す。DBは書き換えない。 */
+export async function previewQuestionExchange(selected: Blob): Promise<ImportPreview> {
+  const parsed = await readExchangeImportFile(selected);
+  if (!parsed.ok) {
+    return { items: parsed.errors.map((e) => ({ kind: 'error' as const, operationIndex: null, ...e })), canCommit: false };
+  }
+  return buildImportPreview(parsed.value);
 }

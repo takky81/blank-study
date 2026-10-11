@@ -59,7 +59,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { exportEligibleQuestions, mapEligibilityRpcResult } from './api';
+import { buildImportPreview, exportEligibleQuestions, mapEligibilityRpcResult } from './api';
 import { parseExchangeExport, serializeExchangeExport } from './schema';
 
 const uuid = (n: number) => `11111111-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -198,5 +198,38 @@ describe('exportEligibleQuestions', () => {
   it('参照先keywordが読めない場合は不完全なartifactを返さない', async () => {
     tables.keywords = [];
     await expect(exportEligibleQuestions(filter, deps)).rejects.toThrow(/設問交換の対象内容を読み込めませんでした/);
+  });
+});
+
+describe('buildImportPreview', () => {
+  beforeEach(() => {
+    seed();
+    failTable = null;
+    queryLog.length = 0;
+    rpcCalls.length = 0;
+  });
+
+  it('参照keyword/questionをID昇順chunkのSELECTだけで読みpreviewを作る', async () => {
+    const many = Array.from({ length: 250 }, (_, i) => uuid(1000 + i));
+    tables.structured_questions!.push(...many.map((id) => question(id, KW1)));
+    const content = { questionText: '新', modelAnswer: '答', choices: [], explanation: null };
+    const operations = many.map((questionId) => ({
+      kind: 'update' as const, keywordId: KW1, questionId, expectedVersion: 2, question: content,
+      sourceRequestedFlags: [], resolvedFlags: [],
+    }));
+    const preview = await buildImportPreview({ schemaVersion: 1, exchangeId: EX1, exportedAt: ts, operations });
+    expect(preview.canCommit).toBe(true);
+    expect(preview.items.filter((i) => i.kind === 'update')).toHaveLength(250);
+    expect(rpcCalls).toEqual([]);
+    const questionReads = queryLog.filter((q) => q.table === 'structured_questions');
+    expect(questionReads.map((q) => q.inFilter?.[1].length)).toEqual([200, 50]);
+    expect(questionReads.every((q) => q.order.join() === 'id')).toBe(true);
+  });
+
+  it('読取失敗は操作文脈付きErrorにする', async () => {
+    failTable = 'keywords';
+    const op = { kind: 'create' as const, keywordId: KW1, question: { questionText: '新', modelAnswer: '答', choices: [], explanation: null } };
+    await expect(buildImportPreview({ schemaVersion: 1, exchangeId: EX1, exportedAt: ts, operations: [op] }))
+      .rejects.toThrow('設問交換のpreviewを作成できませんでした: network down');
   });
 });

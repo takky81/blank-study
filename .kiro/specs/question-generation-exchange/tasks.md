@@ -64,7 +64,7 @@
   - _Depends: 1.2, 2.3_
   - _Requirements: 3.1, 3.5, 3.6, 4.1_
 
-- [ ] 3.2 current snapshotからimport preview planを作る
+- [x] 3.2 current snapshotからimport preview planを作る
   - validated operationに対してowner-scoped current question/keyword snapshotを取得し、create/update/stale/unknown/errorへ分類する。
   - updateはbefore/after、staleは現在内容・現在版とincomingを保持し、error/conflictが1件でもあればcanCommit=falseにする。
   - unknownとforeign参照は同じerror表現にし、preview作成がDBを書き換えないことをintegration testで確認する。
