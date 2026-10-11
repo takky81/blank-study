@@ -55,7 +55,7 @@
   - _Requirements: 2.1, 2.3, 2.6, 3.1, 3.6_
 
 - [ ] 3. browser export/uploadとpreviewを実装する
-- [ ] 3.1 (P) JSON download/upload adapterを実装する
+- [x] 3.1 (P) JSON download/upload adapterを実装する
   - schema v1をUTF-8 JSON Blobとして安全なfilenameでdownloadし、選択fileをUTF-8文字列として読み取るadapterを作る。
   - 対象0件ではdownloadせず、invalid encoding/JSONは書込み前のpath付きerrorへ変換する。
   - download artifactの再parse round tripと、空結果・壊れたfileでdownload/importが進まないtestを完了条件とする。
