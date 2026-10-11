@@ -47,11 +47,10 @@ for (const viewport of [
     await expectNoHorizontalOverflow(page);
 
     await start(page, s.keywordId, '自動');
-    const choices = page.getByRole('radiogroup', { name: '選択肢' });
+    const choices = page.getByRole('group', { name: '選択肢' });
     await expect(choices).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    await choices.getByLabel('ビット', { exact: true }).check();
-    await page.getByRole('button', { name: '解答する' }).click();
+    await choices.getByRole('button', { name: 'ビット', exact: true }).click();
     await expect(page.getByRole('status').getByText('正解', { exact: true })).toBeVisible();
     await expect(page.getByLabel('内容に疑義がある')).toBeVisible();
     await expect(page.getByLabel('解説の追加を希望する')).toBeVisible();
@@ -101,14 +100,15 @@ test('範囲選択・形式選択・回答・flag・次の操作をキーボー�
   await page.getByRole('button', { name: '学習を開始' }).focus();
   await page.keyboard.press('Enter');
 
-  // 選択肢: 名前付きradio、矢印で移動、Enterで送信。
-  const choices = page.getByRole('radiogroup', { name: '選択肢' });
-  const bit = choices.getByRole('radio', { name: 'ビット', exact: true });
+  // 選択肢: 名前付きbutton、Tabで移動し、Enterで即確定する。
+  const choices = page.getByRole('group', { name: '選択肢' });
+  const bit = choices.getByRole('button', { name: 'ビット', exact: true });
   await expect(bit).toBeVisible();
-  await choices.getByRole('radio').first().focus();
-  await page.keyboard.press('Space');
-  for (let i = 0; i < 4 && !(await bit.isChecked()); i += 1) await page.keyboard.press('ArrowDown');
-  await expect(bit).toBeChecked();
+  await choices.getByRole('button').first().focus();
+  for (let i = 0; i < 4 && !(await bit.evaluate((el) => el === document.activeElement)); i += 1) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(bit).toBeFocused();
   await page.keyboard.press('Enter');
   const status = page.getByRole('status').filter({ hasText: '正解' });
   await expect(status).toHaveAttribute('aria-live', 'polite');

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { StructuredQuestion } from '@/features/questions/types';
@@ -89,15 +89,15 @@ describe('StructuredQuestionStudyPage', () => {
   it('選択肢は登録順（模範解答→登録選択肢）で並び、わからないは末尾に分かれる', async () => {
     setup([candidate(base)]);
     await start('選択式');
-    const labels = screen.getAllByRole('radio').map((radio) => radio.closest('label')?.textContent);
+    const group = screen.getByRole('group', { name: '選択肢' });
+    const labels = within(group).getAllByRole('button').map((button) => button.textContent);
     expect(labels).toEqual(['化学反応', '物理現象', '生物', '天体', 'わからない']);
   });
 
   it('わからないは空の回答として記録され不正解になる', async () => {
     const { record } = setup([candidate(base)]);
     await start('選択式');
-    fireEvent.click(screen.getByRole('radio', { name: 'わからない' }));
-    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    fireEvent.click(screen.getByRole('button', { name: 'わからない' }));
     expect(await screen.findByRole('status')).toHaveTextContent('不正解');
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ answer: '', mode: 'choice' }));
   });
@@ -122,14 +122,14 @@ describe('StructuredQuestionStudyPage', () => {
     expect(screen.getByText('正解 1 / 1 問')).toBeInTheDocument();
   });
 
-  it('選択式はラベル付き選択肢で答え、不正解なら模範解答を示す', async () => {
-    setup([candidate(base)]);
+  it('選択式は選択肢を押した時点で解答を確定し、不正解なら模範解答を示す', async () => {
+    const { record } = setup([candidate(base)]);
     await start('選択式');
-    const group = screen.getByRole('radiogroup', { name: '選択肢' });
-    expect(group).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '解答する' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('radio', { name: '物理現象' }));
-    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(screen.getByRole('group', { name: '選択肢' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '解答する' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '物理現象' }));
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ answer: '物理現象', mode: 'choice' }));
     const status = await screen.findByRole('status');
     expect(status).toHaveTextContent('不正解');
     expect(status).toHaveTextContent('化学反応');

@@ -161,12 +161,14 @@ export function StructuredQuestionStudyPage({
 
   const begin = (candidates: readonly QuestionStudyCandidate[]) => advance(startQuestionSession(candidates, order));
 
-  const submit = (session: QuestionSession, current: Current) => {
+  /** 選択式は選択肢のクリックで即確定するため、押された選択肢の位置を受け取る。 */
+  const submit = (session: QuestionSession, current: Current, choiceIndex: number | null = selected) => {
     const { question } = current.candidate;
     let answer: string;
     let isCorrect: boolean;
     if (current.mode === 'choice') {
-      const choice = selected === null ? undefined : current.choices[selected];
+      if (choiceIndex !== null) setSelected(choiceIndex);
+      const choice = choiceIndex === null ? undefined : current.choices[choiceIndex];
       if (!choice) return;
       answer = choice.unknown ? '' : choice.value;
       isCorrect = judgeQuestionChoice(choice, question.modelAnswer);
@@ -356,14 +358,14 @@ export function StructuredQuestionStudyPage({
         <form className="flex min-w-0 flex-col gap-4"
           onSubmit={(event) => { event.preventDefault(); if (canSubmit) submit(session, current); }}>
           {current.mode === 'choice' ? (
-            <div role="radiogroup" aria-label="選択肢" className={`grid gap-2 ${narrow ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <div role="group" aria-label="選択肢" aria-busy={recording} className={`grid gap-2 ${narrow ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {current.choices.map((choice, index) => (
-                <label key={`${index}-${choice.value}`}
-                  className="flex min-h-11 min-w-0 items-center gap-3 rounded border px-3 py-2 text-[14px]">
-                  <input type="radio" name="question-choice" className="h-4.5 w-4.5 shrink-0 accent-ink"
-                    checked={selected === index} disabled={recording} onChange={() => setSelected(index)} />
+                <button key={`${index}-${choice.value}`} type="button"
+                  className="btn-s flex min-h-11 min-w-0 items-center justify-start px-3 py-2 text-left text-[14px]"
+                  aria-pressed={selected === index} disabled={recording}
+                  onClick={() => { if (!recording) submit(session, current, index); }}>
                   <span className="min-w-0 break-words">{choice.value}</span>
-                </label>
+                </button>
               ))}
             </div>
           ) : (
@@ -378,11 +380,15 @@ export function StructuredQuestionStudyPage({
               {view.notice}
             </p>
           )}
-          <div className="flex flex-wrap gap-3">
-            <button type="submit" className="btn-p h-12 px-8" disabled={!canSubmit}>
-              {recording ? '記録しています…' : '解答する'}
-            </button>
-          </div>
+          {current.mode === 'choice' ? (
+            recording && <p className="text-[13px] text-muted">記録しています…</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" className="btn-p h-12 px-8" disabled={!canSubmit}>
+                {recording ? '記録しています…' : '解答する'}
+              </button>
+            </div>
+          )}
         </form>
       ) : (
         <QuestionResultPanel key={question.id} question={question} answer={view.input.answer} isCorrect={view.isCorrect}

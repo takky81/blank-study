@@ -91,8 +91,7 @@ test('範囲選択から自動形式で正解・不正解・わからないを�
   // Q1: 選択肢あり・未出題 → 選択式。正解し、解説を確認する。
   await expect(page.getByRole('heading', { name: '一番目の設問' })).toBeVisible();
   await expect(page.getByLabel('進行状況')).toHaveText('0 / 3 問');
-  await page.getByRole('radiogroup', { name: '選択肢' }).getByLabel('ビット', { exact: true }).check();
-  await answerButton(page).click();
+  await page.getByRole('group', { name: '選択肢' }).getByRole('button', { name: 'ビット', exact: true }).click();
   await expect(verdict(page, '正解')).toBeVisible();
   await expect(page.getByRole('heading', { name: '解説' })).toBeVisible();
   await expect(page.getByText('情報量の最小単位')).toBeVisible();
@@ -100,7 +99,7 @@ test('範囲選択から自動形式で正解・不正解・わからないを�
 
   // Q2: 選択肢なし → 記述式。不正解。
   await expect(page.getByRole('heading', { name: '二番目の設問' })).toBeVisible();
-  await expect(page.getByRole('radiogroup', { name: '選択肢' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: '選択肢' })).toHaveCount(0);
   await expect(answerButton(page)).toBeDisabled();
   await page.getByLabel('解答').fill('ちがう答え');
   await answerButton(page).click();
@@ -110,8 +109,7 @@ test('範囲選択から自動形式で正解・不正解・わからないを�
 
   // Q3: わからない → 不正解。
   await expect(page.getByRole('heading', { name: '三番目の設問' })).toBeVisible();
-  await page.getByRole('radiogroup', { name: '選択肢' }).getByLabel('わからない').check();
-  await answerButton(page).click();
+  await page.getByRole('group', { name: '選択肢' }).getByRole('button', { name: 'わからない', exact: true }).click();
   await expect(verdict(page, '不正解')).toBeVisible();
   await expect(result(page)).toContainText('わからない');
   await page.getByRole('button', { name: '次の問題へ' }).click();
@@ -142,7 +140,7 @@ test('記述式指定ではURL範囲から開始し、途中終了で途中ま�
   await openStudy(page, `?scope=material&scopeId=${s.materialId}`);
   await startSession(page, '記述式', 3);
   await expect(page.getByRole('heading', { name: '一番目の設問' })).toBeVisible();
-  await expect(page.getByRole('radiogroup', { name: '選択肢' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: '選択肢' })).toHaveCount(0);
   await page.getByLabel('解答').fill(' ビット ');
   await answerButton(page).click();
   await expect(verdict(page, '正解')).toBeVisible();
@@ -160,12 +158,11 @@ test('選択式指定では章範囲でも選択肢を出し、選択肢不足�
   await openStudy(page, `?scope=chapter&scopeId=${s.chapterId}`);
   await startSession(page, '選択式', 3);
   await expect(page.getByRole('heading', { name: '一番目の設問' })).toBeVisible();
-  await page.getByRole('radiogroup', { name: '選択肢' }).getByLabel('バイト').check();
-  await answerButton(page).click();
+  await page.getByRole('group', { name: '選択肢' }).getByRole('button', { name: 'バイト', exact: true }).click();
   await expect(verdict(page, '不正解')).toBeVisible();
   await page.getByRole('button', { name: '次の問題へ' }).click();
   await expect(page.getByRole('heading', { name: '二番目の設問' })).toBeVisible();
-  await expect(page.getByRole('radiogroup', { name: '選択肢' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: '選択肢' })).toHaveCount(0);
   await expect(page.getByLabel('解答')).toBeVisible();
   expect(await logs(owner)).toEqual([
     { question_id: s.q1, question_version: 1, answer: 'バイト', mode: 'choice', is_correct: false },
