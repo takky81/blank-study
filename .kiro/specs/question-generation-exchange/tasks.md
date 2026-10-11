@@ -36,7 +36,7 @@
   - _Depends: 1.1; upstream `structured-question-bank` tasks 1.1〜1.4 and `structured-question-study` tasks 1.1〜1.3_
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5, 2.7_
 
-- [ ] 2.2 eligibility結果へ階層・本文・設問版を接続する
+- [x] 2.2 eligibility結果へ階層・本文・設問版を接続する
   - keyword UUIDから科目、教材、本文に出現する章pathと関連本文を取得し、provenance chapterをmembershipとして扱わないexport projectionを作る。
   - question read contractから全active設問の現在内容、版、sortOrder、requested flagsを結合し、target/path/question/flagと列挙集合をExchange schema v1所定の安定順へ整える。
   - 同一keywordの複数章出現、複数flag設問、統計理由の併存でもtargetが1件で、全階層path・章Markdown・metrics・版を含み、EligibilityTargetとrequestedFlagsがgolden fixtureに完全一致する結果を完了条件とする。
@@ -177,3 +177,6 @@
   - _Boundary: QuestionGenerationExchangeIntegrationValidation_
   - _Depends: 6.2_
   - _Requirements: 2.2, 2.3, 4.3, 5.5, 6.2, 7.8_
+
+## Implementation Notes
+- keyword export: displayText = answers[0]、modelAnswer = answers.join("、")（design未定義のため2.2で決定）。eligibility RPCはPostgREST max_rows=1000回避のため単一jsonb配列を返す。新規公開RPCは e2e/rpc-security-matrix.ts の末尾へ追加する（既存specが位置indexを参照）。

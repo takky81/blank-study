@@ -12,7 +12,7 @@
       "keyword": {
         "id": "10000000-0000-4000-8000-000000000001",
         "displayText": "光合成",
-        "modelAnswer": "光エネルギーで二酸化炭素と水から有機物を合成する反応"
+        "modelAnswer": "光合成、炭酸同化"
       },
       "metrics": {
         "attempts": 6,
@@ -42,7 +42,7 @@
             "id": "40000000-0000-4000-8000-000000000001",
             "title": "代謝",
             "sortOrder": 1,
-            "bodyMarkdown": "# 代謝\n\n**光合成**は葉緑体で行われる。\n"
+            "bodyMarkdown": "# 代謝\n\n{{光合成|id=ab12cd}}は**葉緑体**で行われる。{{光合成|id=ab12cd}}\n"
           }
         },
         {
@@ -52,15 +52,15 @@
             "sortOrder": 0
           },
           "material": {
-            "id": "30000000-0000-4000-8000-000000000002",
-            "title": "生物演習",
-            "sortOrder": 2
+            "id": "30000000-0000-4000-8000-000000000001",
+            "title": "基礎生物",
+            "sortOrder": 0
           },
           "chapter": {
             "id": "40000000-0000-4000-8000-000000000002",
             "title": "エネルギー",
-            "sortOrder": 0,
-            "bodyMarkdown": "光合成と呼吸の比較。"
+            "sortOrder": 2,
+            "bodyMarkdown": "{{id=ab12cd}}と呼吸の比較。"
           }
         }
       ],
@@ -125,7 +125,7 @@
       "keyword": {
         "id": "10000000-0000-4000-8000-000000000002",
         "displayText": "呼吸",
-        "modelAnswer": "有機物を分解してエネルギーを取り出す反応"
+        "modelAnswer": "呼吸"
       },
       "metrics": {
         "attempts": 0,
