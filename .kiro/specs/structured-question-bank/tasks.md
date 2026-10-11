@@ -122,11 +122,11 @@
   - _Depends: 2.2_
   - _Requirements: 7.1, 7.2_
 
-- [ ] 5.4 (P) 新規RPCの4主体セキュリティ適合テストを追加する
+- [x] 5.4 (P) 新規RPCの4主体セキュリティ適合テストを追加する
   - DB catalogから公開user-data RPCを自動列挙し、`mutate_structured_question`（全command）と`reorder_structured_questions`がRpcSecurityMatrixに過不足なく存在することを検証する。
   - owner成功、cross-owner拒否、anon拒否、service roleはfixture準備・事後確認限定として公開RPCを検証する。primitiveは同じowner／cross-owner／anon／service-role matrixで自身の再検証も確認する。
   - DB catalogで`private`がexposed schemas外、primitiveが`SECURITY INVOKER`、空search path、正確なidentity argumentsであり、authenticatedだけに最小`USAGE`／当該signatureの`EXECUTE`、`PUBLIC`／`anon`に非許可であることを検証する。
-  - anonとauthenticatedの双方からSupabase REST/RPC endpointでprimitiveを直接指定しても到達不能であり、公開bank RPCとexchange orchestration経由だけで同一transaction内の委譲が成功することを検証する。
+  - anonとauthenticatedの双方からSupabase REST/RPC endpointでprimitiveを直接指定しても到達不能であり、公開bank RPCから同一transaction内の委譲が成功することを検証する。exchange orchestrationからの委譲は`question-generation-exchange` Task 5.3で検証する。
   - 通常Data APIと各RPCで他利用者の存在・現在内容を漏らさないことを検証する。
   - 4主体の権限回帰が直列実行で成功する。
   - _Boundary: QuestionRpcSecurityConformance_
