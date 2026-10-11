@@ -133,7 +133,7 @@
   - _Depends: 1.3, 3.2_
   - _Requirements: 1.7, 8.1, 8.2, 8.8, 8.9_
 
-- [ ] 6.4 (P) 1,001件超の候補・統計適合テストを追加する
+- [x] 6.4 (P) 1,001件超の候補・統計適合テストを追加する
   - 1範囲に1,001件以上の設問とstatsを用意し、全件・安定順・question ID重複なしを検証する。
   - ページ境界で同じorderやdue日時が続いてもID tie-breakerで欠落しないことを確認する。
   - 同一keywordの複数章出現で最小tupleを代表位置にし、keyword直接scopeでは`(sortOrder,id)`のみを使う。keyword集計のsum／差分／比率／active count、statsなし、attempts 0、無効・削除除外も確認する。
