@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type {
@@ -8,6 +8,7 @@ import type {
   StructuredQuestion,
 } from './types';
 import { validateQuestionContent } from './validation';
+import { isQuestionBankOperationCancelled } from './operationCancellation';
 
 export type QuestionEditorProps = {
   initialDraft: QuestionContentDraft;
@@ -36,6 +37,8 @@ export function QuestionEditor({
 }: QuestionEditorProps) {
   const nextChoiceId = useRef(initialDraft.choices.length);
   const savingRef = useRef(false);
+  const mountedRef = useRef(true);
+  const operationRef = useRef(0);
   const pendingChoiceFocus = useRef<number | 'add' | null>(null);
   const addChoiceRef = useRef<HTMLButtonElement>(null);
   const [questionText, setQuestionText] = useState(initialDraft.questionText);
@@ -46,6 +49,11 @@ export function QuestionEditor({
   const [explanation, setExplanation] = useState(initialDraft.explanation ?? '');
   const [errors, setErrors] = useState<readonly QuestionFieldError[]>([]);
   const [saveState, setSaveState] = useState<SaveState>({ kind: 'idle' });
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; operationRef.current += 1; savingRef.current = false; };
+  }, []);
 
   const fieldError = (field: 'questionText' | 'modelAnswer') =>
     errors.find((error) => error.field === field)?.message;
@@ -139,21 +147,24 @@ export function QuestionEditor({
     );
     setExplanation(result.draft.explanation ?? '');
     savingRef.current = true;
+    const operation = ++operationRef.current;
     setSaveState({ kind: 'saving' });
     try {
       const mutation = await onSave(result.draft);
+      if (!mountedRef.current || operationRef.current !== operation) return;
       if (mutation.kind === 'saved') {
         setSaveState({ kind: 'saved', version: mutation.question.version });
       } else {
         setSaveState({ kind: 'conflict', current: mutation.current });
       }
     } catch (caught: unknown) {
+      if (!mountedRef.current || operationRef.current !== operation || isQuestionBankOperationCancelled(caught)) return;
       setSaveState({
         kind: 'error',
         message: caught instanceof Error ? caught.message : '設問の保存に失敗しました。',
       });
     } finally {
-      savingRef.current = false;
+      if (mountedRef.current && operationRef.current === operation) savingRef.current = false;
     }
   }
 

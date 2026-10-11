@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 
 import { QuestionList } from './QuestionList';
+import { QuestionBankOperationCancelled } from './operationCancellation';
 import type { MutationResult, StructuredQuestion } from './types';
 
 function question(overrides: Partial<StructuredQuestion> = {}): StructuredQuestion {
@@ -133,5 +134,20 @@ describe('QuestionList', () => {
     expect(screen.getByRole('button', { name: '疑義フラグを解除' })).toBeVisible();
     expect(container.querySelector('li')).toHaveClass('min-w-0');
     expect(container.querySelector('li')).not.toHaveClass('overflow-hidden');
+  });
+
+  it('文脈キャンセルとunmount後の競合・失敗を通知しない', async () => {
+    const pending = deferred<MutationResult>();
+    const conflict = vi.fn();
+    const { unmount } = renderList({ questions: [question({ doubtFlag: true })], onClearFlag: () => pending.promise, onVersionConflict: conflict });
+    fireEvent.click(screen.getByRole('button', { name: '疑義フラグを解除' }));
+    unmount();
+    await act(async () => pending.resolve({ kind: 'version-conflict', current: question({ version: 9 }) }));
+    expect(conflict).not.toHaveBeenCalled();
+
+    renderList({ questions: [question({ doubtFlag: true })], onClearFlag: vi.fn().mockRejectedValue(new QuestionBankOperationCancelled()), onVersionConflict: conflict });
+    fireEvent.click(screen.getByRole('button', { name: '疑義フラグを解除' }));
+    await act(async () => undefined);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

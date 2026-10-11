@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 
 import { QuestionEditor } from './QuestionEditor';
+import { QuestionBankOperationCancelled } from './operationCancellation';
 import type { MutationResult, QuestionContentDraft, StructuredQuestion } from './types';
 
 const initialDraft: QuestionContentDraft = {
@@ -221,5 +222,21 @@ describe('QuestionEditor', () => {
     pressKeyboardButton(screen.getByRole('button', { name: 'キャンセル' }), ' ');
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('文脈キャンセルとunmount後の成功・競合・失敗を通知しない', async () => {
+    const pending = deferred<MutationResult>();
+    const reload = vi.fn();
+    const { unmount } = render(<QuestionEditor initialDraft={initialDraft} onSave={() => pending.promise} onCancel={vi.fn()} onReloadConflict={reload} />);
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    unmount();
+    await act(async () => pending.resolve({ kind: 'version-conflict', current: savedQuestion(20) }));
+    expect(reload).not.toHaveBeenCalled();
+
+    const cancelled = vi.fn().mockRejectedValue(new QuestionBankOperationCancelled());
+    render(<QuestionEditor initialDraft={initialDraft} onSave={cancelled} onCancel={vi.fn()} onReloadConflict={reload} />);
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    await act(async () => undefined);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

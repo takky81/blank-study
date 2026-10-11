@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { RowActions } from '@/components/RowActions';
 import type { DeleteQuestionResult, MutationResult, QuestionVersionToken, ReorderQuestionResult, StructuredQuestion } from './types';
+import { isQuestionBankOperationCancelled } from './operationCancellation';
 
 export type QuestionFlagName = 'doubtFlag' | 'explanationRequestFlag';
 export type QuestionListProps = {
@@ -21,10 +22,17 @@ const token = (question: StructuredQuestion): QuestionVersionToken => ({ id: que
 export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClearFlag, onDelete, onVersionConflict }: QuestionListProps) {
   const ordered = useMemo(() => [...questions].sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)), [questions]);
   const busyRef = useRef(false);
+  const mountedRef = useRef(true);
+  const operationRef = useRef(0);
   const retryRef = useRef<(() => void) | null>(null);
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<DialogAction | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; operationRef.current += 1; busyRef.current = false; };
+  }, []);
 
   function closeDialog() { const opener = dialog?.opener; setDialog(null); opener?.focus(); }
   function conflict(current: StructuredQuestion) {
@@ -36,12 +44,18 @@ export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClea
     if (busyRef.current) return;
     retryRef.current = () => run(action);
     busyRef.current = true; setBusy(true); setNotice(null);
-    void action().catch((caught: unknown) => setNotice({ kind: 'error', message: caught instanceof Error ? caught.message : '設問の操作に失敗しました。' }))
-      .finally(() => { busyRef.current = false; setBusy(false); });
+    const operation = ++operationRef.current;
+    void action().catch((caught: unknown) => {
+      if (!mountedRef.current || operationRef.current !== operation || isQuestionBankOperationCancelled(caught)) return;
+      setNotice({ kind: 'error', message: caught instanceof Error ? caught.message : '設問の操作に失敗しました。' });
+    }).finally(() => {
+      if (!mountedRef.current || operationRef.current !== operation) return;
+      busyRef.current = false; setBusy(false);
+    });
   }
   function finish(message: string) { retryRef.current = null; setNotice({ kind: 'status', message }); }
   function runMutation(request: () => Promise<MutationResult>, message: string) {
-    run(async () => { const result = await request(); result.kind === 'version-conflict' ? conflict(result.current) : finish(`${message}（版 ${result.question.version}）`); });
+    run(async () => { const result = await request(); if (!mountedRef.current) return; result.kind === 'version-conflict' ? conflict(result.current) : finish(`${message}（版 ${result.question.version}）`); });
   }
   function move(index: number, offset: -1 | 1) {
     const destination = index + offset;
@@ -51,6 +65,7 @@ export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClea
     reordered.splice(destination, 0, moving);
     run(async () => {
       const result = await onReorder(reordered.map(token));
+      if (!mountedRef.current) return;
       if ('kind' in result && result.kind === 'version-conflict') conflict(result.current);
       else finish('設問を並べ替えました');
     });
@@ -59,10 +74,10 @@ export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClea
     if (!dialog) return;
     const action = dialog;
     if (action.kind === 'delete') {
-      run(async () => { const result = await onDelete(action.question); closeDialog(); result === 'deleted' ? finish('設問を削除しました') : conflict(result.current); });
+      run(async () => { const result = await onDelete(action.question); if (!mountedRef.current) return; closeDialog(); result === 'deleted' ? finish('設問を削除しました') : conflict(result.current); });
     } else {
       const active = !action.question.isActive;
-      run(async () => { const result = await onSetActive(action.question, active); closeDialog(); result.kind === 'version-conflict' ? conflict(result.current) : finish(`設問を${active ? '有効' : '無効'}にしました（版 ${result.question.version}）`); });
+      run(async () => { const result = await onSetActive(action.question, active); if (!mountedRef.current) return; closeDialog(); result.kind === 'version-conflict' ? conflict(result.current) : finish(`設問を${active ? '有効' : '無効'}にしました（版 ${result.question.version}）`); });
     }
   }
 
