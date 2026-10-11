@@ -14,6 +14,7 @@ import {
   type QuestionStudyStats,
 } from './candidates';
 import type { ResolvedQuestionMode } from './question';
+import { aggregateKeywordQuestionStudy, type KeywordQuestionStudyAggregate } from './statsContract';
 
 /** `in` フィルタ1回に渡すID数。URL長と行数上限の両方に収まるよう小さめに取る。 */
 const ID_CHUNK_SIZE = 200;
@@ -84,6 +85,37 @@ export async function listQuestionStudyStats(questionIds: readonly string[]): Pr
     .map(mapQuestionStudyStatsRow);
 }
 
+
+type ActiveQuestionRow = { id: string; keyword_id: string; is_active: boolean };
+
+/**
+ * 下流consumer向け: 有効設問の専用statsをkeyword単位で集計して返す（読取のみ）。
+ * materialIdを渡すとその教材に限定する。穴埋め統計は含まない。
+ */
+export async function listKeywordQuestionStudyAggregates(
+  options: Readonly<{ materialId?: string }> = {},
+): Promise<KeywordQuestionStudyAggregate[]> {
+  let questions: ActiveQuestionRow[];
+  try {
+    questions = await fetchAll<ActiveQuestionRow>(async (from, to) => {
+      let query = supabase
+        .from('structured_questions')
+        .select('id, keyword_id, is_active', { count: 'exact' })
+        .eq('is_active', true);
+      if (options.materialId !== undefined) query = query.eq('material_id', options.materialId);
+      const page = await query.order('id').range(from, to);
+      if (page.error) throw page.error;
+      return { rows: (page.data ?? []) as ActiveQuestionRow[], total: page.count };
+    });
+  } catch (cause) {
+    throw readError('設問学習の統計を読み込めませんでした', cause);
+  }
+  const stats = await listQuestionStudyStats(questions.map((row) => row.id));
+  return aggregateKeywordQuestionStudy(
+    questions.map((row) => ({ id: row.id, keywordId: row.keyword_id, isActive: row.is_active })),
+    stats,
+  );
+}
 /** 範囲の階層・有効設問・statsを全ページ読み、候補へ射影する。権限外／不在の範囲は空。 */
 export async function loadQuestionStudyCandidates(
   scope: QuestionStudyScope,

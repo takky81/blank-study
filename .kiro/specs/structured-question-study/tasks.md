@@ -89,7 +89,7 @@
   - _Depends: 4.1, 4.2_
   - _Requirements: 5.6, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 5. アプリ経路と下流統計契約へ接続する
+- [x] 5. アプリ経路と下流統計契約へ接続する
 - [x] 5.1 構造化設問学習のroute adapterをapp-shellへ引き渡す
   - feature-local `QuestionStudyRoute.tsx`を実装し、`questions.study`、`/question-study`、`nav.questions.study`、`設問学習`、`wide,narrow`とscope pair・許可済み`returnTo`を提供する。
   - `src/App.tsx`、feature route registry、共通navigationは変更せず、最終登録とwide／narrow導線の合成を`app-shell-and-responsive-experience` task 6.2へ引き渡す。
@@ -99,7 +99,7 @@
   - _Depends: 4.3; upstream `app-shell-and-responsive-experience` task 6.1 descriptor contract_
   - _Requirements: 1.7, 8.1, 8.2, 8.4, 8.8, 8.10, 8.11, 8.12_
 
-- [ ] 5.2 下流向け専用統計read contractを固定する
+- [x] 5.2 下流向け専用統計read contractを固定する
   - question別統計に加え、keyword単位で有効設問だけを集計し、`attempts=sum(asked_count)`、`correct=sum(correct_count)`、`wrong=attempts-correct`、`accuracy=correct/attempts`、`questionCount=active questions`を型付きで公開する。
   - 無効／削除済み設問を除外し、statsなしは各件数0、attempts 0はaccuracy nullの未出題として返す。穴埋め統計を混ぜず、exchangeが抽出条件へ利用できる。
   - 下流consumerが専用テーブルへ書き込まず必要統計を取得できることを統合テストで確認する。

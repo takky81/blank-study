@@ -64,7 +64,9 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { listQuestionStudyStats, loadQuestionStudyCandidates, recordQuestionAnswer } from './api';
+import {
+  listKeywordQuestionStudyAggregates, listQuestionStudyStats, loadQuestionStudyCandidates, recordQuestionAnswer,
+} from './api';
 
 const ts = '2026-10-11T00:00:00.000Z';
 
@@ -245,5 +247,36 @@ describe('recordQuestionAnswer', () => {
       rpcImpl = () => Promise.resolve({ data, error: null });
       expect((await recordQuestionAnswer(input)).kind).toBe('failed');
     }
+  });
+});
+
+describe('listKeywordQuestionStudyAggregates', () => {
+  it('有効設問とstatsを全ページ読み、keyword単位の統計を返す', async () => {
+    tables.structured_questions = [
+      ...Array.from({ length: 1201 }, (_, index) => questionRow(index)),
+      questionRow(5000, { keyword_id: 'k2', is_active: false }),
+      questionRow(5001, { keyword_id: 'k2', material_id: 'm0' }),
+    ];
+    tables.structured_question_stats = Array.from({ length: 1201 }, (_, index) =>
+      statsRow(`q-${String(index).padStart(5, '0')}`));
+    await expect(listKeywordQuestionStudyAggregates()).resolves.toEqual([
+      { keywordId: 'k1', attempts: 3603, correct: 2402, wrong: 1201, accuracy: 2402 / 3603, questionCount: 1201 },
+      { keywordId: 'k2', attempts: 0, correct: 0, wrong: 0, accuracy: null, questionCount: 1 },
+    ]);
+    const questionQueries = queryLog.filter((query) => query.table === 'structured_questions');
+    expect(questionQueries.every((query) => query.eq.some(([c, v]) => c === 'is_active' && v === true))).toBe(true);
+    expect(questionQueries[0]?.order).toEqual(['id']);
+  });
+
+  it('materialIdを指定するとその教材の設問だけを集計する', async () => {
+    tables.structured_questions = [questionRow(1), questionRow(2, { keyword_id: 'k0', material_id: 'm0' })];
+    const result = await listKeywordQuestionStudyAggregates({ materialId: 'm0' });
+    expect(result.map((item) => item.keywordId)).toEqual(['k0']);
+  });
+
+  it('読取失敗は操作文脈付き日本語Errorにする', async () => {
+    tables.structured_questions = [questionRow(1)];
+    failTable = 'structured_questions';
+    await expect(listKeywordQuestionStudyAggregates()).rejects.toThrow('設問学習の統計を読み込めませんでした');
   });
 });
