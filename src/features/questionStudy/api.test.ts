@@ -28,8 +28,16 @@ function evaluate(state: Query): Row[] {
   });
 }
 
+let rpcImpl: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> =
+  () => Promise.resolve({ data: null, error: null });
+const rpcCalls: [string, Record<string, unknown>][] = [];
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    rpc: vi.fn((name: string, args: Record<string, unknown>) => {
+      rpcCalls.push([name, args]);
+      return rpcImpl(name, args);
+    }),
     from: vi.fn((table: string) => {
       const state: Query = { table, eq: [], inFilter: null, order: [], ranges: [] };
       queryLog.push(state);
@@ -56,7 +64,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { listQuestionStudyStats, loadQuestionStudyCandidates } from './api';
+import { listQuestionStudyStats, loadQuestionStudyCandidates, recordQuestionAnswer } from './api';
 
 const ts = '2026-10-11T00:00:00.000Z';
 
@@ -187,5 +195,55 @@ describe('loadQuestionStudyCandidates', () => {
     failTable = 'structured_questions';
     await expect(loadQuestionStudyCandidates({ kind: 'material', id: 'm1' }))
       .rejects.toThrow(/^設問学習の候補を読み込めませんでした: /);
+  });
+});
+
+describe('recordQuestionAnswer', () => {
+  const input = {
+    questionId: 'q1', expectedQuestionVersion: 3, answer: '答え', mode: 'written' as const,
+    answeredAt: '2026-10-11T00:00:00.000Z',
+  };
+  const statsRow = {
+    question_id: 'q1', owner_id: 'u1', asked_count: 1, correct_count: 1, consecutive_correct: 1,
+    interval_days: 1, ease_factor: '2.6', due_at: '2026-10-12T00:00:00Z', updated_at: '2026-10-11T00:00:00Z',
+  };
+  beforeEach(() => { rpcCalls.length = 0; });
+
+  it('回答・形式・期待版をRPC引数へ渡し、記録成功時は確定log IDと最新statsを返す', async () => {
+    rpcImpl = () => Promise.resolve({ data: { kind: 'recorded', logId: 'log1', stats: statsRow }, error: null });
+    const result = await recordQuestionAnswer(input);
+    expect(rpcCalls).toEqual([['record_structured_question_answer', {
+      p_question_id: 'q1', p_expected_question_version: 3, p_answer: '答え', p_mode: 'written',
+      p_answered_at: '2026-10-11T00:00:00.000Z',
+    }]]);
+    expect(result).toEqual({
+      kind: 'recorded', logId: 'log1',
+      stats: {
+        questionId: 'q1', askedCount: 1, correctCount: 1, consecutiveCorrect: 1, intervalDays: 1,
+        easeFactor: 2.6, dueAt: '2026-10-12T00:00:00Z', updatedAt: '2026-10-11T00:00:00Z',
+      },
+    });
+  });
+
+  it('設問不在・無効・版不一致はquestion-conflictとしてstatsを返さない', async () => {
+    rpcImpl = () => Promise.resolve({ data: { kind: 'question-conflict' }, error: null });
+    expect(await recordQuestionAnswer(input)).toEqual({ kind: 'question-conflict' });
+  });
+
+  it('RPCエラーや例外はfailedとなり未確定statsを返さない', async () => {
+    rpcImpl = () => Promise.resolve({ data: null, error: { message: 'permission denied' } });
+    const failed = await recordQuestionAnswer(input);
+    expect(failed.kind).toBe('failed');
+    expect(failed).not.toHaveProperty('stats');
+    rpcImpl = () => Promise.reject(new Error('network'));
+    expect((await recordQuestionAnswer(input)).kind).toBe('failed');
+  });
+
+  it('想定外の応答形状はfailedとして扱う', async () => {
+    for (const data of [null, { kind: 'recorded', logId: 'log1' }, { kind: 'recorded', stats: statsRow },
+      { kind: 'other' }, { kind: 'recorded', logId: 'log1', stats: { ...statsRow, question_id: 'other' } }]) {
+      rpcImpl = () => Promise.resolve({ data, error: null });
+      expect((await recordQuestionAnswer(input)).kind).toBe('failed');
+    }
   });
 });

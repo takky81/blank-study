@@ -10,6 +10,7 @@ import {
   type QuestionStudyScope,
   type QuestionStudyStats,
 } from './candidates';
+import type { ResolvedQuestionMode } from './question';
 
 /** `in` フィルタ1回に渡すID数。URL長と行数上限の両方に収まるよう小さめに取る。 */
 const ID_CHUNK_SIZE = 200;
@@ -202,4 +203,61 @@ function preOrderChapters(rows: readonly ChapterDbRow[]): CatalogHierarchy['chap
     visit(tree);
   }
   return result;
+}
+
+export type RecordQuestionAnswerInput = {
+  questionId: string;
+  expectedQuestionVersion: number;
+  answer: string;
+  mode: ResolvedQuestionMode;
+  answeredAt: string;
+};
+
+export type RecordQuestionAnswerResult =
+  | { kind: 'recorded'; logId: string; stats: QuestionStudyStats }
+  | { kind: 'question-conflict' }
+  | { kind: 'failed'; message: string };
+
+const RECORD_FAILED_MESSAGE = '回答を記録できませんでした';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStatsRow(value: unknown, questionId: string): value is StatsRow {
+  return isRecord(value)
+    && value.question_id === questionId
+    && typeof value.asked_count === 'number'
+    && typeof value.correct_count === 'number'
+    && typeof value.consecutive_correct === 'number'
+    && typeof value.interval_days === 'number'
+    && (typeof value.ease_factor === 'number' || typeof value.ease_factor === 'string')
+    && Number.isFinite(Number(value.ease_factor))
+    && (value.due_at === null || typeof value.due_at === 'string')
+    && typeof value.updated_at === 'string';
+}
+
+/** 回答を原子的に記録する。成功時だけ確定log IDと最新statsを返し、失敗時はstatsを返さない。 */
+export async function recordQuestionAnswer(input: RecordQuestionAnswerInput): Promise<RecordQuestionAnswerResult> {
+  let data: unknown;
+  try {
+    const response = await supabase.rpc('record_structured_question_answer', {
+      p_question_id: input.questionId,
+      p_expected_question_version: input.expectedQuestionVersion,
+      p_answer: input.answer,
+      p_mode: input.mode,
+      p_answered_at: input.answeredAt,
+    });
+    if (response.error) return { kind: 'failed', message: RECORD_FAILED_MESSAGE };
+    data = response.data;
+  } catch {
+    return { kind: 'failed', message: RECORD_FAILED_MESSAGE };
+  }
+  if (!isRecord(data)) return { kind: 'failed', message: RECORD_FAILED_MESSAGE };
+  if (data.kind === 'question-conflict') return { kind: 'question-conflict' };
+  if (data.kind === 'recorded' && typeof data.logId === 'string' && data.logId !== ''
+    && isStatsRow(data.stats, input.questionId)) {
+    return { kind: 'recorded', logId: data.logId, stats: mapQuestionStudyStatsRow(data.stats) };
+  }
+  return { kind: 'failed', message: RECORD_FAILED_MESSAGE };
 }

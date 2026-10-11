@@ -47,7 +47,7 @@
   - _Depends: 1.1_
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [ ] 3. question-studyデータアクセスを実装する
+- [x] 3. question-studyデータアクセスを実装する
 - [x] 3.1 階層・設問・専用統計を欠落なく読み取る
   - catalogとquestion-bankの公開契約を利用し、DB行をcamelCaseのcandidate・stats型へ変換する。
   - 階層、設問、statsを安定一意順序で全ページ取得し、1,001件以上でも欠落・重複なく候補射影へ渡す。
@@ -56,7 +56,7 @@
   - _Depends: 2.1_
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 5.7, 8.1, 8.2, 8.3, 8.7_
 
-- [ ] 3.2 回答記録gatewayと判別可能な結果を実装する
+- [x] 3.2 回答記録gatewayと判別可能な結果を実装する
   - 回答、形式、期待設問版を記録RPCへ渡し、recorded／question-conflict／failedを型安全に変換する。
   - 成功時だけ確定log IDと最新statsを返し、失敗時に未確定statsを返さない。
   - RPC再取得後の履歴件数、統計、SRSが1回答分だけ一致する。
