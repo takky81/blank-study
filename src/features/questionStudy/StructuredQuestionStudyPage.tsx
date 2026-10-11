@@ -128,6 +128,7 @@ export function StructuredQuestionStudyPage({
   const narrow = useNarrow();
   const [scope, setScope] = useState<QuestionStudyScope | null>(initialScope);
   const [view, setView] = useState<View>({ kind: 'loading' });
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [order, setOrder] = useState<QuestionStudyOrder>('auto');
   const [requestedMode, setRequestedMode] = useState<RequestedQuestionMode>('auto');
   const [written, setWritten] = useState('');
@@ -145,7 +146,7 @@ export function StructuredQuestionStudyPage({
       () => { if (active) setView({ kind: 'error', message: '設問を読み込めませんでした' }); },
     );
     return () => { active = false; };
-  }, [scope, loadCandidates]);
+  }, [scope, loadCandidates, loadAttempt]);
 
   const advance = (session: QuestionSession, notice: string | null = null) => {
     const next = pickNextQuestion(session, now());
@@ -277,7 +278,10 @@ export function StructuredQuestionStudyPage({
   if (view.kind === 'error') {
     return shell(<>
       <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">{view.message}</p>
-      <div>{backButton}</div>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className="btn-p h-12 px-8" onClick={() => setLoadAttempt((n) => n + 1)}>再読み込み</button>
+        {backButton}
+      </div>
     </>);
   }
   if (view.kind === 'empty') {
