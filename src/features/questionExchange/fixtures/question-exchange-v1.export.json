@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "exchangeId": "9b2f4c1e-7a3d-4e8b-9c0a-1d2e3f4a5b6c",
+  "exportedAt": "2026-10-11T09:30:00Z",
+  "filters": {
+    "minimumAttempts": 4,
+    "maximumAccuracy": 0.5,
+    "maximumQuestionCount": 3
+  },
+  "targets": [
+    {
+      "keyword": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "displayText": "光合成",
+        "modelAnswer": "光エネルギーで二酸化炭素と水から有機物を合成する反応"
+      },
+      "metrics": {
+        "attempts": 6,
+        "correct": 2,
+        "wrong": 4,
+        "accuracy": 0.3333333333333333,
+        "questionCount": 3
+      },
+      "reasons": [
+        "doubt-flag",
+        "explanation-request-flag",
+        "performance-and-count"
+      ],
+      "chapterContexts": [
+        {
+          "subject": {
+            "id": "20000000-0000-4000-8000-000000000001",
+            "title": "生物",
+            "sortOrder": 0
+          },
+          "material": {
+            "id": "30000000-0000-4000-8000-000000000001",
+            "title": "基礎生物",
+            "sortOrder": 0
+          },
+          "chapter": {
+            "id": "40000000-0000-4000-8000-000000000001",
+            "title": "代謝",
+            "sortOrder": 1,
+            "bodyMarkdown": "# 代謝\n\n**光合成**は葉緑体で行われる。\n"
+          }
+        },
+        {
+          "subject": {
+            "id": "20000000-0000-4000-8000-000000000001",
+            "title": "生物",
+            "sortOrder": 0
+          },
+          "material": {
+            "id": "30000000-0000-4000-8000-000000000002",
+            "title": "生物演習",
+            "sortOrder": 2
+          },
+          "chapter": {
+            "id": "40000000-0000-4000-8000-000000000002",
+            "title": "エネルギー",
+            "sortOrder": 0,
+            "bodyMarkdown": "光合成と呼吸の比較。"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "questionId": "50000000-0000-4000-8000-000000000002",
+          "expectedVersion": 3,
+          "sortOrder": 0,
+          "questionText": "光合成が行われる細胞小器官は？",
+          "modelAnswer": "葉緑体",
+          "choices": [
+            "葉緑体",
+            "ミトコンドリア",
+            "核"
+          ],
+          "explanation": null,
+          "requestedFlags": [
+            "doubt",
+            "explanation-request"
+          ]
+        },
+        {
+          "questionId": "50000000-0000-4000-8000-000000000001",
+          "expectedVersion": 1,
+          "sortOrder": 1,
+          "questionText": "光合成の材料を答えよ。",
+          "modelAnswer": "二酸化炭素と水",
+          "choices": [],
+          "explanation": "光エネルギーを利用する。",
+          "requestedFlags": []
+        },
+        {
+          "questionId": "50000000-0000-4000-8000-000000000003",
+          "expectedVersion": 2,
+          "sortOrder": 1,
+          "questionText": "光合成で放出される気体は？",
+          "modelAnswer": "酸素",
+          "choices": [],
+          "explanation": null,
+          "requestedFlags": [
+            "doubt"
+          ]
+        }
+      ],
+      "flaggedQuestions": [
+        {
+          "questionId": "50000000-0000-4000-8000-000000000002",
+          "requestKinds": [
+            "doubt",
+            "explanation-request"
+          ]
+        },
+        {
+          "questionId": "50000000-0000-4000-8000-000000000003",
+          "requestKinds": [
+            "doubt"
+          ]
+        }
+      ]
+    },
+    {
+      "keyword": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "displayText": "呼吸",
+        "modelAnswer": "有機物を分解してエネルギーを取り出す反応"
+      },
+      "metrics": {
+        "attempts": 0,
+        "correct": 0,
+        "wrong": 0,
+        "accuracy": null,
+        "questionCount": 1
+      },
+      "reasons": [
+        "explanation-request-flag"
+      ],
+      "chapterContexts": [],
+      "questions": [
+        {
+          "questionId": "50000000-0000-4000-8000-000000000004",
+          "expectedVersion": 1,
+          "sortOrder": 0,
+          "questionText": "呼吸の場は？",
+          "modelAnswer": "ミトコンドリア",
+          "choices": [],
+          "explanation": null,
+          "requestedFlags": [
+            "explanation-request"
+          ]
+        }
+      ],
+      "flaggedQuestions": [
+        {
+          "questionId": "50000000-0000-4000-8000-000000000004",
+          "requestKinds": [
+            "explanation-request"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -9,7 +9,7 @@
   - _Boundary: EligibilityFilter_
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.4, 2.5, 2.7_
 
-- [ ] 1.2 (P) versioned JSON schema v1とcodecを実装する
+- [x] 1.2 (P) versioned JSON schema v1とcodecを実装する
   - `QuestionExchangeExportV1`、`QuestionExchangeTargetV1`、`ChapterContextV1`、filters、create/update operation、requested/resolved flags、path付きerrorの判別可能な型を全field・型・nullabilityどおり定義する。
   - UTF-8 JSONのserialize/parse、schema version、必須型、unknown/delete kind、createへのID混入、updateのID/版欠落を検証する。
   - `src/features/questionExchange/fixtures/question-exchange-v1.export.json`をgolden fixtureとし、member追加拒否、null/空配列、target/path/question/flagの安定順、EligibilityTarget写像、requestedFlagsからsourceRequestedFlagsへの不変複製を検証し、round tripと不正fixtureが成功値または正確なJSON path付きerrorへ分類される状態を完了条件とする。
