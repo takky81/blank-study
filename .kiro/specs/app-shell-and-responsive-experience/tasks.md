@@ -1,0 +1,131 @@
+# Implementation Plan
+
+## Baseline Evidence
+
+- `[x]` は現行コードまたは既存自動テストで利用者可視の契約が直接確認できるベースライン、`[ ]` は挙動を再実装せず未検証回帰を追加する項目とする。
+- AppShell／ルート／BreadcrumbTrail はルート表、共通ヘッダー、未知 URL の置換、現在地、狭幅下部ナビを実装済みで、ブラウザ戻るは既存 E2E に証拠がある。ただし、全ルート対応、未知 URL、現在地のライフサイクルの自動回帰はない。
+- ThemePreferences は解決・反転の unit test と切替・保持の E2E、AsyncActionGuard は重複防止・成功／失敗後解除の unit test、VisualTokens はコントラスト・濃度順の unit test と hover の E2E に証拠がある。
+- ResponsiveSignal／CollapsibleActions／ConfirmDialog は実装と代表的な 390px E2E に証拠があるが、767／768px、639／640px、幅変更、Escape、外側クリック、初期 focus、ARIA 状態遷移は未検証である。
+- DisplayStateContract は教材画面の loading／empty／error／retry と消失科目の E2E に証拠があるが、代表 consumer の適合回帰と busy 表示の結合は未検証である。
+- `ConflictDialog` の適応表示は実装済みだが、下流 transfer 型への逆依存が残る。共通表示型の所有を本仕様へ戻し、editor／portability は adapter と統合テストだけを所有する。
+- SubpathDeployment は production base、生成 basename、404 複製を設定済みだが、production subpath の直リンク／再読込／404 fallback は未検証である。
+- React、Vitest、Playwright、Vite build／preview は導入済みで、新しいランタイムやアプリ機能の実装は前提にしない。
+
+- [ ] 1. ルーティングと共通ナビゲーションのベースラインを固定する
+- [x] 1.1 認証後の画面配線と共通移動契約を維持する
+  - 既定画面、科目、教材編集、教材／科目の学習、履歴への URL 対応、共通ヘッダー、現在地、未知 URL の科目一覧置換が現行実装に存在する。
+  - ブラウザ履歴の 1 つ前へ戻れることが既存の利用者経路テストで確認できる。
+  - 完了時点で、既存のルート表と共通ナビゲーションがベースライン証拠として追跡できる。
+  - _Boundary: AppShell, BreadcrumbTrail_
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
+- [ ] 1.2 ルートと現在地の統合回帰を追加する
+  - 各既存 URL が対応画面を表示し、未知 URL が履歴を汚さず科目一覧へ置換されることを検証する。
+  - 上位リンクと現在地が画面遷移に追従し、前画面の現在地が残らないことを検証する。
+  - 完了時点で、全既存ルート、未知 URL、現在地のライフサイクルが自動回帰で観測できる。
+  - _Boundary: AppShell, BreadcrumbTrail_
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6_
+
+- [ ] 2. テーマ選択と安全な復元の回帰を完成させる
+- [x] 2.1 テーマの解決、切替、保存値優先を維持する
+  - 未保存時の OS 設定、保存値優先、不正値の未設定扱い、反対テーマへの切替が既存 unit test で確認できる。
+  - 利用者による切替と再読込後の保持が既存 E2E で確認できる。
+  - 完了時点で、既存のテーマ選択と保持がベースライン証拠として追跡できる。
+  - _Boundary: ThemePreferences, AppShell_
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+- [ ] 2.2 端末設定に失敗してもテーマを継続できる回帰を追加する
+  - 端末設定の読取例外では OS 設定へフォールバックし、起動が継続することを検証する。
+  - 書込例外でも表示中テーマが直ちに切り替わり、次の操作を受け付けることを検証する。
+  - 完了時点で、読書き例外と起動時テーマ反映が自動回帰で観測できる。
+  - _Boundary: ThemePreferences, AppShell_
+  - _Requirements: 2.1, 2.2, 2.3, 2.5_
+
+- [ ] 3. 適応 UI と共通操作品質の回帰を完成させる
+- [x] 3.1 広幅／狭幅のナビゲーションと操作配置を維持する
+  - 広幅で共通操作を直接表示し、狭幅で本文余白付き下部ナビ、ヘッダー／行操作メニューへ切り替わる現行実装がある。
+  - 390px での下部ナビ、ヘッダー／行メニュー、主要操作の維持が既存 E2E で確認できる。
+  - 完了時点で、代表的な広幅／狭幅配置がベースライン証拠として追跡できる。
+  - _Boundary: AppShell, ResponsiveSignal, CollapsibleActions_
+  - _Requirements: 3.1, 3.2, 3.4, 3.5_
+- [x] 3.2 ダイアログと折り畳み操作の意味・表示契約を維持する
+  - 共通確認ダイアログの名前、モーダル状態、キャンセル初期 focus、Escape 処理と、狭幅メニューの展開状態、項目選択／外側クリック／Escape 処理が現行実装にある。
+  - 390px の下端・全幅ダイアログと狭幅メニューの基本操作が既存 E2E で確認できる。
+  - 完了時点で、共通操作部品の既存契約がベースライン証拠として追跡できる。
+  - _Boundary: ConfirmDialog, CollapsibleActions_
+  - _Requirements: 3.4, 3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4_
+- [x] 3.3 共通配色、操作領域、focus、hover を維持する
+  - ライト／ダークの意味色、44px 共通ボタン、focus 輪郭、操作可能要素とカード内ボタンの hover 規則が現行 CSS にある。
+  - 選定済み文字／背景 4.5:1、輪郭／背景 3:1、面の濃度順が unit test、hover が E2E で確認できる。
+  - 完了時点で、既存 token と操作状態がベースライン証拠として追跡できる。
+  - _Boundary: VisualTokens_
+  - _Requirements: 3.8, 4.5, 4.6, 4.7, 7.1, 7.2, 7.3, 7.4_
+- [x] 3.4 非同期操作の重複防止ロジックを維持する
+  - 実行中の後続呼出し抑止、成功後の再実行、失敗後の busy 解除が既存 unit test で確認できる。
+  - 完了時点で、同一操作の guard ライフサイクルがベースライン証拠として追跡できる。
+  - _Boundary: AsyncActionGuard_
+  - _Requirements: 6.1, 6.2, 6.4_
+- [ ] 3.5 画面幅信号とシェル配置の統合回帰を追加する
+  - 767px と 768px でシェルのナビゲーション／共通操作／本文余白が期待どおり分かれることを検証する。
+  - 表示中に境界をまたいでも再読込なしで配置が切り替わり、購読解除後に古い更新を受けないことを検証する。
+  - 完了時点で、ResponsiveSignal と AppShell を結ぶ 768px 境界の初期値、変更追従、解除が自動回帰で観測できる。
+  - _Boundary: ResponsiveSignal, AppShell_
+  - _Requirements: 3.1, 3.2, 3.3, 3.5_
+- [ ] 3.6 共通確認ダイアログの境界・キーボード回帰を追加する
+  - 639px の下端シートと 640px の中央表示を区別する。
+  - ダイアログ名、モーダル状態、キャンセル初期 focus、Escape キャンセルを検証する。
+  - 完了時点で、640px 境界とダイアログのキーボード／ARIA ライフサイクルが自動回帰で観測できる。
+  - _Boundary: ConfirmDialog_
+  - _Requirements: 3.6, 3.7, 4.1, 4.2_
+- [ ] 3.7 折り畳み操作メニューの状態・終了回帰を追加する
+  - 広幅では操作を直接表示し、狭幅では主要操作を残して補助操作をラベル付きメニューへ格納することを検証する。
+  - 展開状態が支援技術へ伝わり、Escape、外側選択、項目選択で閉じることを検証する。
+  - 完了時点で、行とヘッダーの操作メニューの表示／ARIA／終了ライフサイクルが自動回帰で観測できる。
+  - _Boundary: CollapsibleActions_
+  - _Requirements: 3.4, 3.5, 4.3, 4.4_
+- [ ] 3.8 共通操作領域と focus 表示を業務画面へ統合して横断回帰を追加する
+  - `e2e/ui.spec.ts` から科目一覧 `/` と教材編集 `/materials/:materialId/edit` を開き、狭幅の可視操作が44px以上であることを検証する。feature本体は変更しない。
+  - キーボード移動で共通操作に視認可能な focus 輪郭が現れることをライト／ダーク双方で検証する。
+  - 完了時点で、VisualTokens と代表 consumer を結ぶ操作領域と focus 表示がシェル適合テストとして観測できる。
+  - _Boundary: VisualTokens_
+  - _Requirements: 3.8, 4.5, 7.1_
+
+- [ ] 3.9 feature 非依存の差分選択ダイアログを共通所有へ戻す
+  - 共通 component が下流 feature の型を import せず、安定 conflict／candidate ID、doc ID、表示ラベル、正答配列をローカル props 型で受け取り、2件以上の任意数候補を表示できるようにする。
+  - 各 conflict で1候補だけを `aria-pressed` と見た目へ反映し、未選択 conflict がある間は確定不可、busy 中は確定と取消を受け付けないことを component test で検証する。
+  - 旧2択 consumer は互換 adapter を経由して型検査／buildを保ち、authoring／portability の候補ID adapter完了後にだけ旧 props を削除できる状態を完了条件とする。
+  - _Boundary: ConflictDialog_
+  - _Requirements: 3.6, 3.7, 4.8, 4.9, 4.10, 6.3_
+
+- [ ] 4. 表示状態と処理中状態の横断回帰を完成させる
+- [ ] 4.1 業務画面の読み込み、空、失敗、再試行を横断検証する
+  - `e2e/ui.spec.ts` の科目一覧 `/` と科目内教材一覧 `/subjects/:subjectId` で、初回読込中に空状態を出さず、成功0件で固有の空状態を出すことを検証する。feature本体は変更しない。
+  - 読込失敗を警告と再試行で示し、同じ画面条件で読込を再実行することを検証する。
+  - 完了時点で、loading、empty、error、retry の最低契約が複数の代表 consumer で自動回帰として観測できる。
+  - _Boundary: DisplayStateContract_
+  - _Requirements: 5.1, 5.2, 5.3, 5.4_
+- [ ] 4.2 消失した業務データからの復帰を横断検証する
+  - `e2e/ui.spec.ts` で消失科目 `/subjects/:subjectId` と消失教材 `/materials/:materialId/edit` を開き、見つからない旨と各上位一覧への導線を検証する。feature本体は変更しない。
+  - 未知 route の無言置換と業務データ消失表示を別の結果として検証する。
+  - 完了時点で、missing 状態と正しい復帰先が代表 consumer の適合回帰として観測できる。
+  - _Boundary: DisplayStateContract_
+  - _Requirements: 1.6, 5.5_
+- [ ] 4.3 非同期変更の処理中表示と再操作可能性を統合検証する
+  - `e2e/ui.spec.ts` の科目追加と教材編集保存を代表操作とし、応答待ちの操作が無効化または処理中表示となり、同じ変更が1回だけ送られることを検証する。feature本体は変更しない。
+  - 成功／失敗の終了後に処理中表示が解除され、次の操作を受け付けることを検証する。
+  - 完了時点で、guard と利用者可視の busy 状態の結合が代表画面で自動回帰として観測できる。
+  - _Boundary: AsyncActionGuard, DisplayStateContract_
+  - _Depends: 3.4_
+  - _Requirements: 6.1, 6.2, 6.3, 6.4_
+
+- [ ] 5. GitHub Pages サブパス配信の回帰を完成させる
+- [x] 5.1 production base、Router basename、404 入口を一致させる
+  - production 資産 base、Router の生成 basename、配信成果物の 404 入口複製が現行設定にある。
+  - 完了時点で、3 要素が同じサブパス契約を構成するベースライン証拠として追跡できる。
+  - _Boundary: SubpathDeployment, AppShell_
+  - _Requirements: 8.1, 8.2, 8.3_
+- [ ] 5.2 (P) production 相当の直リンクと再読込回帰を追加する
+  - production 成果物をサブパス基準で起動し、静的資産と内部 URL が同じ base で解決することを検証する。
+  - 既存画面の深い URL を直接開き、404 入口経由と再読込後にも同じ画面へ復帰することを検証する。
+  - 完了時点で、`/blank-study/` 配下の直リンク、404 fallback、再読込が production 相当の自動回帰で観測できる。
+  - _Boundary: SubpathDeployment_
+  - _Depends: 5.1_
+  - _Requirements: 8.1, 8.2, 8.3_

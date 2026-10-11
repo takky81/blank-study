@@ -1,0 +1,143 @@
+# Implementation Plan
+
+## Baseline Evidence
+
+- `src/features/history/aggregate.ts` と `aggregate.test.ts` は、共用しきい値、3区分、active 除外、重み付き正答率、今日／今週、順位、14日 bucket、別解訂正後の累積値を直接検証している。
+- `src/features/history/api.ts` と `HistoryPage.tsx` は、5 read、camelCase 変換、keyword／answer log の全件ページング、現行の provenance ベース tree、loading／error／retry／empty／展開／集計表示を実装している。
+- `e2e/history.spec.ts` の既存6件は、章の3区分と79%、教材開閉、順位、当日3件、履歴なし、1,002 keywords を直接検証している。
+- `20260829000000_init.sql` は対象6表の owner RLS、外部キー、索引を定義し、catalog は StablePagedReader と DB 親子／owner 整合性を所有する。
+- 上記の直接証拠がある作業だけを `[x]` とする。本文 doc ID 出現による章所属、複数章／重複出現、provenance 章削除後の再投影、構造行の上限超過、loading/retry の失敗注入、1,001 answer_logs、所有者混在は `[ ]` とする。
+
+- [x] 1. 現行の owner・履歴保持契約を消費する（1〜2時間）
+  - 適用済み migration が持つ owner RLS、keyword 削除時 cascade、章削除時の provenance 切離し、stats／logs 索引を読取り前提として確認する。未実装の複合親子整合性は完了証拠に含めず4.9で扱う。
+  - migration の直接確認で history が schema、policy、共通 paging helper を重複所有せず、authenticated 利用者の可視行だけを下流投影する現行状態を完了条件とする。
+  - _Boundary: HistoryUpstreamContractConsumer_
+  - _Requirements: 1.10, 8.3, 8.4_
+
+- [x] 2. 学習インサイトの純粋ポリシーを固定する
+- [x] 2.1 未出題・苦手・定着を共用しきい値で分類する（1時間）
+  - 適応学習セッションが所有する定着回数・正答率を参照し、0回、定着境界、その他の出題済みを3区分へ分類する。
+  - unit 回帰で0回、3回以上かつ90%以上、未達、境界一致を観測できる状態を完了条件とする。
+  - _Boundary: MasteryClassification_
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+- [x] 2.2 階層 Summary と復習予定を算出する（1〜2時間）
+  - active keyword だけから総問題数、3区分、累積加重正答率、今日／今週の復習予定を算出し、空および全未出題では正答率を持たせない。
+  - unit 回帰で非活性、上位合計、別解訂正後の累積値、端末日付の今日／日曜始まりの今週を観測できる状態を完了条件とする。
+  - _Boundary: InsightAggregation_
+  - _Depends: 2.1_
+  - _Requirements: 1.8, 3.1, 3.2, 3.3, 3.4, 3.5, 3.7, 4.1, 4.2, 4.3_
+- [x] 2.3 解答済み keyword を学習優先度順へ投影する（1時間）
+  - active かつ出題済みだけを正答率昇順、同率では出題回数降順に並べ、settled も除外しない。
+  - unit 回帰で未出題／非活性の除外と同率順を観測できる状態を完了条件とする。
+  - _Boundary: WeakKeywordProjection_
+  - _Requirements: 1.8, 5.1, 5.2, 5.3_
+- [x] 2.4 解答履歴を端末日付の14日 bucket へ投影する（1時間）
+  - 非活性 keyword に残る履歴を含む解答 event を日付別に数え、0件の日と古い順を維持する。
+  - unit 回帰で当日の件数／正答率、0件日の null 正答率、日付順を観測できる状態を完了条件とする。
+  - _Boundary: DailyVolumeProjection_
+  - _Depends: 1_
+  - _Requirements: 1.9, 6.1, 6.2, 6.3, 6.4_
+
+- [x] 3. 現行の read model と画面統合を固定する
+- [x] 3.1 現行の keyword／log 全件を HistoryData へ変換する（2〜3時間）
+  - 科目・教材・章・keyword 学習状態・解答履歴の5 read を all-or-error で実行し、DB 行を画面型へ変換する。
+  - 現行実装で keyword と answer log を安定した ID 順の共通ページングで取得し、操作文脈付き日本語エラーで部分成功を返さない。
+  - コードの直接確認で nullable stats の0初期化、日時変換、全 keyword／log の1回だけの反映を観測できる状態を完了条件とする。
+  - _Boundary: HistoryDataGateway_
+  - _Depends: 1_
+  - _Requirements: 1.1, 3.7, 7.6, 7.7, 8.1, 8.2, 8.3_
+- [x] 3.2 現行の保存順と provenance ベース階層を特性化する（2〜3時間）
+  - 科目、科目内教材、教材内章を保存順で並べ、同一教材内の parent relation を再帰 tree にする現行挙動を確認する。
+  - 現行 `chapter_id` ベースの keyword 投影は本文出現契約を満たす証拠とはせず、4.2 と4.3で置換する gap として記録する。
+  - コードの直接確認で node の children と現行集計入力が生成される状態だけを完了条件とする。
+  - _Boundary: HistoryTreeProjectionBaseline_
+  - _Depends: 3.1_
+  - _Requirements: 1.2, 1.3_
+- [x] 3.3 履歴画面の読込 lifecycle、階層操作、空状態を統合する（1〜2時間）
+  - mount 時刻を固定し、loading、all-or-error、retry、subject 初期展開、子あり行の開閉、子なし行の無効化を統合する。
+  - 科目なし、順位対象なし、解答履歴なしを別々の空状態として表示する。
+  - 画面コードと既存 E2E で教材開閉と履歴なし状態を観測できる状態を完了条件とする。
+  - _Boundary: HistoryPage_
+  - _Depends: 3.1, 3.2_
+  - _Requirements: 5.5, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
+- [x] 3.4 現行の Summary、復習予定、順位、14日量を画面へ統合する（2〜3時間）
+  - 現行 node の参照を rows へ解決し、階層帯と件数、正答率、今日／今週、上位10件、14日量を表示する。
+  - 画面コードと既存 E2E で章の3区分と79%、順位、当日3件を観測できる状態を完了条件とする。
+  - _Boundary: HistoryPage_
+  - _Depends: 2.2, 2.3, 2.4, 3.2, 3.3_
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.4, 5.4, 6.1, 6.2, 6.3, 6.4_
+- [x] 3.5 keyword 取得上限超過を利用者経路で回帰する（1〜2時間）
+  - 既存1件と追加1,001件の計1,002 active keywords を seed し、全体と章行の双方へ欠落なく反映する。
+  - E2E で `1002 問` が表示され、未出題が復習予定へ含まれる状態を完了条件とする。
+  - _Boundary: HistoryDataGateway, HistoryPage_
+  - _Depends: 3.1, 3.2, 3.4_
+  - _Requirements: 3.1, 4.2, 8.1_
+
+- [ ] 4. 未実装の本文投影と統合回帰を閉じる
+- [ ] 4.1 loading と読込失敗後の全体再試行を回帰する（2〜3時間）
+  - 初期 read を待機させて loading 表示を確認し、answer_logs の初回 REST だけを500にして alert と再試行を観測する。
+  - 再試行で全5 read が再実行され、成功後に alert が消えて chart と subject 初期展開が表示される状態を完了条件とする。
+  - _Boundary: HistoryDataGateway, HistoryPage_
+  - _Depends: 3.3_
+  - _Requirements: 7.5, 7.6, 7.7_
+- [ ] 4.2 章本文の doc ID 出現を集計参照へ投影する（2〜3時間）
+  - authoring 所有の token 契約を消費し、各章本文から `(chapterId, tokenIndex, keywordId)` の出現参照を本文順に作る。`keywords.chapter_id` は入力に使わない。
+  - 章と祖先では同一 UUID の重複出現を保持し、教材／科目では UUID を重複除外する。本文に出ない active keyword は教材／科目だけへ含める。
+  - unit で同一章2回、別章1回、祖先伝播、教材／科目1件、本文にない active keyword を直接 assert する。
+  - _Boundary: ChapterOccurrenceProjection_
+  - _Depends: 3.2; upstream `markdown-keyword-authoring` task 1.1_
+  - _Requirements: 1.4, 1.5, 1.6, 1.7_
+- [ ] 4.3 本文出現投影を画面へ統合し provenance 削除を回帰する（2〜3時間）
+  - HistoryDataGateway と HistoryTreeProjection を `keywordRefs` に接続し、章は出現単位、教材／科目は UUID 単位で aggregate へ渡す。
+  - provenance 章を削除しても別章本文に同じ doc ID が残る fixture を作り、keyword が active のまま別章、教材、科目へ再投影されることを assert する。
+  - 親／子／孫の本文と複数章出現を E2E で直接検証し、`chapter_id` の null／別章値が集計所属を変えない状態を完了条件とする。
+  - _Boundary: HistoryDataGateway, HistoryTreeProjection, HistoryPage_
+  - _Depends: 2.2, 3.4, 4.2_
+  - _Requirements: 1.3, 1.4, 1.5, 1.6, 1.7, 1.10, 3.2, 7.2_
+- [ ] 4.4 全構造 read に catalog の安定ページングを適用する（2〜3時間）
+  - subjects、materials、chapters／body を catalog 所有の StablePagedReader へ接続し、業務順序 + `id` の一意順、終了判定を変更しない。
+  - 各構造種別で1,001件超のページ境界にある末尾 node／本文 token が1回だけ階層と集計へ現れる E2E を用意する。
+  - owner／subject／material／parent 整合性は catalog の DB 制約を消費し、history 側に migration や重複検証 helper を追加しない。
+  - _Boundary: HistoryDataGateway_
+  - _Depends: 1, 3.1, 4.3; upstream `learning-content-catalog` tasks 5.1, 5.2, 5.3_
+  - _Requirements: 1.1, 1.2, 1.3, 8.3, 8.4, 8.5_
+- [ ] 4.5 1回の取得上限を超える answer logs を回帰する（2〜3時間）
+  - 同一 active keyword の当日 answer_logs 1,001件を batch insert し、2ページ目を通る fixture を作る。
+  - 最終日 bucket の `data-count="1001"` と seed した正答率を直接 assert する。
+  - _Boundary: HistoryDataGateway, DailyVolumeProjection, HistoryPage_
+  - _Depends: 2.4, 3.1, 3.4_
+  - _Requirements: 6.1, 6.2, 8.2_
+- [ ] 4.6 所有者A/Bの認証 fixture と後始末を用意する（1〜2時間）
+  - 所有者A/Bの authenticated session を切替できる fixture を用意し、service role は setup／cleanup／seed にだけ使う。
+  - fixture 単体で各 session の user ID が期待 owner と一致し、owner ごとの subject cascade で後始末できる状態を完了条件とする。
+  - _Boundary: HistoryOwnerFixture_
+  - _Depends: 1_
+  - _Requirements: 8.3, 8.4_
+- [ ] 4.7 所有者A/Bで階層・node・習熟内訳を分離する（2〜3時間）
+  - A/Bへ同名階層と異なる本文出現／習熟内訳を seed し、各 session の科目、教材、章、総問題数、3区分を直接 assert する。
+  - 相手 owner の node、本文出現、件数が漏出せず、catalog の owner／親子整合性に反する fixture を通常 client から作れないことを確認する。
+  - _Boundary: HistoryDataGateway, HistoryPage, HistoryOwnerIsolationConformance_
+  - _Depends: 3.4, 4.3, 4.6_
+  - _Requirements: 1.1, 3.1, 8.3, 8.4_
+- [ ] 4.8 所有者A/Bで順位・復習予定・日別量を分離する（1〜2時間）
+  - A/Bへ異なる keyword、期限、解答履歴件数を seed し、各 session の順位、今日／今週、最終日 bucket を直接 assert する。
+  - 相手 owner の keyword、期限件数、log 件数が加算されない状態を完了条件とする。
+  - _Boundary: HistoryDataGateway, WeakKeywordProjection, DailyVolumeProjection, HistoryPage, HistoryOwnerIsolationConformance_
+  - _Depends: 2.2, 2.3, 2.4, 3.4, 4.6_
+  - _Requirements: 4.4, 5.1, 5.4, 6.1, 6.2, 8.3, 8.4_
+
+- [ ] 4.9 catalog の複合構造整合性を history consumer から適合確認する（1〜2時間）
+  - catalog の複合 owner／subject／material／parent 制約と identity の4主体 conformance 完了後、通常 client から不正な親子・owner関連を作れず、正当な階層は従来どおり読めることを history の代表経路で確認する。
+  - history は migration や検証 helper を重複所有せず、上流契約を消費する統合テストだけを所有する。
+  - 外部 prerequisite: `learning-content-catalog` Tasks 1.5, 1.6 と `identity-and-access` Task 6.7。
+  - _Boundary: HistoryUpstreamContractConsumer, HistoryOwnerIsolationConformance_
+  - _Depends: 4.7_
+  - _Requirements: 1.10, 8.3, 8.4_
+
+- [ ] 5. 学習インサイトの最終品質ゲートを実行する（2〜3時間）
+  - Node.js 24、ローカル Supabase、E2E 環境変数、Playwright Chromium を利用可能にし、共有 DB を `workers: 1` で扱う。
+  - typecheck、history unit、occurrence unit、決定表 coverage、production build、history E2E をすべて成功させる。
+  - 本仕様が所有する adapter／projection／画面回帰だけを完了条件とし、catalog の paging helper、DB 制約、identity の policy 自体の実装完了を本タスクへ混ぜない。
+  - _Boundary: HistoryDataGateway, ChapterOccurrenceProjection, HistoryTreeProjection, MasteryClassification, InsightAggregation, WeakKeywordProjection, DailyVolumeProjection, HistoryPage, HistoryOwnerIsolationConformance_
+  - _Depends: 4.1, 4.3, 4.4, 4.5, 4.7, 4.8, 4.9_
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 8.1, 8.2, 8.3, 8.4, 8.5_
