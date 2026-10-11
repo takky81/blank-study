@@ -1,7 +1,7 @@
 # 実装計画
 
 - [ ] 1. 交換schemaとeligibility純粋契約を実装する
-- [ ] 1.1 (P) eligibility閾値と固定論理式を型安全に実装する
+- [x] 1.1 (P) eligibility閾値と固定論理式を型安全に実装する
   - 最低出題回数、最大正答率、最大設問数の入力型、範囲検証、field errorを定義する。
   - 疑義 OR 解説追加 OR（誤答1以上 AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下）を共有fixtureで表現する。keyword集計はactive設問だけのsum、差分、比率、active countを使い、statsなし／attempts 0を統計対象外にする。
   - 各境界値、AND群の1条件不足、複数理由の重複排除がunit testで観測できる状態を完了条件とする。

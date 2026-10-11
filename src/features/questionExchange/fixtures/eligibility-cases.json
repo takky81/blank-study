@@ -1,0 +1,145 @@
+{
+  "description": "EligibilityFilterとDB eligibility RPCが共有する固定論理式の判定fixture。questionsは同一ownerのstructured_questions、statsはstructured_question_statsを表す。",
+  "cases": [
+    {
+      "name": "AND群の全条件が境界値ちょうどで成立する",
+      "filter": { "minimumAttempts": 4, "maximumAccuracy": 0.5, "maximumQuestionCount": 2 },
+      "questions": [
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }
+      ],
+      "stats": [
+        { "questionId": "q1", "askedCount": 3, "correctCount": 2 },
+        { "questionId": "q2", "askedCount": 1, "correctCount": 0 }
+      ],
+      "expected": [
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 4, "correct": 2, "wrong": 2, "accuracy": 0.5, "questionCount": 2 },
+          "reasons": ["performance-and-count"],
+          "flaggedQuestions": []
+        }
+      ]
+    },
+    {
+      "name": "出題回数が下限を1下回ると統計条件不成立",
+      "filter": { "minimumAttempts": 5, "maximumAccuracy": 0.5, "maximumQuestionCount": 2 },
+      "questions": [{ "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }],
+      "stats": [{ "questionId": "q1", "askedCount": 4, "correctCount": 2 }],
+      "expected": []
+    },
+    {
+      "name": "正答率が上限を超えると統計条件不成立",
+      "filter": { "minimumAttempts": 1, "maximumAccuracy": 0.49, "maximumQuestionCount": 2 },
+      "questions": [{ "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }],
+      "stats": [{ "questionId": "q1", "askedCount": 4, "correctCount": 2 }],
+      "expected": []
+    },
+    {
+      "name": "設問数が上限を超えると統計条件不成立",
+      "filter": { "minimumAttempts": 1, "maximumAccuracy": 1, "maximumQuestionCount": 1 },
+      "questions": [
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }
+      ],
+      "stats": [{ "questionId": "q1", "askedCount": 4, "correctCount": 2 }],
+      "expected": []
+    },
+    {
+      "name": "誤答0回は正答率上限1でも統計条件不成立",
+      "filter": { "minimumAttempts": 0, "maximumAccuracy": 1, "maximumQuestionCount": 10 },
+      "questions": [{ "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }],
+      "stats": [{ "questionId": "q1", "askedCount": 3, "correctCount": 3 }],
+      "expected": []
+    },
+    {
+      "name": "statsなしとattempts 0は閾値に関係なく統計条件不成立",
+      "filter": { "minimumAttempts": 0, "maximumAccuracy": 1, "maximumQuestionCount": 10 },
+      "questions": [
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k2", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }
+      ],
+      "stats": [{ "questionId": "q2", "askedCount": 0, "correctCount": 0 }],
+      "expected": []
+    },
+    {
+      "name": "無効設問の統計・件数・フラグは集計から除外する",
+      "filter": { "minimumAttempts": 2, "maximumAccuracy": 0.5, "maximumQuestionCount": 1 },
+      "questions": [
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k1", "isActive": false, "doubtFlag": true, "explanationRequestFlag": true }
+      ],
+      "stats": [
+        { "questionId": "q1", "askedCount": 2, "correctCount": 1 },
+        { "questionId": "q2", "askedCount": 10, "correctCount": 10 }
+      ],
+      "expected": [
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 2, "correct": 1, "wrong": 1, "accuracy": 0.5, "questionCount": 1 },
+          "reasons": ["performance-and-count"],
+          "flaggedQuestions": []
+        }
+      ]
+    },
+    {
+      "name": "疑義フラグは成績条件に関係なく対象にする",
+      "filter": { "minimumAttempts": 100, "maximumAccuracy": 0, "maximumQuestionCount": 0 },
+      "questions": [{ "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": true, "explanationRequestFlag": false }],
+      "stats": [],
+      "expected": [
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 0, "correct": 0, "wrong": 0, "accuracy": null, "questionCount": 1 },
+          "reasons": ["doubt-flag"],
+          "flaggedQuestions": [{ "questionId": "q1", "requestKinds": ["doubt"] }]
+        }
+      ]
+    },
+    {
+      "name": "解説追加フラグは成績条件に関係なく対象にする",
+      "filter": { "minimumAttempts": 100, "maximumAccuracy": 0, "maximumQuestionCount": 0 },
+      "questions": [{ "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": true }],
+      "stats": [{ "questionId": "q1", "askedCount": 5, "correctCount": 5 }],
+      "expected": [
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 5, "correct": 5, "wrong": 0, "accuracy": 1, "questionCount": 1 },
+          "reasons": ["explanation-request-flag"],
+          "flaggedQuestions": [{ "questionId": "q1", "requestKinds": ["explanation-request"] }]
+        }
+      ]
+    },
+    {
+      "name": "同じkeywordの複数フラグ設問と統計理由を1対象へ重複なく統合する",
+      "filter": { "minimumAttempts": 1, "maximumAccuracy": 0.8, "maximumQuestionCount": 3 },
+      "questions": [
+        { "id": "q3", "keywordId": "k1", "isActive": true, "doubtFlag": true, "explanationRequestFlag": true },
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": true, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q9", "keywordId": "k0", "isActive": true, "doubtFlag": false, "explanationRequestFlag": true }
+      ],
+      "stats": [
+        { "questionId": "q1", "askedCount": 2, "correctCount": 1 },
+        { "questionId": "q3", "askedCount": 2, "correctCount": 1 }
+      ],
+      "expected": [
+        {
+          "keywordId": "k0",
+          "metrics": { "attempts": 0, "correct": 0, "wrong": 0, "accuracy": null, "questionCount": 1 },
+          "reasons": ["explanation-request-flag"],
+          "flaggedQuestions": [{ "questionId": "q9", "requestKinds": ["explanation-request"] }]
+        },
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 4, "correct": 2, "wrong": 2, "accuracy": 0.5, "questionCount": 3 },
+          "reasons": ["doubt-flag", "explanation-request-flag", "performance-and-count"],
+          "flaggedQuestions": [
+            { "questionId": "q1", "requestKinds": ["doubt"] },
+            { "questionId": "q3", "requestKinds": ["doubt", "explanation-request"] }
+          ]
+        }
+      ]
+    }
+  ]
+}
