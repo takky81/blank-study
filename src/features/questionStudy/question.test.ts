@@ -8,6 +8,7 @@ import {
   judgeQuestionChoice,
   resolveQuestionMode,
 } from './question';
+import { SETTLED_COUNT, SETTLED_RATE } from '@/features/study/question';
 
 function stats(askedCount: number, correctCount: number): QuestionStudyStats {
   return {
@@ -67,5 +68,26 @@ describe('judgeQuestionAnswer', () => {
   it('わからないは不正解になる', () => {
     expect(judgeQuestionChoice({ value: 'わからない', unknown: true }, 'わからない')).toBe(false);
     expect(judgeQuestionChoice({ value: '東京', unknown: false }, '東京')).toBe(true);
+  });
+});
+
+describe('上流しきい値の境界', () => {
+  const choices = ['誤答A'];
+  it('出題数がSETTLED_COUNT未満なら全問正解でも選択式', () => {
+    expect(resolveQuestionMode('auto', stats(SETTLED_COUNT - 1, SETTLED_COUNT - 1), choices)).toBe('choice');
+  });
+  it('正答率がSETTLED_RATEちょうど以上で記述式、未満で選択式', () => {
+    const total = 100;
+    const atRate = Math.ceil(total * SETTLED_RATE);
+    expect(resolveQuestionMode('auto', stats(total, atRate), choices)).toBe('written');
+    expect(resolveQuestionMode('auto', stats(total, atRate - 1), choices)).toBe('choice');
+    expect(resolveQuestionMode('auto', stats(SETTLED_COUNT, SETTLED_COUNT), choices)).toBe('written');
+  });
+  it('選択肢が1件あれば選択式指定は選択式のまま', () => {
+    expect(resolveQuestionMode('choice', null, choices)).toBe('choice');
+  });
+  it('空白だけの記述回答は不正解', () => {
+    expect(judgeQuestionAnswer('　 ', '東京')).toBe(false);
+    expect(canSubmitWrittenAnswer('')).toBe(false);
   });
 });

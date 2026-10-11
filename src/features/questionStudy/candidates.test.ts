@@ -150,4 +150,62 @@ describe('projectQuestionCandidates', () => {
     projectQuestionCandidates({ kind: 'material', id: 'material-a' }, hierarchy, questions, stats);
     expect(questions.map(({ id }) => id)).toEqual(before);
   });
+
+  it('同一docIdが別教材の章に出現しても教材ごとのkeywordへ解決し、最小tupleで並べる', () => {
+    const shared: CatalogHierarchy = {
+      subjects: [{ id: 's2', sortOrder: 1 }, { id: 's1', sortOrder: 0 }],
+      materials: [
+        { id: 'm-late', subjectId: 's1', sortOrder: 5 },
+        { id: 'm-early', subjectId: 's1', sortOrder: 2 },
+      ],
+      chapters: [
+        { id: 'c-late', materialId: 'm-late', sortOrder: 0, body: '{{id=same01}}' },
+        { id: 'c-early-2', materialId: 'm-early', sortOrder: 4, body: '{{id=same01}}' },
+        { id: 'c-early-1', materialId: 'm-early', sortOrder: 3, body: 'x {{id=other2}} {{id=same01}}' },
+      ],
+      keywords: [
+        { id: 'k-late', materialId: 'm-late', docId: 'same01', isActive: true },
+        { id: 'k-early', materialId: 'm-early', docId: 'same01', isActive: true },
+        { id: 'k-other', materialId: 'm-early', docId: 'other2', isActive: true },
+      ],
+    };
+    const qs = [
+      question('q-late', 'k-late', 0, { materialId: 'm-late' }),
+      question('q-early', 'k-early', 0, { materialId: 'm-early' }),
+      question('q-other', 'k-other', 0, { materialId: 'm-early' }),
+    ];
+    const result = projectQuestionCandidates({ kind: 'subject', id: 's1' }, shared, qs, []);
+
+    expect(result.map(({ question: item }) => item.id)).toEqual(['q-other', 'q-early', 'q-late']);
+    expect(result[1]).toMatchObject({ materialOrder: 2, chapterOrder: 3, bodyOccurrenceIndex: 1 });
+    expect(result[2]).toMatchObject({ materialOrder: 5, chapterOrder: 0, bodyOccurrenceIndex: 0 });
+  });
+
+  it('同じ設問idの重複入力は最初の1件だけ残す', () => {
+    const duplicated = [question('dup', 'keyword-a', 0), question('dup', 'keyword-a', 0)];
+    expect(projectQuestionCandidates({ kind: 'chapter', id: 'chapter-first' }, hierarchy, duplicated, []))
+      .toHaveLength(1);
+    expect(projectQuestionCandidates({ kind: 'keyword', id: 'keyword-a' }, hierarchy, duplicated, []))
+      .toHaveLength(1);
+  });
+
+  it('入力順を変えても同じ安定順になり、同じsortOrderはidで並ぶ', () => {
+    const scope = { kind: 'material', id: 'material-a' } as const;
+    const forward = projectQuestionCandidates(scope, hierarchy, questions, stats).map(({ question: q }) => q.id);
+    const reversed = projectQuestionCandidates(scope, hierarchy, [...questions].reverse(), stats)
+      .map(({ question: q }) => q.id);
+    expect(reversed).toEqual(forward);
+    expect(forward.indexOf('question-a1-a')).toBeLessThan(forward.indexOf('question-a1-z'));
+  });
+
+  it('設問なし・本文にkeywordなし・別教材のkeyword設問は空候補になる', () => {
+    expect(projectQuestionCandidates({ kind: 'material', id: 'material-a' }, hierarchy, [], [])).toEqual([]);
+    const noTokens = { ...hierarchy, chapters: hierarchy.chapters.map((c) => ({ ...c, body: '本文のみ' })) };
+    expect(projectQuestionCandidates({ kind: 'subject', id: 'subject-a' }, noTokens, questions, [])).toEqual([]);
+    expect(projectQuestionCandidates({ kind: 'subject', id: 'subject-b' }, hierarchy, questions, [])).toEqual([]);
+    expect(projectQuestionCandidates(
+      { kind: 'keyword', id: 'keyword-a' }, hierarchy,
+      [question('foreign', 'keyword-a', 0, { materialId: 'material-b' })], [],
+    )).toEqual([]);
+  });
 });

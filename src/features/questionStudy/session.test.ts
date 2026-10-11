@@ -114,4 +114,38 @@ describe('QuestionSessionPolicy', () => {
     };
     expect(run()).toEqual(run());
   });
+
+  it('候補0件は開始時点で完了・終了し出題しない', () => {
+    const session = startQuestionSession([], 'auto');
+    expect(session.result).toEqual({ answered: 0, correct: 0, total: 0, completed: true, ended: true });
+    expect(pickNextQuestion(session, now)).toBeNull();
+  });
+
+  it('候補1件は直近回避で詰まらず出題し、確定で完了する', () => {
+    let session = startQuestionSession([candidate('only', 0, { dueAt: '2026-10-12T00:00:00.000Z' })], 'auto');
+    expect(pickNextQuestion(session, now)?.question.id).toBe('only');
+    session = recordQuestionSessionAnswer(session, 'only', false);
+    expect(session.result).toMatchObject({ answered: 1, correct: 0, completed: true, ended: true });
+    expect(pickNextQuestion(session, now)).toBeNull();
+  });
+
+  it('自動順で期限と習熟が同着なら候補の安定順で選ぶ', () => {
+    const due = { dueAt: '2026-10-12T00:00:00.000Z', consecutiveCorrect: 2 };
+    const session = startQuestionSession([candidate('x', 0, due), candidate('y', 1, due)], 'auto');
+    expect(pickNextQuestion(session, now)?.question.id).toBe('x');
+  });
+
+  it('出現順は確定statsで成績が変わっても安定順のまま', () => {
+    let session = startQuestionSession([candidate('a', 0), candidate('b', 1), candidate('c', 2)], 'sequential');
+    session = recordQuestionSessionAnswer(session, 'a', true, statsOf('a', { dueAt: '2026-10-30T00:00:00.000Z' }));
+    expect(pickNextQuestion(session, now)?.question.id).toBe('b');
+  });
+
+  it('終了後と未知の設問の確定は件数を変えない', () => {
+    let session = startQuestionSession([candidate('a', 0), candidate('b', 1)], 'sequential');
+    session = recordQuestionSessionAnswer(session, 'unknown', true);
+    expect(session.result.answered).toBe(0);
+    session = recordQuestionSessionAnswer(finishQuestionSession(session), 'a', true);
+    expect(session.result).toMatchObject({ answered: 0, ended: true });
+  });
 });
