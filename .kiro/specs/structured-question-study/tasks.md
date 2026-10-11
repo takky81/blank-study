@@ -15,7 +15,7 @@
   - _Boundary: RecordQuestionAnswerRPC_
   - _Requirements: 5.1, 5.2, 5.3, 5.6, 6.1, 6.2, 6.5, 6.6_
 
-- [ ] 1.3 専用データへRLSとRPC権限を適用する
+- [x] 1.3 専用データへRLSとRPC権限を適用する
   - stats/logsのowner policy、authenticated限定grant、RPCのinvoker権限、空search path、schema修飾、anon revokeを追加する。
   - 通常読取とRPCが同じowner境界を通り、ブラウザがservice roleを必要としない権限定義にする。
   - owner以外は設問・履歴・statsの存在や値を判別できない状態を確認できる。
