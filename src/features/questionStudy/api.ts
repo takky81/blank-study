@@ -2,6 +2,9 @@ import { fetchAll } from '@/lib/paged';
 import { supabase } from '@/lib/supabase';
 import { buildTree, type ChapterNode } from '@/features/chapters/tree';
 import { listQuestionsByMaterial } from '@/features/questions/api';
+import { listSubjects } from '@/features/subjects/api';
+import { listMaterials } from '@/features/materials/api';
+import { listChapters } from '@/features/chapters/api';
 import type { StructuredQuestion } from '@/features/questions/types';
 import {
   projectQuestionCandidates,
@@ -261,3 +264,38 @@ export async function recordQuestionAnswer(input: RecordQuestionAnswerInput): Pr
   }
   return { kind: 'failed', message: RECORD_FAILED_MESSAGE };
 }
+
+export type QuestionScopeOption = Readonly<{ id: string; label: string }>;
+
+/** 範囲選択の候補を階層ごとに読む。科目→教材→章／キーワード。 */
+export type QuestionScopeOptionsLoader = Readonly<{
+  listSubjects: () => Promise<readonly QuestionScopeOption[]>;
+  listMaterials: (subjectId: string) => Promise<readonly QuestionScopeOption[]>;
+  listChapters: (materialId: string) => Promise<readonly QuestionScopeOption[]>;
+  listKeywords: (materialId: string) => Promise<readonly QuestionScopeOption[]>;
+}>;
+
+type KeywordOptionRow = { id: string; answers: string[] | null; is_active: boolean };
+
+export const questionScopeOptionsLoader: QuestionScopeOptionsLoader = {
+  listSubjects: async () => (await listSubjects()).map((s) => ({ id: s.id, label: s.name })),
+  listMaterials: async (subjectId) => (await listMaterials(subjectId)).map((m) => ({ id: m.id, label: m.name })),
+  listChapters: async (materialId) => {
+    const rows = await listChapters(materialId);
+    const ordered: QuestionScopeOption[] = [];
+    const visit = (nodes: readonly ChapterNode[], depth: number) => {
+      for (const node of nodes) {
+        ordered.push({ id: node.id, label: `${'　'.repeat(depth)}${node.title}` });
+        visit(node.children, depth + 1);
+      }
+    };
+    visit(buildTree(rows), 0);
+    return ordered;
+  },
+  listKeywords: async (materialId) => {
+    const rows = await readPaged<KeywordOptionRow>('keywords', 'id, answers, is_active',
+      ['doc_id', 'id'], null, ['material_id', materialId]);
+    return rows.filter((row) => row.is_active)
+      .map((row) => ({ id: row.id, label: row.answers?.[0] ?? row.id }));
+  },
+};
