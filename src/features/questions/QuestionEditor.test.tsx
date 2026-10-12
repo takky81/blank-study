@@ -24,7 +24,7 @@ function savedQuestion(version: number): StructuredQuestion {
     sortOrder: 0,
     isActive: true,
     doubtFlag: false,
-    explanationRequestFlag: false,
+    doubtNote: null, explanationRequestFlag: false,
     version,
     updatedAt: '2026-10-11T00:00:00Z',
   };

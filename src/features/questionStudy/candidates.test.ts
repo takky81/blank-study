@@ -52,7 +52,7 @@ function question(
     sortOrder,
     isActive: true,
     doubtFlag: false,
-    explanationRequestFlag: false,
+    doubtNote: null, explanationRequestFlag: false,
     version: 1,
     updatedAt: '2026-10-11T00:00:00.000Z',
     ...overrides,

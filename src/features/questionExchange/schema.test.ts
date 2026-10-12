@@ -74,6 +74,17 @@ describe('export schema v1（golden fixture）', () => {
     ]);
   });
 
+  it('疑義の内容は文字列またはnullで、keyは必須とする', () => {
+    expect(golden.targets[0]!.questions[0]!.doubtNote).toBe('選択肢に模範解答が含まれている');
+    expect(golden.targets[0]!.questions[1]!.doubtNote).toBeNull();
+    expect(errorsOf(mutatedExport((d) => (d.targets[0].questions[0].doubtNote = 1))).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtNote',
+    ]);
+    expect(errorsOf(mutatedExport((d) => delete d.targets[0].questions[0].doubtNote)).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtNote',
+    ]);
+  });
+
   it('追加memberと必須member欠落を正確なpathで拒否する', () => {
     expect(errorsOf(mutatedExport((d) => (d.extra = 1)))).toEqual([{ path: '$.extra', message: expect.any(String) }]);
     expect(errorsOf(mutatedExport((d) => (d.targets[0].chapterContexts[0].chapter.note = 'x'))).map((e) => e.path)).toEqual([

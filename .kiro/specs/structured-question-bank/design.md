@@ -198,6 +198,7 @@ type StructuredQuestion = QuestionVersionToken & {
   sortOrder: number;
   isActive: boolean;
   doubtFlag: boolean;
+  doubtNote: string | null; // 疑義内容（任意）。doubtFlag=falseなら常にnull
   explanationRequestFlag: boolean;
 };
 type QuestionContentDraft = Pick<StructuredQuestion,
@@ -220,7 +221,8 @@ function listQuestionsByKeyword(keywordId: string): Promise<StructuredQuestion[]
 function listQuestionsByMaterial(materialId: string): Promise<StructuredQuestion[]>;
 function saveQuestion(draft: QuestionDraft, id?: string, expectedVersion?: number): Promise<MutationResult>;
 function setQuestionFlags(id: string, expectedVersion: number,
-  flags: { doubtFlag?: boolean; explanationRequestFlag?: boolean }): Promise<MutationResult>;
+  flags: { doubtFlag?: boolean; doubtNote?: string | null; explanationRequestFlag?: boolean }): Promise<MutationResult>;
+// doubtNoteは結果のdoubtFlagがtrueのときだけ許可。doubtFlag=falseで自動消去。内容更新では未patchなら保持。
 function setQuestionActive(id: string, expectedVersion: number, active: boolean): Promise<MutationResult>;
 function reorderQuestions(keywordId: string,
   ordered: readonly QuestionVersionToken[]): Promise<StructuredQuestion[] | VersionConflict>;

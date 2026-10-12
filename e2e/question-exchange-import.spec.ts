@@ -90,7 +90,7 @@ test.describe('AtomicImportRPCValidation', () => {
   });
 
   test('create/updateの混在payloadを全検証後にbank primitiveへ委譲し、owner値はauth.uid()で決まる', async () => {
-    const q = await seedQuestion(ownerId, materialId, keywordId, { doubt_flag: true, explanation_request_flag: true });
+    const q = await seedQuestion(ownerId, materialId, keywordId, { doubt_flag: true, doubt_note: '疑義メモ', explanation_request_flag: true });
     const result = await user.rpc('import_question_exchange', payload([
       { kind: 'create', keywordId, question: content, ownerId: otherId, owner_id: otherId },
       {
@@ -105,7 +105,7 @@ test.describe('AtomicImportRPCValidation', () => {
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.owner_id === ownerId && r.question_text === '取込後の問い')).toBe(true);
     const updated = rows.find((r) => r.id === q.id);
-    expect(updated).toMatchObject({ version: q.version + 1, doubt_flag: false, explanation_request_flag: true });
+    expect(updated).toMatchObject({ version: q.version + 1, doubt_flag: false, doubt_note: null, explanation_request_flag: true });
   });
 
   const invalidCases: { name: string; build: (ctx: Ctx) => Op }[] = [

@@ -10,7 +10,7 @@ function question(overrides: Partial<StructuredQuestion> = {}): StructuredQuesti
     id: 'question-1', ownerId: 'owner-1', materialId: 'material-1', keywordId: 'keyword-1',
     questionText: '日本の首都は？', modelAnswer: '東京', choices: ['大阪'],
     explanation: null, sortOrder: 0, isActive: true, doubtFlag: false,
-    explanationRequestFlag: false, version: 1, updatedAt: '2026-10-11T00:00:00Z',
+    doubtNote: null, explanationRequestFlag: false, version: 1, updatedAt: '2026-10-11T00:00:00Z',
     ...overrides,
   };
 }
@@ -53,6 +53,16 @@ describe('QuestionList', () => {
     expect(row).toHaveTextContent('解説: あり');
     expect(row).toHaveTextContent('疑義フラグ: あり');
     expect(row).toHaveTextContent('解説追加フラグ: なし');
+  });
+
+  it('疑義の内容があれば疑義フラグと併せて読み取り専用で表示する', () => {
+    renderList({ questions: [
+      question({ id: 'a', doubtFlag: true, doubtNote: '模範解答が古い' }),
+      question({ id: 'b', sortOrder: 1, doubtFlag: true }),
+    ] });
+    const [withNote, withoutNote] = screen.getAllByRole('listitem');
+    expect(withNote).toHaveTextContent('疑義の内容: 模範解答が古い');
+    expect(withoutNote).not.toHaveTextContent('疑義の内容');
   });
 
   it('編集、並べ替え、flag解除を共通行操作から実行して結果を通知する', async () => {

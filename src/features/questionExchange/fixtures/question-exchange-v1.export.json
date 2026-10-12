@@ -77,6 +77,7 @@
             "核"
           ],
           "explanation": null,
+          "doubtNote": "選択肢に模範解答が含まれている",
           "requestedFlags": [
             "doubt",
             "explanation-request"
@@ -90,6 +91,7 @@
           "modelAnswer": "二酸化炭素と水",
           "choices": [],
           "explanation": "光エネルギーを利用する。",
+          "doubtNote": null,
           "requestedFlags": []
         },
         {
@@ -100,6 +102,7 @@
           "modelAnswer": "酸素",
           "choices": [],
           "explanation": null,
+          "doubtNote": null,
           "requestedFlags": [
             "doubt"
           ]
@@ -147,6 +150,7 @@
           "modelAnswer": "ミトコンドリア",
           "choices": [],
           "explanation": null,
+          "doubtNote": null,
           "requestedFlags": [
             "explanation-request"
           ]

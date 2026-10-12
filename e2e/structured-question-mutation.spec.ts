@@ -83,6 +83,47 @@ test.describe.serial('structured question mutation RPC', () => {
     expect(unchanged.data).toEqual({ version: 1, doubt_flag: false, is_active: true });
   });
 
+  test('doubt note follows the doubt flag through set-flags and content updates', async () => {
+    const ownerId = await ensureTestUser();
+    await resetData(ownerId);
+    const subjectId = await seedSubject(ownerId, 'RPC疑義メモ');
+    const { keywordId } = await seedMaterialWithKeyword(ownerId, subjectId, 'rpc003');
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await client.auth.signInWithPassword(TEST_USER);
+    const content = validCases[0]!.content;
+    const created = await client.rpc('mutate_structured_question', {
+      p_command: 'create', p_keyword_id: keywordId, p_content: content,
+    });
+    const id = (created.data as MutationResponse).question!.id;
+    const row = async () => (await adminClient().from('structured_questions')
+      .select('version,doubt_flag,doubt_note').eq('id', id).single()).data;
+    const setFlags = (version: number, patch: Record<string, unknown>) => client.rpc('mutate_structured_question', {
+      p_command: 'set-flags', p_question_id: id, p_expected_version: version, p_flag_patch: patch,
+    });
+
+    // note without a resulting doubt flag, non-string note, and unknown keys are rejected
+    for (const patch of [{ doubt_note: 'メモ' }, { doubt_flag: false, doubt_note: 'メモ' },
+      { doubt_flag: true, doubt_note: 1 }, { doubt_flag: true, doubt_note: 'x'.repeat(1001) },
+      { doubt_flag: true, unknown: 'x' }]) {
+      expect((await setFlags(1, patch)).error, JSON.stringify(patch)).not.toBeNull();
+    }
+    expect(await row()).toEqual({ version: 1, doubt_flag: false, doubt_note: null });
+
+    expect((await setFlags(1, { doubt_flag: true, doubt_note: '  定義が違う  ' })).error).toBeNull();
+    expect(await row()).toEqual({ version: 2, doubt_flag: true, doubt_note: '定義が違う' });
+    expect((await client.rpc('mutate_structured_question', {
+      p_command: 'update-content', p_question_id: id, p_expected_version: 2, p_content: content,
+    })).error).toBeNull();
+    expect(await row()).toEqual({ version: 3, doubt_flag: true, doubt_note: '定義が違う' });
+    expect((await setFlags(3, { doubt_flag: true, doubt_note: '   ' })).error).toBeNull();
+    expect(await row()).toEqual({ version: 4, doubt_flag: true, doubt_note: null });
+    expect((await setFlags(4, { doubt_flag: true, doubt_note: '再メモ' })).error).toBeNull();
+    expect((await setFlags(5, { doubt_flag: false })).error).toBeNull();
+    expect(await row()).toEqual({ version: 6, doubt_flag: false, doubt_note: null });
+  });
+
   test('shared drafts, flags, stale writes, active state, and deletion obey one atomic contract', async () => {
     const ownerId = await ensureTestUser();
     await resetData(ownerId);

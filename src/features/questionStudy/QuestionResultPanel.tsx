@@ -15,6 +15,8 @@ export type ResultQuestion = Readonly<{
   modelAnswer: string;
   explanation: string | null;
   doubtFlag: boolean;
+  /** 疑義の内容（任意）。疑義flagがfalseのときは常にnull。 */
+  doubtNote: string | null;
   explanationRequestFlag: boolean;
   version: number;
 }>;
@@ -36,8 +38,9 @@ type FlagName = 'doubtFlag' | 'explanationRequestFlag';
 type FlagStatus =
   | { kind: 'idle' }
   | { kind: 'saving'; flag: FlagName; value: boolean }
-  | { kind: 'saved' }
-  | { kind: 'failed' }
+  | { kind: 'saving-note' }
+  | { kind: 'saved'; target: 'flag' | 'note' }
+  | { kind: 'failed'; target: 'flag' | 'note' }
   | { kind: 'conflict' };
 
 const FLAG_LABELS: Record<FlagName, string> = {
@@ -59,7 +62,8 @@ export function QuestionResultPanel({
   const [question, setQuestion] = useState<ResultQuestion>(initialQuestion);
   const [status, setStatus] = useState<FlagStatus>({ kind: 'idle' });
   const busy = useRef(false);
-  const locked = status.kind === 'saving' || status.kind === 'conflict';
+  const [noteDraft, setNoteDraft] = useState(initialQuestion.doubtNote ?? '');
+  const locked = status.kind === 'saving' || status.kind === 'saving-note' || status.kind === 'conflict';
 
   const displayed = (flag: FlagName) =>
     status.kind === 'saving' && status.flag === flag ? status.value : question[flag];
@@ -72,13 +76,37 @@ export function QuestionResultPanel({
       const result = await setFlags(question.id, question.version, { [flag]: value });
       if (result.kind === 'saved') {
         setQuestion(result.question);
+        if (flag === 'doubtFlag') setNoteDraft(result.question.doubtNote ?? '');
         onQuestionUpdated(result.question);
-        setStatus({ kind: 'saved' });
+        setStatus({ kind: 'saved', target: 'flag' });
       } else {
         setStatus({ kind: 'conflict' });
       }
     } catch {
-      setStatus({ kind: 'failed' });
+      setStatus({ kind: 'failed', target: 'flag' });
+    } finally {
+      busy.current = false;
+    }
+  };
+
+  // 疑義の内容は疑義flagと同じ版付き契約で保存する。失敗時は入力を保持する。
+  const saveNote = async () => {
+    if (busy.current || locked || !question.doubtFlag) return;
+    busy.current = true;
+    setStatus({ kind: 'saving-note' });
+    try {
+      const doubtNote = noteDraft.trim() === '' ? null : noteDraft.trim();
+      const result = await setFlags(question.id, question.version, { doubtFlag: true, doubtNote });
+      if (result.kind === 'saved') {
+        setQuestion(result.question);
+        setNoteDraft(result.question.doubtNote ?? '');
+        onQuestionUpdated(result.question);
+        setStatus({ kind: 'saved', target: 'note' });
+      } else {
+        setStatus({ kind: 'conflict' });
+      }
+    } catch {
+      setStatus({ kind: 'failed', target: 'note' });
     } finally {
       busy.current = false;
     }
@@ -118,11 +146,25 @@ export function QuestionResultPanel({
           </label>
         ))}
         <p aria-live="polite" className="text-[13px] text-muted">
-          {status.kind === 'saving' ? '保存しています…' : status.kind === 'saved' ? 'フラグを保存しました' : ''}
+          {status.kind === 'saving' || status.kind === 'saving-note' ? '保存しています…'
+            : status.kind === 'saved' ? (status.target === 'note' ? '疑義の内容を保存しました' : 'フラグを保存しました') : ''}
         </p>
+        {question.doubtFlag && status.kind !== 'saving' && (
+          <div className="flex min-w-0 flex-col gap-2 px-1">
+            <label htmlFor="question-result-doubt-note" className="text-[14px]">疑義の内容（任意）</label>
+            <textarea id="question-result-doubt-note" rows={3} maxLength={1000}
+              className="min-h-11 w-full min-w-0 rounded border px-3 py-2 text-[14px]"
+              value={noteDraft} disabled={locked}
+              onChange={(event) => setNoteDraft(event.target.value)} />
+            <div>
+              <button type="button" className="btn-s h-11 px-4" disabled={locked}
+                onClick={() => { void saveNote(); }}>疑義の内容を保存</button>
+            </div>
+          </div>
+        )}
         {status.kind === 'failed' && (
           <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
-            フラグを保存できませんでした。もう一度お試しください
+            {status.target === 'note' ? '疑義の内容' : 'フラグ'}を保存できませんでした。もう一度お試しください
           </p>
         )}
         {status.kind === 'conflict' && (

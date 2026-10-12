@@ -156,3 +156,6 @@
   - _Boundary: StructuredQuestionBankIntegration_
   - _Depends: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   - _Requirements: 1.1, 2.7, 3.8, 4.5, 5.4, 6.1, 7.1, 7.3, 7.4, 7.5_
+
+## Implementation Notes
+- 疑義内容（2026-10-12追加）: migration 20261012000000 で structured_questions.doubt_note を追加し、primitive/mutate_structured_question のflag patchに doubt_note を許可。doubt_flag=false で自動消去、内容更新では保持。一覧では疑義内容を読み取り専用で表示する。

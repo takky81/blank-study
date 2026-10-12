@@ -55,7 +55,7 @@ async function stats(owner: string) {
 
 async function flags(questionId: string) {
   const result = await adminClient().from('structured_questions')
-    .select('doubt_flag, explanation_request_flag').eq('id', questionId).single();
+    .select('doubt_flag, doubt_note, explanation_request_flag').eq('id', questionId).single();
   if (result.error) throw result.error;
   return result.data;
 }
@@ -287,7 +287,12 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   await expect(saved).toBeVisible();
   await expect(doubt).toBeChecked();
   await expect(request).not.toBeChecked();
-  expect(await flags(s.q1)).toEqual({ doubt_flag: true, explanation_request_flag: false });
+  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: null, explanation_request_flag: false });
+  // 疑義の内容（任意）を入力して保存する
+  await page.getByLabel('疑義の内容（任意）').fill('  ニブルの定義が教材と違う  ');
+  await page.getByRole('button', { name: '疑義の内容を保存' }).click();
+  await expect(page.getByText('疑義の内容を保存しました')).toBeVisible();
+  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: 'ニブルの定義が教材と違う', explanation_request_flag: false });
   await page.getByRole('button', { name: '次の問題へ' }).click();
 
   // Q2: 両方
@@ -298,7 +303,7 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   await request.check();
   await expect(request).toBeChecked();
   await expect(doubt).toBeChecked();
-  await expect.poll(() => flags(s.q2)).toEqual({ doubt_flag: true, explanation_request_flag: true });
+  await expect.poll(() => flags(s.q2)).toEqual({ doubt_flag: true, doubt_note: null, explanation_request_flag: true });
   await page.getByRole('button', { name: '次の問題へ' }).click();
 
   // Q3（解説あり）: 解説追加だけ
@@ -308,8 +313,8 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   await request.check();
   await expect(saved).toBeVisible();
   await expect(doubt).not.toBeChecked();
-  expect(await flags(s.q3)).toEqual({ doubt_flag: false, explanation_request_flag: true });
-  expect(await flags(s.q1)).toEqual({ doubt_flag: true, explanation_request_flag: false });
+  expect(await flags(s.q3)).toEqual({ doubt_flag: false, doubt_note: null, explanation_request_flag: true });
+  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: 'ニブルの定義が教材と違う', explanation_request_flag: false });
 
   await page.getByRole('button', { name: '次の問題へ' }).click();
   await expect(page.getByText('正解 2 / 3 問')).toBeVisible();

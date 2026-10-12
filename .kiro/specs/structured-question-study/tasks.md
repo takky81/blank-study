@@ -165,3 +165,6 @@
   - _Boundary: StructuredQuestionStudyIntegration_
   - _Depends: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
   - _Requirements: 1.7, 4.7, 5.4, 6.2, 7.4, 8.1, 8.3, 8.4, 8.5_
+
+## Implementation Notes
+- 疑義内容（2026-10-12追加、Requirement 7.1）: 結果画面で疑義がある間「疑義の内容（任意）」textareaと「疑義の内容を保存」を表示し、`{ doubtFlag: true, doubtNote }` を同じ版付きflag契約で送る。失敗時は入力保持＋再試行、競合時は再読込を促す。

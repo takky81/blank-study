@@ -150,7 +150,7 @@ function checkNode(c: Checker, value: unknown, path: string, withBody: boolean):
 }
 
 function checkExportQuestion(c: Checker, value: unknown, path: string): void {
-  const keys = ['questionId', 'expectedVersion', 'sortOrder', 'questionText', 'modelAnswer', 'choices', 'explanation', 'requestedFlags'];
+  const keys = ['questionId', 'expectedVersion', 'sortOrder', 'questionText', 'modelAnswer', 'choices', 'explanation', 'doubtNote', 'requestedFlags'];
   if (!c.object(value, path, keys)) return;
   c.uuid(value.questionId, `${path}.questionId`);
   c.integer(value.expectedVersion, `${path}.expectedVersion`, 1);
@@ -159,6 +159,7 @@ function checkExportQuestion(c: Checker, value: unknown, path: string): void {
   c.string(value.modelAnswer, `${path}.modelAnswer`);
   c.array(value.choices, `${path}.choices`, (e, p) => c.string(e, p));
   c.nullableString(value.explanation, `${path}.explanation`);
+  c.nullableString(value.doubtNote, `${path}.doubtNote`);
   c.enumArray(value.requestedFlags, `${path}.requestedFlags`, REQUEST_KIND_ORDER);
 }
 

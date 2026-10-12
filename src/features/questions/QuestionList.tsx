@@ -91,6 +91,7 @@ export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClea
             <div><dt className="inline">解説: </dt><dd className="inline">{question.explanation === null ? 'なし' : 'あり'}</dd></div>
             <div><dt className="inline">疑義フラグ: </dt><dd className="inline">{question.doubtFlag ? 'あり' : 'なし'}</dd></div>
             <div><dt className="inline">解説追加フラグ: </dt><dd className="inline">{question.explanationRequestFlag ? 'あり' : 'なし'}</dd></div>
+            {question.doubtFlag && question.doubtNote !== null && <div className="basis-full min-w-0"><dt className="inline">疑義の内容: </dt><dd className="inline whitespace-pre-wrap [overflow-wrap:anywhere]">{question.doubtNote}</dd></div>}
           </dl>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end"><RowActions label={`「${question.questionText}」のその他の操作`} primary={<button type="button" disabled={busy} onClick={() => onEdit(question)} className="btn-s">設問を編集</button>}>

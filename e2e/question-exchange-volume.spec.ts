@@ -204,6 +204,7 @@ function goldenExport(input: { subjectId: string; materialId: string; chapterId:
         modelAnswer: `解答${g}-${rule.kind}`,
         choices: rule.choices,
         explanation: explanationOf(rule.kind, g),
+        doubtNote: null,
         requestedFlags: kindsById.get(questionId(rule.kind, g)) ?? [],
       })).sort((a, b) => a.sortOrder - b.sortOrder || cmp(a.questionId, b.questionId)),
       flaggedQuestions: flagged,

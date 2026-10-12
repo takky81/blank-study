@@ -51,6 +51,7 @@ function toQuestion(keywordId: string, q: QuestionExchangeExportV1['targets'][nu
     sortOrder: q.sortOrder,
     isActive: true,
     doubtFlag: q.requestedFlags.includes('doubt'),
+    doubtNote: q.doubtNote,
     explanationRequestFlag: q.requestedFlags.includes('explanation-request'),
   };
 }

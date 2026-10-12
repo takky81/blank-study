@@ -56,6 +56,8 @@ export type ExportQuestion = {
   modelAnswer: string;
   choices: readonly string[];
   explanation: string | null;
+  /** 利用者が入力した疑義の内容（任意）。疑義flagがない設問は常にnull。 */
+  doubtNote: string | null;
   requestedFlags: readonly RequestKind[];
 };
 

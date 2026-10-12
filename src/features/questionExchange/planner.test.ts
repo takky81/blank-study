@@ -15,7 +15,7 @@ const content = { questionText: '新しい問い', modelAnswer: '答え', choice
 const current = (id: string, overrides: Partial<StructuredQuestion> = {}): StructuredQuestion => ({
   id, version: 3, updatedAt: '2026-10-01T00:00:00Z', ownerId: 'o', materialId: 'm', keywordId: K1,
   questionText: '古い問い', modelAnswer: '答え', choices: [], explanation: null, sortOrder: 0, isActive: true,
-  doubtFlag: true, explanationRequestFlag: false, ...overrides,
+  doubtFlag: true, doubtNote: null, explanationRequestFlag: false, ...overrides,
 });
 const create = (keywordId = K1): ImportOperation => ({ kind: 'create', keywordId, question: content });
 const update = (questionId: string, overrides: Partial<UpdateOperation> = {}): UpdateOperation => ({

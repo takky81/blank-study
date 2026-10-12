@@ -182,3 +182,4 @@
 - keyword export: displayText = answers[0]、modelAnswer = answers.join("、")（design未定義のため2.2で決定）。eligibility RPCはPostgREST max_rows=1000回避のため単一jsonb配列を返す。新規公開RPCは e2e/rpc-security-matrix.ts の末尾へ追加する（既存specが位置indexを参照）。
 - import_question_exchange のエラー: 22023=検証エラー、P0002=未知/他owner参照（同一表現）、PT409(HTTP 409)=stale版。40001はPostgRESTが再試行してtimeoutするため使わない。成功は {createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount}。private primitiveへのUSAGE/EXECUTEはbank migration 000004/000005で付与済み。
 - route adapterは `@/app/featureRoutes` をimportしない（App.tsxだけがregistryを消費する境界テストあり）。returnTo許可listはfeature内に持つ。
+- ExportQuestion.doubtNote（2026-10-12追加）: 設問バンクのdoubt_noteをprojectionが読み取り契約から転記する（疑義flagなしはnull）。import形式は不変で、doubt解消時はbank primitiveがdoubt_noteも消去する。

@@ -13,7 +13,7 @@ const filters = { minimumAttempts: 3, maximumAccuracy: 0.6, maximumQuestionCount
 const exportValue = { schemaVersion: 1, exchangeId: 'x', exportedAt: '2026-10-11T00:00:00.000Z', filters, targets: [] } as unknown as QuestionExchangeExportV1;
 const current: StructuredQuestion = {
   id: 'q1', ownerId: 'o', materialId: 'm', keywordId: 'k1', questionText: '旧い問い', modelAnswer: '旧答', choices: ['誤'],
-  explanation: null, sortOrder: 0, isActive: true, doubtFlag: true, explanationRequestFlag: false, version: 2, updatedAt: '',
+  explanation: null, sortOrder: 0, isActive: true, doubtFlag: true, doubtNote: null, explanationRequestFlag: false, version: 2, updatedAt: '',
 };
 const draft = { questionText: '新しい問い', modelAnswer: '新答', choices: ['誤'], explanation: null };
 const okPreview: ImportPreview = {

@@ -11,7 +11,7 @@ import { StructuredQuestionStudyPage } from './StructuredQuestionStudyPage';
 const base: StructuredQuestion = {
   id: 'q1', ownerId: 'o', materialId: 'm', keywordId: 'k',
   questionText: '光合成とは？', modelAnswer: '化学反応', choices: ['物理現象', '生物', '天体'], explanation: null,
-  sortOrder: 0, isActive: true, doubtFlag: false, explanationRequestFlag: false,
+  sortOrder: 0, isActive: true, doubtFlag: false, doubtNote: null, explanationRequestFlag: false,
   version: 3, updatedAt: '2026-10-11T00:00:00Z',
 };
 const candidate = (question: StructuredQuestion): QuestionStudyCandidate => ({

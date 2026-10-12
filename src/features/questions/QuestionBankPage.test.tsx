@@ -10,7 +10,7 @@ const keyword = { id: 'keyword-1', materialId: 'material-1', label: '光合成' 
 const question: StructuredQuestion = {
   id: 'question-1', ownerId: 'owner-1', materialId: 'material-1', keywordId: 'keyword-1',
   questionText: '光合成とは？', modelAnswer: '化学反応', choices: [], explanation: null,
-  sortOrder: 0, isActive: true, doubtFlag: false, explanationRequestFlag: false,
+  sortOrder: 0, isActive: true, doubtFlag: false, doubtNote: null, explanationRequestFlag: false,
   version: 1, updatedAt: '2026-10-11T00:00:00Z',
 };
 

@@ -222,6 +222,7 @@ type ExportQuestion = {
   modelAnswer: string;
   choices: readonly string[];
   explanation: string | null;
+  doubtNote: string | null; // 利用者の疑義内容。疑義flagなしは常にnull
   requestedFlags: readonly ('doubt' | 'explanation-request')[];
 };
 type QuestionContentDraft = {
@@ -278,7 +279,7 @@ type QuestionExchangeExportV1 = ExchangeHeader & {
 ```
 
 - JSON objectのmember順には意味を持たせない。必須memberはexport envelopeが`schemaVersion: 1`、UUID `exchangeId`、RFC 3339 UTC `exportedAt`、`filters`、`targets`、targetが`keyword`、`metrics`、`reasons`、`chapterContexts`、`questions`、`flaggedQuestions`であり、追加memberはv1 parserで拒否する。
-- UUID文字列は各`id`、questionの`expectedVersion`は1以上の整数、各`sortOrder`とmetrics countは0以上の整数、`maximumAccuracy`と非null `accuracy`は0以上1以下とする。nullableは`metrics.accuracy`と`ExportQuestion.explanation`だけである。配列に対象がなければnullでなく`[]`を使う。
+- UUID文字列は各`id`、questionの`expectedVersion`は1以上の整数、各`sortOrder`とmetrics countは0以上の整数、`maximumAccuracy`と非null `accuracy`は0以上1以下とする。nullableは`metrics.accuracy`、`ExportQuestion.explanation`、`ExportQuestion.doubtNote`だけである（`doubtNote` keyは必須）。配列に対象がなければnullでなく`[]`を使う。
 - `chapterContexts`の1要素が階層pathと関連chapter本文の最小単位である。同じkeywordが現れる全章を含め、`(subject.sortOrder, subject.id, material.sortOrder, material.id, chapter.sortOrder, chapter.id)`で安定整列する。targetは`keyword.id`、`questions`は`(sortOrder, questionId)`、`flaggedQuestions`は`questionId`で昇順にする。
 - 列挙配列は`reasons`を`doubt-flag`、`explanation-request-flag`、`performance-and-count`、flag配列を`doubt`、`explanation-request`の定義順で重複なく整列する。本文は章の保存済みMarkdownを`bodyMarkdown`へ改変せず格納する。
 - `EligibilityTarget.keywordId/metrics/reasons/flaggedQuestions`は同一IDの`QuestionExchangeTargetV1.keyword.id/metrics/reasons/flaggedQuestions`へ1対1に写像する。全active既存設問を`questions`へ含め、フラグ対象questionの`ExportQuestion.requestedFlags`は同じIDの`flaggedQuestions.requestKinds`と完全一致し、非対象questionは`[]`とする。

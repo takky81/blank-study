@@ -17,6 +17,7 @@ export type StructuredQuestion = QuestionVersionToken & {
   sortOrder: number;
   isActive: boolean;
   doubtFlag: boolean;
+  doubtNote: string | null;
   explanationRequestFlag: boolean;
 };
 
@@ -52,6 +53,8 @@ export type MutationResult =
 
 export type QuestionFlagPatch = {
   doubtFlag?: boolean;
+  /** Optional doubt description; only meaningful while doubtFlag is true. Server clears it when doubt is cleared. */
+  doubtNote?: string | null;
   explanationRequestFlag?: boolean;
 };
 
@@ -70,6 +73,7 @@ export type StructuredQuestionConsumerView = Readonly<{
   sortOrder: number;
   isActive: boolean;
   doubtFlag: boolean;
+  doubtNote: string | null;
   explanationRequestFlag: boolean;
   version: number;
   updatedAt: string;
