@@ -62,7 +62,7 @@ async function seed(ownerId: string): Promise<Seed> {
   const flaggedQuestion = await insertQuestion({
     ...base, keyword_id: flagKeywordId, question_text: '1バイトは何ビットか', model_answer: '8ビット',
     choices: ['4ビット', '16ビット'], explanation: '1バイトは8ビット。', sort_order: 0, doubt_flag: true,
-    doubt_note: '16ビットとする資料もあるのでは', doubt_reasons: ['weak_distractors', 'defective'],
+    doubt_note: '16ビットとする資料もあるのでは', doubt_reasons: ['unclear', 'defective'],
   });
   const plainQuestion = await insertQuestion({
     ...base, keyword_id: flagKeywordId, question_text: 'ビットの語源は', model_answer: 'binary digit', sort_order: 1,
@@ -99,7 +99,7 @@ function golden(s: Seed, filters: QuestionExchangeExportV1['filters'], includeSt
       {
         questionId: s.flaggedQuestion.id, expectedVersion: s.flaggedQuestion.version, sortOrder: 0,
         questionText: '1バイトは何ビットか', modelAnswer: '8ビット', choices: ['4ビット', '16ビット'],
-        explanation: '1バイトは8ビット。', doubtNote: '16ビットとする資料もあるのでは', doubtReasons: ['defective', 'weak_distractors'], requestedFlags: ['doubt'],
+        explanation: '1バイトは8ビット。', doubtNote: '16ビットとする資料もあるのでは', doubtReasons: ['defective', 'unclear'], requestedFlags: ['doubt'],
       },
       {
         questionId: s.plainQuestion.id, expectedVersion: s.plainQuestion.version, sortOrder: 1,

@@ -168,5 +168,6 @@
 
 ## Implementation Notes
 - 疑義内容（2026-10-12追加、Requirement 7.1）: 結果画面で疑義がある間「疑義の内容（任意）」textareaと「疑義の内容を保存」を表示し、`{ doubtFlag: true, doubtNote }` を同じ版付きflag契約で送る。失敗時は入力保持＋再試行、競合時は再読込を促す。
-- 疑義の理由（2026-10-12追加、Requirement 7.1）: 疑義がある間、textareaの上に fieldset「疑義の理由」と5つの理由checkbox（44px行）を表示し、既存の理由を初期選択する。「疑義の内容を保存」で `{ doubtFlag: true, doubtReasons, doubtNote }` を送る（doubtReasonsは正規順コード: `answer_guessable`（問題文から答えが分かる）、`low_value`（問う価値が低い）、`defective`（問題不備（正解・問題文の誤り、正解が一つに決まらない））、`weak_distractors`（誤答が簡単すぎる）、`unclear`（問題文が分かりにくい））。失敗時は選択を保持する。
+- 疑義の理由（2026-10-12追加、Requirement 7.1）: 疑義がある間、textareaの上に fieldset「疑義の理由」と4つの理由checkbox（44px行）を表示し、既存の理由を初期選択する。「疑義の内容を保存」で `{ doubtFlag: true, doubtReasons, doubtNote }` を送る（doubtReasonsは正規順コード: `answer_guessable`（知識がなくても解ける（問題文や選択肢から推測できる））、`low_value`（問う価値が低い）、`defective`（問題不備（正解・問題文の誤り、正解が一つに決まらない））、`unclear`（問題文が分かりにくい））。失敗時は選択を保持する。
 - 疑義の自動保存（2026-10-12変更）: 「疑義の内容を保存」ボタンを廃止し、理由はcheckboxを変えるたび、内容はtextareaから離れたとき（変更がある場合のみ）に保存する。保存は直列で、保存中の変更は最新1件を続けて送る。失敗時は入力保持＋「再保存」、競合時は再読込を促して操作を止める。
+- 疑義の理由の統合（2026-10-12）: `weak_distractors`（誤答が簡単すぎる）を `answer_guessable` に統合し、ラベルを「知識がなくても解ける（問題文や選択肢から推測できる）」へ変更した。固定コードは `answer_guessable`／`low_value`／`defective`／`unclear` の4つ（この順が正規順）。新規migration `20261012020000_merge_doubt_reason_weak_distractors.sql` で既存行の `weak_distractors` を `answer_guessable` へ置換・重複除去・正規順化し（データ正規化のため版トリガーを一時無効化し `version`/`updated_at` は変えない）、CHECK制約と `private.apply_structured_question_content` のコード一覧を4コードへ置き換えた。設問交換codecも `weak_distractors` を拒否する。

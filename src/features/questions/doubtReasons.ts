@@ -3,10 +3,9 @@
  * 保存・交換するのはコードで、表示ラベルはここだけで定義する。
  */
 export const DOUBT_REASONS = [
-  { code: 'answer_guessable', label: '問題文から答えが分かる' },
+  { code: 'answer_guessable', label: '知識がなくても解ける（問題文や選択肢から推測できる）' },
   { code: 'low_value', label: '問う価値が低い' },
   { code: 'defective', label: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' },
-  { code: 'weak_distractors', label: '誤答が簡単すぎる' },
   { code: 'unclear', label: '問題文が分かりにくい' },
 ] as const;
 

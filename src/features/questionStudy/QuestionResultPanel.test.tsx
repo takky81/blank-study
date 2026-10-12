@@ -122,9 +122,8 @@ describe('QuestionResultPanel', () => {
     expect(screen.getByRole('checkbox', { name: '問題文が分かりにくい' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: '誤答が簡単すぎる' })).not.toBeChecked();
     fireEvent.change(screen.getByLabelText('疑義の内容（任意）'), { target: { value: 'メモ' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: '問題文から答えが分かる' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '知識がなくても解ける（問題文や選択肢から推測できる）' }));
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3,
       { doubtFlag: true, doubtReasons: ['answer_guessable', 'unclear'], doubtNote: 'メモ' }));
     await waitFor(() => expect(onQuestionUpdated).toHaveBeenLastCalledWith(
@@ -141,13 +140,13 @@ describe('QuestionResultPanel', () => {
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['low_value', 'unclear'] }, 5));
     setup(setFlags, { doubtFlag: true });
     fireEvent.click(screen.getByRole('checkbox', { name: '問う価値が低い' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: '誤答が簡単すぎる' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' }));
     fireEvent.click(screen.getByRole('checkbox', { name: '問題文が分かりにくい' }));
     expect(setFlags).toHaveBeenCalledTimes(1);
     release(saved({ doubtFlag: true, doubtReasons: ['low_value'] }, 4));
     await waitFor(() => expect(setFlags).toHaveBeenCalledTimes(2));
     expect(setFlags).toHaveBeenLastCalledWith('q1', 4,
-      { doubtFlag: true, doubtReasons: ['low_value', 'weak_distractors', 'unclear'], doubtNote: null });
+      { doubtFlag: true, doubtReasons: ['low_value', 'defective', 'unclear'], doubtNote: null });
   });
 
   it('疑義の理由の保存失敗では選択を保持し、再保存で同じ内容を送る', async () => {

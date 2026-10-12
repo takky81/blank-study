@@ -184,3 +184,4 @@
 - route adapterは `@/app/featureRoutes` をimportしない（App.tsxだけがregistryを消費する境界テストあり）。returnTo許可listはfeature内に持つ。
 - ExportQuestion.doubtNote（2026-10-12追加）: 設問バンクのdoubt_noteをprojectionが読み取り契約から転記する（疑義flagなしはnull）。import形式は不変で、doubt解消時はbank primitiveがdoubt_noteも消去する。
 - ExportQuestion.doubtReasons（2026-10-12追加）: 設問バンクのdoubt_reasonsをprojectionが正規順のコード配列で転記する（疑義flagなしは[]）。schema codecは共有定数DOUBT_REASONSのコード・定義順・重複なしを検証する。import形式は不変で、doubt解消時はbank primitiveがdoubt_reasonsも空にする。
+- 疑義の理由の統合（2026-10-12）: `weak_distractors`（誤答が簡単すぎる）を `answer_guessable` に統合し、ラベルを「知識がなくても解ける（問題文や選択肢から推測できる）」へ変更した。固定コードは `answer_guessable`／`low_value`／`defective`／`unclear` の4つ（この順が正規順）。新規migration `20261012020000_merge_doubt_reason_weak_distractors.sql` で既存行の `weak_distractors` を `answer_guessable` へ置換・重複除去・正規順化し（データ正規化のため版トリガーを一時無効化し `version`/`updated_at` は変えない）、CHECK制約と `private.apply_structured_question_content` のコード一覧を4コードへ置き換えた。設問交換codecも `weak_distractors` を拒否する。

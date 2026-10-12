@@ -224,7 +224,7 @@ function saveQuestion(draft: QuestionDraft, id?: string, expectedVersion?: numbe
 function setQuestionFlags(id: string, expectedVersion: number,
   flags: { doubtFlag?: boolean; doubtNote?: string | null; doubtReasons?: readonly DoubtReason[]; explanationRequestFlag?: boolean }): Promise<MutationResult>;
 // doubtNoteは結果のdoubtFlagがtrueのときだけ許可。doubtFlag=falseで自動消去。内容更新では未patchなら保持。
-// doubtReasons（`answer_guessable`（問題文から答えが分かる）、`low_value`（問う価値が低い）、`defective`（問題不備（正解・問題文の誤り、正解が一つに決まらない））、`weak_distractors`（誤答が簡単すぎる）、`unclear`（問題文が分かりにくい））も同じ規則。未知コードは22023で拒否し、正規順・重複なしで保存する。
+// doubtReasons（`answer_guessable`（知識がなくても解ける（問題文や選択肢から推測できる））、`low_value`（問う価値が低い）、`defective`（問題不備（正解・問題文の誤り、正解が一つに決まらない））、`unclear`（問題文が分かりにくい））も同じ規則。未知コードは22023で拒否し、正規順・重複なしで保存する。
 function setQuestionActive(id: string, expectedVersion: number, active: boolean): Promise<MutationResult>;
 function reorderQuestions(keywordId: string,
   ordered: readonly QuestionVersionToken[]): Promise<StructuredQuestion[] | VersionConflict>;

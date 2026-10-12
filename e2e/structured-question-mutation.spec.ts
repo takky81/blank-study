@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { adminClient, ensureTestUser, resetData, seedMaterialWithKeyword, seedSubject } from './db';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, TEST_USER } from './env';
 
@@ -162,13 +163,58 @@ test.describe.serial('structured question mutation RPC', () => {
     expect(await row()).toEqual({ version: 4, doubt_flag: true, doubt_reasons: ['answer_guessable', 'unclear'] });
     expect((await setFlags(4, { doubt_flag: true, doubt_reasons: [] })).error).toBeNull();
     expect(await row()).toEqual({ version: 5, doubt_flag: true, doubt_reasons: [] });
-    expect((await setFlags(5, { doubt_flag: true, doubt_reasons: ['defective', 'weak_distractors', 'low_value'] })).error).toBeNull();
-    expect(await row()).toEqual({ version: 6, doubt_flag: true, doubt_reasons: ['low_value', 'defective', 'weak_distractors'] });
+    // weak_distractors was merged into answer_guessable and is no longer accepted
+    expect((await setFlags(5, { doubt_flag: true, doubt_reasons: ['weak_distractors'] })).error?.code).toBe('22023');
+    expect((await setFlags(5, { doubt_flag: true, doubt_reasons: ['defective', 'unclear', 'low_value'] })).error).toBeNull();
+    expect(await row()).toEqual({ version: 6, doubt_flag: true, doubt_reasons: ['low_value', 'defective', 'unclear'] });
     expect((await setFlags(6, { doubt_flag: false })).error).toBeNull();
     expect(await row()).toEqual({ version: 7, doubt_flag: false, doubt_reasons: [] });
     // the table check rejects direct writes that bypass the RPC
     expect((await adminClient().from('structured_questions').update({ doubt_reasons: ['low_value'] }).eq('id', id)).error).not.toBeNull();
     expect((await adminClient().from('structured_questions').update({ doubt_flag: true, doubt_reasons: ['low_value', 'low_value'] }).eq('id', id)).error).not.toBeNull();
+  });
+
+  test('the merge migration converts existing weak_distractors rows without bumping version', async () => {
+    const ownerId = await ensureTestUser();
+    await resetData(ownerId);
+    const subjectId = await seedSubject(ownerId, 'RPC疑義理由統合');
+    const { keywordId } = await seedMaterialWithKeyword(ownerId, subjectId, 'rpc005');
+    const ids = [randomUUID(), randomUUID(), randomUUID()];
+    for (const questionId of ids) {
+      callPrimitive({ ownerId, questionId, keywordId, content: validCases[0]!.content });
+    }
+    const migration = readFileSync(
+      join(process.cwd(), 'supabase/migrations/20261012020000_merge_doubt_reason_weak_distractors.sql'), 'utf8');
+    const normalization = migration.slice(
+      migration.indexOf('alter table public.structured_questions disable trigger'),
+      migration.indexOf('enable trigger structured_questions_set_version;') + 'enable trigger structured_questions_set_version;'.length,
+    );
+    expect(normalization).toContain('update public.structured_questions');
+    const legacy = ['{weak_distractors}', '{answer_guessable,weak_distractors}', '{low_value,weak_distractors,unclear}'];
+    const sql = [
+      'begin',
+      'alter table public.structured_questions drop constraint structured_questions_doubt_reasons_check',
+      'alter table public.structured_questions disable trigger structured_questions_set_version',
+      ...ids.map((qid, i) => `update public.structured_questions set doubt_flag = true, doubt_reasons = '${legacy[i]}' where id = '${qid}'`),
+      'alter table public.structured_questions enable trigger structured_questions_set_version',
+      normalization,
+      `select string_agg(id::text || '=' || version || ':' || array_to_string(doubt_reasons, ','), ' ' order by id) from public.structured_questions where id in (${ids.map((qid) => `'${qid}'`).join(',')})`,
+      'rollback',
+    ].join(';\n');
+    const output = execFileSync(
+      'docker',
+      ['exec', 'supabase_db_blank-study', 'psql', '-U', 'postgres', '-d', 'postgres', '-tA', '-v', 'ON_ERROR_STOP=1', '-c', sql],
+      { encoding: 'utf8' },
+    );
+    const expected = ['answer_guessable', 'answer_guessable', 'answer_guessable,low_value,unclear'];
+    for (const [i, qid] of ids.entries()) expect(output).toContain(`${qid}=1:${expected[i]}`);
+
+    // after the real migration no row keeps the old code and the check rejects it
+    const remaining = execFileSync('docker', ['exec', 'supabase_db_blank-study', 'psql', '-U', 'postgres', '-d', 'postgres', '-tA', '-c',
+      "select count(*) from public.structured_questions where 'weak_distractors' = any(doubt_reasons)"], { encoding: 'utf8' }).trim();
+    expect(remaining).toBe('0');
+    expect((await adminClient().from('structured_questions').update({ doubt_flag: true, doubt_reasons: ['weak_distractors'] })
+      .eq('id', ids[0]!)).error).not.toBeNull();
   });
 
   test('shared drafts, flags, stale writes, active state, and deletion obey one atomic contract', async () => {

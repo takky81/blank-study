@@ -80,7 +80,7 @@
           "doubtNote": "選択肢に模範解答が含まれている",
           "doubtReasons": [
             "answer_guessable",
-            "weak_distractors"
+            "unclear"
           ],
           "requestedFlags": [
             "doubt",
