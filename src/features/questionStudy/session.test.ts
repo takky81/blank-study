@@ -100,13 +100,14 @@ describe('QuestionSessionPolicy', () => {
     expect(pickNextQuestion(session, now)?.question.id).toBe('a');
   });
 
-  it('同じ入力と確定statsから同じ次問と結果を再現する', () => {
+  it('同じ入力・確定stats・乱数列から同じ次問と結果を再現する', () => {
     const make = () => startQuestionSession(
       [candidate('a', 0), candidate('b', 1), candidate('c', 2)], 'auto');
     const run = () => {
       let s = make();
+      const random = seeded(7);
       const ids: string[] = [];
-      for (let q = pickNextQuestion(s, now); q; q = pickNextQuestion(s, now)) {
+      for (let q = pickNextQuestion(s, now, random); q; q = pickNextQuestion(s, now, random)) {
         ids.push(q.question.id);
         s = recordQuestionSessionAnswer(s, q.question.id, ids.length % 2 === 0);
       }
@@ -129,10 +130,36 @@ describe('QuestionSessionPolicy', () => {
     expect(pickNextQuestion(session, now)).toBeNull();
   });
 
-  it('自動順で期限と習熟が同着なら候補の安定順で選ぶ', () => {
+  it('自動順で期限と習熟が同着なら乱数で選ぶ', () => {
     const due = { dueAt: '2026-10-12T00:00:00.000Z', consecutiveCorrect: 2 };
     const session = startQuestionSession([candidate('x', 0, due), candidate('y', 1, due)], 'auto');
-    expect(pickNextQuestion(session, now)?.question.id).toBe('x');
+    const values = (list: number[]) => () => list.shift() ?? 0;
+    expect(pickNextQuestion(session, now, values([0.1, 0.9]))?.question.id).toBe('x');
+    expect(pickNextQuestion(session, now, values([0.9, 0.1]))?.question.id).toBe('y');
+  });
+
+  it('自動順の乱数は同着の中だけで効き、未出題・期限・習熟の優先を崩さない', () => {
+    const candidates = [
+      candidate('late', 0, { dueAt: '2026-10-20T00:00:00.000Z' }),
+      candidate('soon-high', 1, { dueAt: '2026-10-12T00:00:00.000Z', consecutiveCorrect: 5 }),
+      candidate('soon-low', 2, { dueAt: '2026-10-12T00:00:00.000Z', consecutiveCorrect: 0 }),
+      candidate('new', 3),
+    ];
+    for (const r of [0, 0.5, 0.999999, 1]) {
+      let session = startQuestionSession(candidates, 'auto');
+      const order: string[] = [];
+      for (let q = pickNextQuestion(session, now, () => r); q; q = pickNextQuestion(session, now, () => r)) {
+        order.push(q.question.id);
+        session = recordQuestionSessionAnswer(session, q.question.id, true);
+      }
+      expect(order).toEqual(['new', 'soon-low', 'soon-high', 'late']);
+    }
+  });
+
+  it('未出題どうしは乱数によって出題順が変わる', () => {
+    const session = startQuestionSession([candidate('a', 0), candidate('b', 1), candidate('c', 2)], 'auto');
+    const values = (list: number[]) => () => list.shift() ?? 0;
+    expect(pickNextQuestion(session, now, values([0.8, 0.5, 0.2]))?.question.id).toBe('c');
   });
 
   it('出現順は確定statsで成績が変わっても安定順のまま', () => {
@@ -149,3 +176,12 @@ describe('QuestionSessionPolicy', () => {
     expect(session.result).toMatchObject({ answered: 0, ended: true });
   });
 });
+
+/** テスト用の再現可能な疑似乱数。 */
+function seeded(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    return state / 2147483648;
+  };
+}

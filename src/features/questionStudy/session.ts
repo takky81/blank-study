@@ -36,10 +36,15 @@ export function startQuestionSession(
 
 /**
  * 次の1問を選ぶ。未回答候補が無い、または終了済みなら null。
- * 順序規則は既存の `pickNext` に委ね、同着は乱数ではなく
- * 専用習熟状態（連続正解の少ない順）→ 候補の安定順で決めて再現可能にする。
+ * 順序規則は既存の `pickNext` に委ねる。自動順で期限が同着のときは
+ * 専用習熟状態（連続正解の少ない順）を優先し、それも同じならランダムにする。
+ * `random` はテストから差し替えて再現可能にする。
  */
-export function pickNextQuestion(session: QuestionSession, now: Date): QuestionStudyCandidate | null {
+export function pickNextQuestion(
+  session: QuestionSession,
+  now: Date,
+  random: () => number = Math.random,
+): QuestionStudyCandidate | null {
   if (session.result.ended) return null;
   const answered = new Set(session.answeredIds);
   const remaining = session.candidates
@@ -47,22 +52,22 @@ export function pickNextQuestion(session: QuestionSession, now: Date): QuestionS
     .filter(({ candidate }) => !answered.has(candidate.question.id));
   if (remaining.length === 0) return null;
 
-  const ordered = session.order === 'auto'
-    ? [...remaining].sort((a, b) => mastery(a.candidate) - mastery(b.candidate) || a.index - b.index)
-    : remaining;
-  const byId = new Map(ordered.map(({ candidate }) => [candidate.question.id, candidate]));
-  const adapted: Candidate[] = ordered.map(({ candidate, index }) => ({
+  const byId = new Map(remaining.map(({ candidate }) => [candidate.question.id, candidate]));
+  const adapted: Candidate[] = remaining.map(({ candidate, index }) => ({
     keywordId: candidate.question.id,
     position: index,
     dueAt: candidate.stats?.dueAt ? new Date(candidate.stats.dueAt) : null,
   }));
 
+  // pickNext は候補順に1つずつ同着用の値を引く。整数部に習熟度、小数部に乱数を入れ、
+  // 期限が同着なら習熟度の低い順、習熟度も同じならランダムに並べる。
+  const tieKeys = remaining.map(({ candidate }) => mastery(candidate));
+  let next = 0;
   const picked = pickNext(adapted, {
     order: session.order,
     recent: session.answeredIds,
     now,
-    // 同着は入力順（習熟→安定順）を保つ。Array.prototype.sort は安定。
-    random: () => 0,
+    random: () => (tieKeys[next++] ?? 0) + Math.min(Math.max(random(), 0), 0.999999),
   });
   return picked ? byId.get(picked.keywordId) ?? null : null;
 }
