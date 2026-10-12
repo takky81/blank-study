@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { StructuredQuestion } from '@/features/questions/types';
@@ -32,11 +32,11 @@ function deferred<T>() {
 }
 
 function setup(candidates: readonly QuestionStudyCandidate[], record = vi.fn<(...a: unknown[]) => Promise<RecordQuestionAnswerResult>>()
-  .mockResolvedValue({ kind: 'recorded', logId: 'l', stats })) {
+  .mockResolvedValue({ kind: 'recorded', logId: 'l', stats }), random: () => number = () => 0.999) {
   const load = vi.fn().mockResolvedValue(candidates);
   const onExit = vi.fn();
   render(<StructuredQuestionStudyPage initialScope={scope} onExit={onExit}
-    loadCandidates={load} recordAnswer={record} />);
+    loadCandidates={load} recordAnswer={record} random={random} />);
   return { load, record, onExit };
 }
 
@@ -86,12 +86,17 @@ describe('StructuredQuestionStudyPage', () => {
     expect(load).toHaveBeenCalledWith({ kind: 'chapter', id: 'c1' });
   });
 
-  it('選択肢は登録順（模範解答→登録選択肢）で並び、わからないは末尾に分かれる', async () => {
-    setup([candidate(base)]);
-    await start('選択式');
-    const group = screen.getByRole('group', { name: '選択肢' });
-    const labels = within(group).getAllByRole('button').map((button) => button.textContent);
-    expect(labels).toEqual(['化学反応', '物理現象', '生物', '天体', 'わからない']);
+  it('回答候補は乱数でシャッフルされ、模範解答の位置が固定されず、わからないは末尾に分かれる', async () => {
+    const labelsWith = async (r: number) => {
+      cleanup();
+      setup([candidate(base)], undefined, () => r);
+      await start('選択式');
+      const group = screen.getByRole('group', { name: '選択肢' });
+      return within(group).getAllByRole('button').map((button) => button.textContent);
+    };
+    // Fisher–Yates: r=0 は毎回先頭と交換、r≒1 は交換なし。
+    expect(await labelsWith(0)).toEqual(['物理現象', '生物', '天体', '化学反応', 'わからない']);
+    expect(await labelsWith(0.999)).toEqual(['化学反応', '物理現象', '生物', '天体', 'わからない']);
   });
 
   it('わからないは空の回答として記録され不正解になる', async () => {

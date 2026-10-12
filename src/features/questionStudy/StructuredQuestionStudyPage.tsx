@@ -43,6 +43,8 @@ export type StructuredQuestionStudyPageProps = {
   /** 設問version競合時に現在設問の最新版を読み直す。出題できなくなったら null。 */
   reloadQuestion?: (question: StructuredQuestion) => Promise<StructuredQuestion | null>;
   now?: () => Date;
+  /** 選択肢の並びと同着の出題順に使う乱数。テストから差し替える。 */
+  random?: () => number;
 };
 
 /** 公開の設問readから同じ設問の最新版を探す。無効・削除済みなら null。 */
@@ -105,14 +107,27 @@ const MODE_OPTIONS: readonly { value: RequestedQuestionMode; label: string }[] =
   { value: 'written', label: '記述式' },
 ];
 
-function prepare(candidate: QuestionStudyCandidate, requested: RequestedQuestionMode): Current {
+function prepare(
+  candidate: QuestionStudyCandidate, requested: RequestedQuestionMode, random: () => number,
+): Current {
   const built = buildQuestionChoiceOptions(candidate.question.modelAnswer, candidate.question.choices);
   const mode = resolveQuestionMode(requested, candidate.stats, built.distractors);
   const choices = mode === 'choice'
-    // 登録順のまま（模範解答→重複しない登録選択肢）、「わからない」は末尾に分けて置く。
-    ? [...built.options.map((o) => ({ value: o.value, unknown: false })), { value: built.unknown.label, unknown: true }]
+    // 模範解答の位置で答えが分からないよう回答候補はシャッフルし、「わからない」は末尾に分けて置く。
+    ? [...shuffle(built.options.map((o) => ({ value: o.value, unknown: false })), random),
+      { value: built.unknown.label, unknown: true }]
     : [];
   return { candidate, mode, choices };
+}
+
+/** Fisher–Yates。入力配列は変更しない。 */
+function shuffle<T>(items: readonly T[], random: () => number): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.min(i, Math.floor(random() * (i + 1)));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
 }
 
 export function StructuredQuestionStudyPage({
@@ -124,6 +139,7 @@ export function StructuredQuestionStudyPage({
   setFlags,
   reloadQuestion = reloadQuestionFromApi,
   now = () => new Date(),
+  random = Math.random,
 }: StructuredQuestionStudyPageProps) {
   const narrow = useNarrow();
   const [scope, setScope] = useState<QuestionStudyScope | null>(initialScope);
@@ -149,14 +165,14 @@ export function StructuredQuestionStudyPage({
   }, [scope, loadCandidates, loadAttempt]);
 
   const advance = (session: QuestionSession, notice: string | null = null) => {
-    const next = pickNextQuestion(session, now());
+    const next = pickNextQuestion(session, now(), random);
     setWritten('');
     setSelected(null);
     if (!next) {
       setView({ kind: 'done', session: session.result.ended ? session : finishQuestionSession(session) });
       return;
     }
-    setView({ kind: 'answering', session, current: prepare(next, requestedMode), busy: false, notice });
+    setView({ kind: 'answering', session, current: prepare(next, requestedMode, random), busy: false, notice });
   };
 
   const begin = (candidates: readonly QuestionStudyCandidate[]) => advance(startQuestionSession(candidates, order));
@@ -242,7 +258,7 @@ export function StructuredQuestionStudyPage({
       candidates: session.candidates.map((c) => (c.question.id === candidate.question.id ? candidate : c)),
     };
     setView((prev) => ended(prev) ? prev : {
-      kind: 'answering', session: updated, current: prepare(candidate, requestedMode), busy: false,
+      kind: 'answering', session: updated, current: prepare(candidate, requestedMode, random), busy: false,
       notice: '設問が更新されました。最新の内容でもう一度解答してください',
     });
   };
