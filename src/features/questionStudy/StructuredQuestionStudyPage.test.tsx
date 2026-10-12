@@ -9,7 +9,7 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }));
 import type { StructuredQuestion } from '@/features/questions/types';
 import type { RecordQuestionAnswerResult } from './api';
 import type { QuestionStudyCandidate, QuestionStudyStats } from './candidates';
-import { StructuredQuestionStudyPage } from './StructuredQuestionStudyPage';
+import { formatQuestionScore, StructuredQuestionStudyPage } from './StructuredQuestionStudyPage';
 
 const base: StructuredQuestion = {
   id: 'q1', ownerId: 'o', materialId: 'm', keywordId: 'k',
@@ -108,6 +108,23 @@ describe('StructuredQuestionStudyPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'わからない' }));
     expect(await screen.findByRole('status')).toHaveTextContent('不正解');
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ answer: '', mode: 'choice' }));
+  });
+
+  it('解答画面に記録前、結果画面に記録後のこの問題の正答数 / 出題数 (正答率) を表示する', async () => {
+    setup([candidate(base)]);
+    await start('記述式');
+    expect(screen.getByLabelText('この問題の成績')).toHaveTextContent('この問題 - / 0 (-%)');
+    fireEvent.change(screen.getByLabelText('解答'), { target: { value: '化学反応' } });
+    fireEvent.click(screen.getByRole('button', { name: '解答する' }));
+    expect(await screen.findByRole('button', { name: '次の問題へ' })).toBeInTheDocument();
+    expect(screen.getByLabelText('この問題の成績')).toHaveTextContent('この問題 1 / 1 (100%)');
+  });
+
+  it('成績は x / x (x%) で正答率を四捨五入し、未出題は - / 0 (-%) とする', () => {
+    expect(formatQuestionScore(null)).toBe('- / 0 (-%)');
+    expect(formatQuestionScore({ askedCount: 0, correctCount: 0 })).toBe('- / 0 (-%)');
+    expect(formatQuestionScore({ askedCount: 3, correctCount: 2 })).toBe('2 / 3 (67%)');
+    expect(formatQuestionScore({ askedCount: 8, correctCount: 1 })).toBe('1 / 8 (13%)');
   });
 
   it('記述式で空回答は確定できず、正解を記録して判定と進行を表示する', async () => {

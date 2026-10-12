@@ -14,7 +14,7 @@ import {
 import { listQuestionsByKeyword } from '@/features/questions/api';
 import type { StructuredQuestion, StructuredQuestionConsumerView } from '@/features/questions/types';
 import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPanel';
-import type { QuestionStudyCandidate, QuestionStudyScope } from './candidates';
+import type { QuestionStudyCandidate, QuestionStudyScope, QuestionStudyStats } from './candidates';
 import {
   buildQuestionChoiceOptions,
   canSubmitWrittenAnswer,
@@ -351,10 +351,13 @@ export function StructuredQuestionStudyPage({
   const { question } = current.candidate;
   const recording = view.kind === 'answering' && view.busy;
   const canSubmit = !recording && (current.mode === 'choice' ? selected !== null : canSubmitWrittenAnswer(written));
+  // この問題の専用成績。結果画面では記録後のstats（sessionへ反映済み）を表示する。
+  const questionStats = session.candidates.find((c) => c.question.id === question.id)?.stats ?? current.candidate.stats;
   const progress = (
-    <p className="text-[13px] text-muted" aria-label="進行状況">
-      {session.result.answered} / {session.result.total} 問
-    </p>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted">
+      <p aria-label="進行状況">{session.result.answered} / {session.result.total} 問</p>
+      <p aria-label="この問題の成績">この問題 {formatQuestionScore(questionStats)}</p>
+    </div>
   );
 
   return shell(<>
@@ -506,4 +509,12 @@ function ScopePicker({ loader, onSelect, onExit }: {
       </div>
     </>
   );
+}
+
+/** 正答数 / 出題数 (正答率)。未出題は - / 0 (-%) とする。 */
+export function formatQuestionScore(stats: Pick<QuestionStudyStats, 'askedCount' | 'correctCount'> | null): string {
+  const asked = stats?.askedCount ?? 0;
+  const correct = stats?.correctCount ?? 0;
+  if (asked === 0) return '- / 0 (-%)';
+  return `${correct} / ${asked} (${Math.round((correct / asked) * 100)}%)`;
 }
