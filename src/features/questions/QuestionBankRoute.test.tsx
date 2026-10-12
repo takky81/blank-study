@@ -2,6 +2,9 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// 環境変数のないCIでも読み込めるよう、Supabaseクライアントは spy 可能な最小形に差し替える。
+vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getUser: vi.fn() }, from: vi.fn() } }));
+
 import { supabase } from '@/lib/supabase';
 import {
   QUESTION_BANK_ROUTE_DESCRIPTOR,

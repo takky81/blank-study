@@ -3,6 +3,9 @@ import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// 環境変数のないCIでも読み込めるよう、Supabaseクライアントは差し替える（データ関数は各テストで注入する）。
+vi.mock('@/lib/supabase', () => ({ supabase: {} }));
+
 import { QuestionBankPage, type QuestionBankApi } from './QuestionBankPage';
 import type { DeleteQuestionResult, MutationResult, ReorderQuestionResult, StructuredQuestion } from './types';
 

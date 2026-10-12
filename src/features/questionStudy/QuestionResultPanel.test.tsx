@@ -3,6 +3,9 @@ import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+// 環境変数のないCIでも読み込めるよう、Supabaseクライアントは差し替える（データ関数は各テストで注入する）。
+vi.mock('@/lib/supabase', () => ({ supabase: {} }));
+
 import type { ConsumerFlagMutationResult, StructuredQuestion } from '@/features/questions/types';
 import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPanel';
 

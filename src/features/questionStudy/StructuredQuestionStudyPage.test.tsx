@@ -3,6 +3,9 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+// 環境変数のないCIでも読み込めるよう、Supabaseクライアントは差し替える（データ関数は各テストで注入する）。
+vi.mock('@/lib/supabase', () => ({ supabase: {} }));
+
 import type { StructuredQuestion } from '@/features/questions/types';
 import type { RecordQuestionAnswerResult } from './api';
 import type { QuestionStudyCandidate, QuestionStudyStats } from './candidates';
