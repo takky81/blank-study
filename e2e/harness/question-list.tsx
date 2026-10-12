@@ -10,7 +10,7 @@ const initialQuestions: StructuredQuestion[] = [0, 1, 2].map((sortOrder) => ({
   id: `question-${sortOrder}`, ownerId: 'owner', materialId: 'material', keywordId: 'keyword',
   questionText: sortOrder === 1 ? longText : `設問${sortOrder + 1}`, modelAnswer: '答え', choices: [],
   explanation: sortOrder === 1 ? '解説' : null, sortOrder, isActive: true,
-  doubtFlag: sortOrder === 1, doubtNote: null, explanationRequestFlag: sortOrder === 1,
+  doubtFlag: sortOrder === 1, doubtNote: null, doubtReasons: [], explanationRequestFlag: sortOrder === 1,
   version: 1, updatedAt: '2026-10-11T00:00:00Z',
 }));
 

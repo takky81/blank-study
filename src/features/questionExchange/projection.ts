@@ -116,6 +116,7 @@ export function projectEligibilityExport(input: EligibilityExportInput): Questio
         choices: [...q.choices],
         explanation: q.explanation,
         doubtNote: q.doubtFlag ? q.doubtNote : null,
+        doubtReasons: q.doubtFlag ? [...q.doubtReasons] : [],
       }));
     return toExchangeTarget(target, {
       keyword: { displayText: keyword.answers[0] as string, modelAnswer: keyword.answers.join('、') },

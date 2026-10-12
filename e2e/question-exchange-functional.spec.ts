@@ -62,7 +62,7 @@ async function seed(ownerId: string): Promise<Seed> {
   const flaggedQuestion = await insertQuestion({
     ...base, keyword_id: flagKeywordId, question_text: '1バイトは何ビットか', model_answer: '8ビット',
     choices: ['4ビット', '16ビット'], explanation: '1バイトは8ビット。', sort_order: 0, doubt_flag: true,
-    doubt_note: '16ビットとする資料もあるのでは',
+    doubt_note: '16ビットとする資料もあるのでは', doubt_reasons: ['weak_distractors', 'defective'],
   });
   const plainQuestion = await insertQuestion({
     ...base, keyword_id: flagKeywordId, question_text: 'ビットの語源は', model_answer: 'binary digit', sort_order: 1,
@@ -99,11 +99,11 @@ function golden(s: Seed, filters: QuestionExchangeExportV1['filters'], includeSt
       {
         questionId: s.flaggedQuestion.id, expectedVersion: s.flaggedQuestion.version, sortOrder: 0,
         questionText: '1バイトは何ビットか', modelAnswer: '8ビット', choices: ['4ビット', '16ビット'],
-        explanation: '1バイトは8ビット。', doubtNote: '16ビットとする資料もあるのでは', requestedFlags: ['doubt'],
+        explanation: '1バイトは8ビット。', doubtNote: '16ビットとする資料もあるのでは', doubtReasons: ['defective', 'weak_distractors'], requestedFlags: ['doubt'],
       },
       {
         questionId: s.plainQuestion.id, expectedVersion: s.plainQuestion.version, sortOrder: 1,
-        questionText: 'ビットの語源は', modelAnswer: 'binary digit', choices: [], explanation: null, doubtNote: null, requestedFlags: [],
+        questionText: 'ビットの語源は', modelAnswer: 'binary digit', choices: [], explanation: null, doubtNote: null, doubtReasons: [], requestedFlags: [],
       },
     ],
     flaggedQuestions: [{ questionId: s.flaggedQuestion.id, requestKinds: ['doubt'] }],
@@ -115,7 +115,7 @@ function golden(s: Seed, filters: QuestionExchangeExportV1['filters'], includeSt
     chapterContexts,
     questions: [{
       questionId: s.statsQuestion.id, expectedVersion: s.statsQuestion.version, sortOrder: 0,
-      questionText: 'オクテットは何ビットか', modelAnswer: '8ビット', choices: [], explanation: null, doubtNote: null, requestedFlags: [],
+      questionText: 'オクテットは何ビットか', modelAnswer: '8ビット', choices: [], explanation: null, doubtNote: null, doubtReasons: [], requestedFlags: [],
     }],
     flaggedQuestions: [],
   };
@@ -264,7 +264,7 @@ test.describe('QuestionExchangeFunctionalE2E', () => {
   });
 
   test('対象0件ではdownloadせず空結果を表示する', async ({ page }) => {
-    expect((await adminClient().from('structured_questions').update({ doubt_flag: false, doubt_note: null }).eq('id', s.flaggedQuestion.id)).error).toBeNull();
+    expect((await adminClient().from('structured_questions').update({ doubt_flag: false, doubt_note: null, doubt_reasons: [] }).eq('id', s.flaggedQuestion.id)).error).toBeNull();
     let downloads = 0;
     page.on('download', () => { downloads += 1; });
     await fillFilter(page, { attempts: '100', accuracy: '0', count: '0' });

@@ -51,7 +51,7 @@ function AuthenticatedQuestionBankHarness() {
           id: `question-${state.nextId}`, ownerId: 'authenticated-owner', materialId, keywordId: draft.keywordId,
           questionText: draft.questionText, modelAnswer: draft.modelAnswer, choices: draft.choices,
           explanation: draft.explanation, sortOrder: state.questions.length, isActive: true,
-          doubtFlag: true, doubtNote: null, explanationRequestFlag: true, version: 1, updatedAt: now(),
+          doubtFlag: true, doubtNote: null, doubtReasons: [], explanationRequestFlag: true, version: 1, updatedAt: now(),
         };
         writeState({ questions: [...state.questions, question], nextId: state.nextId + 1 });
         return { kind: 'saved' as const, question };

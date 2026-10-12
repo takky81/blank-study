@@ -1,3 +1,4 @@
+import { DOUBT_REASON_CODES, type DoubtReason } from '@/features/questions/doubtReasons';
 import type {
   ChapterContextV1,
   EligibilityReason,
@@ -150,7 +151,7 @@ function checkNode(c: Checker, value: unknown, path: string, withBody: boolean):
 }
 
 function checkExportQuestion(c: Checker, value: unknown, path: string): void {
-  const keys = ['questionId', 'expectedVersion', 'sortOrder', 'questionText', 'modelAnswer', 'choices', 'explanation', 'doubtNote', 'requestedFlags'];
+  const keys = ['questionId', 'expectedVersion', 'sortOrder', 'questionText', 'modelAnswer', 'choices', 'explanation', 'doubtNote', 'doubtReasons', 'requestedFlags'];
   if (!c.object(value, path, keys)) return;
   c.uuid(value.questionId, `${path}.questionId`);
   c.integer(value.expectedVersion, `${path}.expectedVersion`, 1);
@@ -160,6 +161,7 @@ function checkExportQuestion(c: Checker, value: unknown, path: string): void {
   c.array(value.choices, `${path}.choices`, (e, p) => c.string(e, p));
   c.nullableString(value.explanation, `${path}.explanation`);
   c.nullableString(value.doubtNote, `${path}.doubtNote`);
+  c.enumArray(value.doubtReasons, `${path}.doubtReasons`, DOUBT_REASON_CODES);
   c.enumArray(value.requestedFlags, `${path}.requestedFlags`, REQUEST_KIND_ORDER);
 }
 
@@ -198,6 +200,7 @@ function checkTargetSemantics(c: Checker, target: QuestionExchangeTargetV1, path
   checkEnumOrder(c, target.reasons, `${path}.reasons`, REASON_ORDER);
   checkStrictOrder(c, target.chapterContexts, `${path}.chapterContexts`, chapterKey);
   checkStrictOrder(c, target.questions, `${path}.questions`, questionKey);
+  target.questions.forEach((q, i) => checkEnumOrder(c, q.doubtReasons as DoubtReason[], `${path}.questions[${i}].doubtReasons`, DOUBT_REASON_CODES));
   target.questions.forEach((q, i) => checkEnumOrder(c, q.requestedFlags, `${path}.questions[${i}].requestedFlags`, REQUEST_KIND_ORDER));
   checkStrictOrder(c, target.flaggedQuestions, `${path}.flaggedQuestions`, (f) => [f.questionId]);
   target.flaggedQuestions.forEach((f, i) =>

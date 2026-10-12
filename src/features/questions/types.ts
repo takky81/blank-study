@@ -1,3 +1,5 @@
+import type { DoubtReason } from './doubtReasons';
+
 export type QuestionId = string;
 
 export type QuestionVersionToken = {
@@ -18,6 +20,7 @@ export type StructuredQuestion = QuestionVersionToken & {
   isActive: boolean;
   doubtFlag: boolean;
   doubtNote: string | null;
+  doubtReasons: readonly DoubtReason[];
   explanationRequestFlag: boolean;
 };
 
@@ -55,6 +58,8 @@ export type QuestionFlagPatch = {
   doubtFlag?: boolean;
   /** Optional doubt description; only meaningful while doubtFlag is true. Server clears it when doubt is cleared. */
   doubtNote?: string | null;
+  /** Optional doubt reason codes; only allowed while doubtFlag is true. Server stores them deduplicated in canonical order and clears them with doubt. */
+  doubtReasons?: readonly DoubtReason[];
   explanationRequestFlag?: boolean;
 };
 
@@ -74,6 +79,7 @@ export type StructuredQuestionConsumerView = Readonly<{
   isActive: boolean;
   doubtFlag: boolean;
   doubtNote: string | null;
+  doubtReasons: readonly DoubtReason[];
   explanationRequestFlag: boolean;
   version: number;
   updatedAt: string;

@@ -159,3 +159,4 @@
 
 ## Implementation Notes
 - 疑義内容（2026-10-12追加）: migration 20261012000000 で structured_questions.doubt_note を追加し、primitive/mutate_structured_question のflag patchに doubt_note を許可。doubt_flag=false で自動消去、内容更新では保持。一覧では疑義内容を読み取り専用で表示する。
+- 疑義の理由（2026-10-12追加）: migration 20261012010000 で structured_questions.doubt_reasons text[]（既定'{}'、5コードのみ・重複なし・doubt_flag=falseなら空のcheck）を追加し、primitive/mutate_structured_question のflag patchに doubt_reasons（文字列配列）を許可。正規順へ整列・重複除去、未知コードは22023、doubt_flag=falseで自動消去。コードとラベルは src/features/questions/doubtReasons.ts の DOUBT_REASONS が唯一の定義元で、一覧では選択した理由ラベルを表示する。

@@ -183,3 +183,4 @@
 - import_question_exchange のエラー: 22023=検証エラー、P0002=未知/他owner参照（同一表現）、PT409(HTTP 409)=stale版。40001はPostgRESTが再試行してtimeoutするため使わない。成功は {createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount}。private primitiveへのUSAGE/EXECUTEはbank migration 000004/000005で付与済み。
 - route adapterは `@/app/featureRoutes` をimportしない（App.tsxだけがregistryを消費する境界テストあり）。returnTo許可listはfeature内に持つ。
 - ExportQuestion.doubtNote（2026-10-12追加）: 設問バンクのdoubt_noteをprojectionが読み取り契約から転記する（疑義flagなしはnull）。import形式は不変で、doubt解消時はbank primitiveがdoubt_noteも消去する。
+- ExportQuestion.doubtReasons（2026-10-12追加）: 設問バンクのdoubt_reasonsをprojectionが正規順のコード配列で転記する（疑義flagなしは[]）。schema codecは共有定数DOUBT_REASONSのコード・定義順・重複なしを検証する。import形式は不変で、doubt解消時はbank primitiveがdoubt_reasonsも空にする。

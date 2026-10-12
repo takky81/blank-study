@@ -1,3 +1,4 @@
+import type { DoubtReason } from '@/features/questions/doubtReasons';
 import { describe, expect, it } from 'vitest';
 import type { StructuredQuestion } from '@/features/questions/types';
 import golden from './fixtures/question-exchange-v1.export.json';
@@ -52,6 +53,7 @@ function toQuestion(keywordId: string, q: QuestionExchangeExportV1['targets'][nu
     isActive: true,
     doubtFlag: q.requestedFlags.includes('doubt'),
     doubtNote: q.doubtNote,
+    doubtReasons: q.doubtReasons as DoubtReason[],
     explanationRequestFlag: q.requestedFlags.includes('explanation-request'),
   };
 }

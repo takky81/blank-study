@@ -199,6 +199,7 @@ type StructuredQuestion = QuestionVersionToken & {
   isActive: boolean;
   doubtFlag: boolean;
   doubtNote: string | null; // 疑義内容（任意）。doubtFlag=falseなら常にnull
+  doubtReasons: readonly DoubtReason[]; // 疑義の理由コード（DOUBT_REASONSの正規順）。doubtFlag=falseなら常に[]
   explanationRequestFlag: boolean;
 };
 type QuestionContentDraft = Pick<StructuredQuestion,
@@ -221,8 +222,9 @@ function listQuestionsByKeyword(keywordId: string): Promise<StructuredQuestion[]
 function listQuestionsByMaterial(materialId: string): Promise<StructuredQuestion[]>;
 function saveQuestion(draft: QuestionDraft, id?: string, expectedVersion?: number): Promise<MutationResult>;
 function setQuestionFlags(id: string, expectedVersion: number,
-  flags: { doubtFlag?: boolean; doubtNote?: string | null; explanationRequestFlag?: boolean }): Promise<MutationResult>;
+  flags: { doubtFlag?: boolean; doubtNote?: string | null; doubtReasons?: readonly DoubtReason[]; explanationRequestFlag?: boolean }): Promise<MutationResult>;
 // doubtNoteは結果のdoubtFlagがtrueのときだけ許可。doubtFlag=falseで自動消去。内容更新では未patchなら保持。
+// doubtReasons（`answer_guessable`（問題文から答えが分かる）、`low_value`（問う価値が低い）、`defective`（問題不備（正解・問題文の誤り、正解が一つに決まらない））、`weak_distractors`（誤答が簡単すぎる）、`unclear`（問題文が分かりにくい））も同じ規則。未知コードは22023で拒否し、正規順・重複なしで保存する。
 function setQuestionActive(id: string, expectedVersion: number, active: boolean): Promise<MutationResult>;
 function reorderQuestions(keywordId: string,
   ordered: readonly QuestionVersionToken[]): Promise<StructuredQuestion[] | VersionConflict>;

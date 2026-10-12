@@ -1,3 +1,4 @@
+import { isDoubtReason, normalizeDoubtReasons } from './doubtReasons';
 import { fetchAll } from '@/lib/paged';
 import { supabase } from '@/lib/supabase';
 import type {
@@ -15,7 +16,7 @@ import type {
 } from './types';
 
 const QUESTION_COLUMNS =
-  'id, owner_id, material_id, keyword_id, question_text, model_answer, choices, explanation, sort_order, is_active, doubt_flag, doubt_note, explanation_request_flag, version, created_at, updated_at';
+  'id, owner_id, material_id, keyword_id, question_text, model_answer, choices, explanation, sort_order, is_active, doubt_flag, doubt_note, doubt_reasons, explanation_request_flag, version, created_at, updated_at';
 
 type StructuredQuestionRow = {
   id: string;
@@ -30,6 +31,7 @@ type StructuredQuestionRow = {
   is_active: boolean;
   doubt_flag: boolean;
   doubt_note?: string | null;
+  doubt_reasons?: string[];
   explanation_request_flag: boolean;
   version: number;
   created_at: string;
@@ -50,6 +52,7 @@ export function mapStructuredQuestionRow(row: StructuredQuestionRow): Structured
     isActive: row.is_active,
     doubtFlag: row.doubt_flag,
     doubtNote: row.doubt_note ?? null,
+    doubtReasons: normalizeDoubtReasons((row.doubt_reasons ?? []).filter(isDoubtReason)),
     explanationRequestFlag: row.explanation_request_flag,
     version: row.version,
     updatedAt: row.updated_at,
@@ -113,8 +116,9 @@ export async function setQuestionFlags(
   expectedVersion: number,
   flags: QuestionFlagPatch,
 ): Promise<MutationResult> {
-  const patch: Record<string, boolean | string | null> = {};
+  const patch: Record<string, boolean | string | null | readonly string[]> = {};
   if (flags.doubtFlag !== undefined) patch.doubt_flag = flags.doubtFlag;
+  if (flags.doubtReasons !== undefined) patch.doubt_reasons = [...flags.doubtReasons];
   if (flags.doubtNote !== undefined) patch.doubt_note = flags.doubtNote;
   if (flags.explanationRequestFlag !== undefined) {
     patch.explanation_request_flag = flags.explanationRequestFlag;
@@ -201,6 +205,7 @@ function toConsumerView(question: StructuredQuestion): StructuredQuestionConsume
     isActive: question.isActive,
     doubtFlag: question.doubtFlag,
     doubtNote: question.doubtNote,
+    doubtReasons: question.doubtReasons,
     explanationRequestFlag: question.explanationRequestFlag,
     version: question.version,
     updatedAt: question.updatedAt,
@@ -213,7 +218,7 @@ function mutationArgs(
   command: 'set-flags' | 'set-active' | 'delete',
   id: string,
   expectedVersion: number,
-  flagPatch: Record<string, boolean | string | null> | null,
+  flagPatch: Record<string, boolean | string | null | readonly string[]> | null,
 ): Record<string, unknown> {
   return {
     p_command: command,
@@ -291,6 +296,7 @@ function isStructuredQuestionRow(value: unknown): value is StructuredQuestionRow
     && typeof value.is_active === 'boolean'
     && typeof value.doubt_flag === 'boolean'
     && (value.doubt_note === undefined || value.doubt_note === null || typeof value.doubt_note === 'string')
+    && (value.doubt_reasons === undefined || (Array.isArray(value.doubt_reasons) && value.doubt_reasons.every(isDoubtReason)))
     && typeof value.explanation_request_flag === 'boolean'
     && isPositiveInteger(value.version)
     && isTimestamp(value.created_at)

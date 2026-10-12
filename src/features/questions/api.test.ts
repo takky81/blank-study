@@ -13,6 +13,7 @@ type DbRow = {
   is_active: boolean;
   doubt_flag: boolean;
   doubt_note?: string | null;
+  doubt_reasons?: string[];
   explanation_request_flag: boolean;
   version: number;
   created_at: string;
@@ -164,6 +165,17 @@ describe('structured question mutation API', () => {
     ]);
   });
 
+  it('疑義の理由をdoubt_reasonsとしてflag patchへ含め、rowから公開型へ写す', async () => {
+    rpcResults.push(
+      { data: { kind: 'saved', question: row(1, { version: 4, doubt_flag: true, doubt_reasons: ['low_value', 'unclear'] }) }, error: null },
+    );
+    await expect(setQuestionFlags('question-0001', 3, { doubtFlag: true, doubtReasons: ['low_value', 'unclear'], doubtNote: null }))
+      .resolves.toMatchObject({ kind: 'saved', question: { doubtReasons: ['low_value', 'unclear'] } });
+    expect(rpcLog.map(({ args }) => args.p_flag_patch)).toEqual([
+      { doubt_flag: true, doubt_reasons: ['low_value', 'unclear'], doubt_note: null },
+    ]);
+  });
+
   it('並べ替えの確定順と版、および競合の現在版を返す', async () => {
     const reordered = [row(2, { sort_order: 0, version: 3 }), row(1, { sort_order: 1, version: 7 })];
     rpcResults.push(
@@ -281,10 +293,10 @@ describe('structured question mutation API', () => {
 
 describe('structured question read API', () => {
   it('DB rowをcamelCase公開型へnull・flag・版・更新時刻を保って変換する', () => {
-    expect(mapStructuredQuestionRow(row(1, { explanation: '説明', is_active: false, doubt_flag: true, doubt_note: '疑義メモ', explanation_request_flag: true, version: 7 }))).toEqual({
+    expect(mapStructuredQuestionRow(row(1, { explanation: '説明', is_active: false, doubt_flag: true, doubt_note: '疑義メモ', doubt_reasons: ['defective'], explanation_request_flag: true, version: 7 }))).toEqual({
       id: 'question-0001', ownerId: 'owner-1', materialId: 'material-1', keywordId: 'keyword-1',
       questionText: 'question 1', modelAnswer: 'answer 1', choices: ['A', 'B'], explanation: '説明',
-      sortOrder: 1, isActive: false, doubtFlag: true, doubtNote: '疑義メモ', explanationRequestFlag: true,
+      sortOrder: 1, isActive: false, doubtFlag: true, doubtNote: '疑義メモ', doubtReasons: ['defective'], explanationRequestFlag: true,
       version: 7, updatedAt: '2026-10-11T00:00:00.000Z',
     });
   });

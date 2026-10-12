@@ -78,6 +78,10 @@
           ],
           "explanation": null,
           "doubtNote": "選択肢に模範解答が含まれている",
+          "doubtReasons": [
+            "answer_guessable",
+            "weak_distractors"
+          ],
           "requestedFlags": [
             "doubt",
             "explanation-request"
@@ -92,6 +96,7 @@
           "choices": [],
           "explanation": "光エネルギーを利用する。",
           "doubtNote": null,
+          "doubtReasons": [],
           "requestedFlags": []
         },
         {
@@ -103,6 +108,9 @@
           "choices": [],
           "explanation": null,
           "doubtNote": null,
+          "doubtReasons": [
+            "unclear"
+          ],
           "requestedFlags": [
             "doubt"
           ]
@@ -151,6 +159,7 @@
           "choices": [],
           "explanation": null,
           "doubtNote": null,
+          "doubtReasons": [],
           "requestedFlags": [
             "explanation-request"
           ]

@@ -1,3 +1,4 @@
+import { doubtReasonLabel, normalizeDoubtReasons } from './doubtReasons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -91,6 +92,7 @@ export function QuestionList({ questions, onEdit, onReorder, onSetActive, onClea
             <div><dt className="inline">解説: </dt><dd className="inline">{question.explanation === null ? 'なし' : 'あり'}</dd></div>
             <div><dt className="inline">疑義フラグ: </dt><dd className="inline">{question.doubtFlag ? 'あり' : 'なし'}</dd></div>
             <div><dt className="inline">解説追加フラグ: </dt><dd className="inline">{question.explanationRequestFlag ? 'あり' : 'なし'}</dd></div>
+            {question.doubtFlag && question.doubtReasons.length > 0 && <div className="basis-full min-w-0"><dt className="inline">疑義の理由: </dt><dd className="inline [overflow-wrap:anywhere]">{normalizeDoubtReasons(question.doubtReasons).map(doubtReasonLabel).join('、')}</dd></div>}
             {question.doubtFlag && question.doubtNote !== null && <div className="basis-full min-w-0"><dt className="inline">疑義の内容: </dt><dd className="inline whitespace-pre-wrap [overflow-wrap:anywhere]">{question.doubtNote}</dd></div>}
           </dl>
         </div>

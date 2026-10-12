@@ -58,6 +58,8 @@ export type ExportQuestion = {
   explanation: string | null;
   /** 利用者が入力した疑義の内容（任意）。疑義flagがない設問は常にnull。 */
   doubtNote: string | null;
+  /** 疑義の理由コード（DOUBT_REASONSの正規順・重複なし）。疑義flagがない設問は常に[]。 */
+  doubtReasons: string[];
   requestedFlags: readonly RequestKind[];
 };
 

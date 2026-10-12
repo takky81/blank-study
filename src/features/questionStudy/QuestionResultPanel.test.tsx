@@ -9,7 +9,7 @@ import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPa
 const question: StructuredQuestion = {
   id: 'q1', ownerId: 'o', materialId: 'm', keywordId: 'k',
   questionText: '光合成とは？', modelAnswer: '化学反応', choices: [], explanation: '光で糖を作る反応',
-  sortOrder: 0, isActive: true, doubtFlag: false, doubtNote: null, explanationRequestFlag: false,
+  sortOrder: 0, isActive: true, doubtFlag: false, doubtNote: null, doubtReasons: [], explanationRequestFlag: false,
   version: 3, updatedAt: '2026-10-11T00:00:00Z',
 };
 
@@ -78,7 +78,7 @@ describe('QuestionResultPanel', () => {
     expect(note).toHaveValue('');
     fireEvent.change(note, { target: { value: '  答えが古い  ' } });
     fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
-    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: true, doubtNote: '答えが古い' }));
+    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: true, doubtReasons: [], doubtNote: '答えが古い' }));
     await waitFor(() => expect(onQuestionUpdated).toHaveBeenLastCalledWith(expect.objectContaining({ version: 5, doubtNote: '答えが古い' })));
     expect(screen.getByText('疑義の内容を保存しました')).toBeInTheDocument();
   });
@@ -92,10 +92,43 @@ describe('QuestionResultPanel', () => {
     expect(note).toHaveValue('既存メモ');
     fireEvent.change(note, { target: { value: '   ' } });
     fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
-    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3, { doubtFlag: true, doubtNote: null }));
+    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3, { doubtFlag: true, doubtReasons: [], doubtNote: null }));
     fireEvent.click(screen.getByRole('checkbox', { name: '内容に疑義がある' }));
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: false }));
     await waitFor(() => expect(screen.queryByLabelText('疑義の内容（任意）')).not.toBeInTheDocument());
+  });
+
+  it('疑義がある間だけ理由のcheckboxを表示し、既存の理由を初期選択し、内容と一緒に正規順で保存する', async () => {
+    const setFlags = vi.fn<QuestionFlagSetter>()
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable', 'unclear'], doubtNote: 'メモ' }, 4))
+      .mockResolvedValueOnce(saved({ doubtFlag: false, doubtReasons: [], doubtNote: null }, 5));
+    const { onQuestionUpdated } = setup(setFlags, { doubtFlag: true, doubtReasons: ['unclear'] });
+    const group = screen.getByRole('group', { name: '疑義の理由' });
+    expect(group).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '問題文が分かりにくい' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: '誤答が簡単すぎる' })).not.toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: '問題文から答えが分かる' }));
+    fireEvent.change(screen.getByLabelText('疑義の内容（任意）'), { target: { value: 'メモ' } });
+    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3,
+      { doubtFlag: true, doubtReasons: ['answer_guessable', 'unclear'], doubtNote: 'メモ' }));
+    await waitFor(() => expect(onQuestionUpdated).toHaveBeenLastCalledWith(
+      expect.objectContaining({ version: 4, doubtReasons: ['answer_guessable', 'unclear'] })));
+    fireEvent.click(screen.getByRole('checkbox', { name: '内容に疑義がある' }));
+    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: false }));
+    await waitFor(() => expect(screen.queryByRole('group', { name: '疑義の理由' })).not.toBeInTheDocument());
+  });
+
+  it('疑義の理由の保存失敗では選択を保持する', async () => {
+    const setFlags = vi.fn<QuestionFlagSetter>().mockRejectedValueOnce(new Error('network'));
+    setup(setFlags, { doubtFlag: true });
+    const reason = screen.getByRole('checkbox', { name: '問う価値が低い' });
+    fireEvent.click(reason);
+    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('もう一度');
+    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).toBeChecked();
   });
 
   it('疑義内容の保存失敗では入力を保持して再試行を案内し、競合では再読み込みを促す', async () => {

@@ -124,6 +124,53 @@ test.describe.serial('structured question mutation RPC', () => {
     expect(await row()).toEqual({ version: 6, doubt_flag: false, doubt_note: null });
   });
 
+  test('doubt reasons are canonical, validated, and follow the doubt flag', async () => {
+    const ownerId = await ensureTestUser();
+    await resetData(ownerId);
+    const subjectId = await seedSubject(ownerId, 'RPC疑義理由');
+    const { keywordId } = await seedMaterialWithKeyword(ownerId, subjectId, 'rpc004');
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await client.auth.signInWithPassword(TEST_USER);
+    const content = validCases[0]!.content;
+    const created = await client.rpc('mutate_structured_question', {
+      p_command: 'create', p_keyword_id: keywordId, p_content: content,
+    });
+    const id = (created.data as MutationResponse).question!.id;
+    const row = async () => (await adminClient().from('structured_questions')
+      .select('version,doubt_flag,doubt_reasons').eq('id', id).single()).data;
+    const setFlags = (version: number, patch: Record<string, unknown>) => client.rpc('mutate_structured_question', {
+      p_command: 'set-flags', p_question_id: id, p_expected_version: version, p_flag_patch: patch,
+    });
+
+    for (const patch of [{ doubt_reasons: ['low_value'] }, { doubt_flag: false, doubt_reasons: ['low_value'] },
+      { doubt_flag: true, doubt_reasons: ['unknown'] }, { doubt_flag: true, doubt_reasons: [1] },
+      { doubt_flag: true, doubt_reasons: 'low_value' }, { doubt_flag: true, doubt_reasons: null }]) {
+      const result = await setFlags(1, patch);
+      expect(result.error, JSON.stringify(patch)).not.toBeNull();
+      expect(result.error!.code, JSON.stringify(patch)).toBe('22023');
+    }
+    expect(await row()).toEqual({ version: 1, doubt_flag: false, doubt_reasons: [] });
+
+    expect((await setFlags(1, { doubt_flag: true, doubt_reasons: ['unclear', 'answer_guessable', 'unclear'] })).error).toBeNull();
+    expect(await row()).toEqual({ version: 2, doubt_flag: true, doubt_reasons: ['answer_guessable', 'unclear'] });
+    expect((await client.rpc('mutate_structured_question', {
+      p_command: 'update-content', p_question_id: id, p_expected_version: 2, p_content: content,
+    })).error).toBeNull();
+    expect((await setFlags(3, { explanation_request_flag: true })).error).toBeNull();
+    expect(await row()).toEqual({ version: 4, doubt_flag: true, doubt_reasons: ['answer_guessable', 'unclear'] });
+    expect((await setFlags(4, { doubt_flag: true, doubt_reasons: [] })).error).toBeNull();
+    expect(await row()).toEqual({ version: 5, doubt_flag: true, doubt_reasons: [] });
+    expect((await setFlags(5, { doubt_flag: true, doubt_reasons: ['defective', 'weak_distractors', 'low_value'] })).error).toBeNull();
+    expect(await row()).toEqual({ version: 6, doubt_flag: true, doubt_reasons: ['low_value', 'defective', 'weak_distractors'] });
+    expect((await setFlags(6, { doubt_flag: false })).error).toBeNull();
+    expect(await row()).toEqual({ version: 7, doubt_flag: false, doubt_reasons: [] });
+    // the table check rejects direct writes that bypass the RPC
+    expect((await adminClient().from('structured_questions').update({ doubt_reasons: ['low_value'] }).eq('id', id)).error).not.toBeNull();
+    expect((await adminClient().from('structured_questions').update({ doubt_flag: true, doubt_reasons: ['low_value', 'low_value'] }).eq('id', id)).error).not.toBeNull();
+  });
+
   test('shared drafts, flags, stale writes, active state, and deletion obey one atomic contract', async () => {
     const ownerId = await ensureTestUser();
     await resetData(ownerId);

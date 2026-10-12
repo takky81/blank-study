@@ -85,6 +85,23 @@ describe('export schema v1（golden fixture）', () => {
     ]);
   });
 
+  it('疑義の理由は固定コードを正規順・重複なしで持ち、keyは必須とする', () => {
+    expect(golden.targets[0]!.questions[0]!.doubtReasons).toEqual(['answer_guessable', 'weak_distractors']);
+    expect(golden.targets[0]!.questions[1]!.doubtReasons).toEqual([]);
+    expect(errorsOf(mutatedExport((d) => (d.targets[0].questions[0].doubtReasons = ['unknown']))).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtReasons[0]',
+    ]);
+    expect(errorsOf(mutatedExport((d) => (d.targets[0].questions[0].doubtReasons = ['weak_distractors', 'answer_guessable']))).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtReasons[1]',
+    ]);
+    expect(errorsOf(mutatedExport((d) => (d.targets[0].questions[0].doubtReasons = ['unclear', 'unclear']))).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtReasons[1]',
+    ]);
+    expect(errorsOf(mutatedExport((d) => delete d.targets[0].questions[0].doubtReasons)).map((e) => e.path)).toEqual([
+      '$.targets[0].questions[0].doubtReasons',
+    ]);
+  });
+
   it('追加memberと必須member欠落を正確なpathで拒否する', () => {
     expect(errorsOf(mutatedExport((d) => (d.extra = 1)))).toEqual([{ path: '$.extra', message: expect.any(String) }]);
     expect(errorsOf(mutatedExport((d) => (d.targets[0].chapterContexts[0].chapter.note = 'x'))).map((e) => e.path)).toEqual([

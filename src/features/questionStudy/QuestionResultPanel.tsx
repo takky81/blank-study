@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { flagMutationContract } from '@/features/questions/api';
+import { DOUBT_REASONS, normalizeDoubtReasons, type DoubtReason } from '@/features/questions/doubtReasons';
 import type {
   FlagMutationContract,
   StructuredQuestionConsumerView,
@@ -17,6 +18,8 @@ export type ResultQuestion = Readonly<{
   doubtFlag: boolean;
   /** 疑義の内容（任意）。疑義flagがfalseのときは常にnull。 */
   doubtNote: string | null;
+  /** 疑義の理由コード（正規順）。疑義flagがfalseのときは常に空。 */
+  doubtReasons: readonly DoubtReason[];
   explanationRequestFlag: boolean;
   version: number;
 }>;
@@ -63,6 +66,7 @@ export function QuestionResultPanel({
   const [status, setStatus] = useState<FlagStatus>({ kind: 'idle' });
   const busy = useRef(false);
   const [noteDraft, setNoteDraft] = useState(initialQuestion.doubtNote ?? '');
+  const [reasonsDraft, setReasonsDraft] = useState<readonly DoubtReason[]>(initialQuestion.doubtReasons);
   const locked = status.kind === 'saving' || status.kind === 'saving-note' || status.kind === 'conflict';
 
   const displayed = (flag: FlagName) =>
@@ -76,7 +80,10 @@ export function QuestionResultPanel({
       const result = await setFlags(question.id, question.version, { [flag]: value });
       if (result.kind === 'saved') {
         setQuestion(result.question);
-        if (flag === 'doubtFlag') setNoteDraft(result.question.doubtNote ?? '');
+        if (flag === 'doubtFlag') {
+          setNoteDraft(result.question.doubtNote ?? '');
+          setReasonsDraft(result.question.doubtReasons);
+        }
         onQuestionUpdated(result.question);
         setStatus({ kind: 'saved', target: 'flag' });
       } else {
@@ -89,17 +96,20 @@ export function QuestionResultPanel({
     }
   };
 
-  // 疑義の内容は疑義flagと同じ版付き契約で保存する。失敗時は入力を保持する。
+  // 疑義の理由と内容は疑義flagと同じ版付き契約で保存する。失敗時は入力を保持する。
   const saveNote = async () => {
     if (busy.current || locked || !question.doubtFlag) return;
     busy.current = true;
     setStatus({ kind: 'saving-note' });
     try {
       const doubtNote = noteDraft.trim() === '' ? null : noteDraft.trim();
-      const result = await setFlags(question.id, question.version, { doubtFlag: true, doubtNote });
+      const result = await setFlags(question.id, question.version, {
+        doubtFlag: true, doubtReasons: normalizeDoubtReasons(reasonsDraft), doubtNote,
+      });
       if (result.kind === 'saved') {
         setQuestion(result.question);
         setNoteDraft(result.question.doubtNote ?? '');
+        setReasonsDraft(result.question.doubtReasons);
         onQuestionUpdated(result.question);
         setStatus({ kind: 'saved', target: 'note' });
       } else {
@@ -151,6 +161,21 @@ export function QuestionResultPanel({
         </p>
         {question.doubtFlag && status.kind !== 'saving' && (
           <div className="flex min-w-0 flex-col gap-2 px-1">
+            <fieldset className="flex min-w-0 flex-col">
+              <legend className="text-[14px]">疑義の理由</legend>
+              {DOUBT_REASONS.map(({ code, label }) => (
+                <label key={code} className="flex min-h-11 min-w-0 items-center gap-3 text-[14px]">
+                  <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink"
+                    checked={reasonsDraft.includes(code)} disabled={locked}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setReasonsDraft((current) => normalizeDoubtReasons(
+                        checked ? [...current, code] : current.filter((c) => c !== code)));
+                    }} />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
+                </label>
+              ))}
+            </fieldset>
             <label htmlFor="question-result-doubt-note" className="text-[14px]">疑義の内容（任意）</label>
             <textarea id="question-result-doubt-note" rows={3} maxLength={1000}
               className="min-h-11 w-full min-w-0 rounded border px-3 py-2 text-[14px]"
