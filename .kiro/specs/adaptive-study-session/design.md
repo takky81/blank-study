@@ -522,7 +522,7 @@ function updateSrs(current: SrsState | null, answer: { correct: boolean; now: Da
 
 - `order.test.ts`: 2.1〜2.6 の優先順、同着乱数、10／9件境界、候補0件。
 - `question.test.ts`: 3.1〜3.5、4.1〜4.8 の閾値、距離、authoring 所有 overlap／duplicate との adapter 整合、非活性、固定選択。
-- `range.test.ts`: 5.1〜5.9 の空欄、共通タグ、橙位置、範囲拡張。
+- `range.test.ts`: 5.1〜5.9 の空欄、共通タグ、不正解色の位置、範囲拡張。
 - `answer.test.ts`: authoring 所有の 6.1〜6.4 の正規化、別解、空入力、読み／部分一致。study はこの共有 test を再定義せず adapter 統合を確認する。
 - `score.test.ts`: 6.7 の今回を含む件数と初回。
 - `alt.test.ts`: 8.1〜8.4 の導線と重複排除。
@@ -531,7 +531,7 @@ function updateSrs(current: SrsState | null, answer: { correct: boolean; now: Da
 ### E2E and Integration Tests
 
 - setup の章開閉／選択、候補0件、選択章、形式、固定「わからない」を検証する。
-- 本文空欄、伏せ字、橙位置、範囲拡張、Markdown 表、スマートフォン配置を検証する。
+- 本文空欄、伏せ字、不正解色の位置、範囲拡張、Markdown 表、スマートフォン配置を検証する。
 - 正解／不正解、問題別成績、終了、中断、履歴／stats、別解の成功／最初の更新失敗を DB と合わせて検証する。
 - 1章1,001キーワードは既存 E2E で検証済み。複数教材／1,001章と provenance 章以外の本文出現は未完了である。
 - 記録の部分成功、誤答後の最新 SRS 利用、別解の後段失敗は未完了である。

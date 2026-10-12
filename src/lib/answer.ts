@@ -31,7 +31,7 @@ export function judge(input: string, answers: readonly string[]): boolean {
 
 /**
  * 表示範囲の中で、解答者の入力と一致するキーワードを探す。
- * 不正解のときに「答えた語が入る位置」を橙で示すために使う。
+ * 不正解のときに「答えた語が入る位置」を不正解色（青系）で示すために使う。
  */
 export function matchesInput(input: string, answers: readonly string[]): boolean {
   return judge(input, answers);

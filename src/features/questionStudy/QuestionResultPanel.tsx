@@ -88,7 +88,12 @@ export function QuestionResultPanel({
     <div className="flex min-w-0 flex-col gap-4">
       <h1 className="text-[18px] whitespace-pre-wrap break-words">{question.questionText}</h1>
       <div role="status" aria-live="polite" className="flex min-w-0 flex-col gap-2 text-[14px]">
-        <p className="text-[18px]">{isCorrect ? '正解' : '不正解'}</p>
+        <p className={`flex items-center gap-3 rounded-md border-2 px-4 py-2 text-[18px] ${isCorrect
+          ? 'border-correct bg-correct-panel text-correct' : 'border-incorrect bg-incorrect-panel text-incorrect'}`}>
+          <span aria-hidden className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[17px] ${isCorrect
+            ? 'border-correct' : 'border-incorrect'}`}>{isCorrect ? '○' : '×'}</span>
+          <span>{isCorrect ? '正解' : '不正解'}</span>
+        </p>
         <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
           <dt className="text-muted">あなたの解答</dt>
           <dd className="min-w-0 whitespace-pre-wrap break-words">{answer === '' ? 'わからない' : answer}</dd>

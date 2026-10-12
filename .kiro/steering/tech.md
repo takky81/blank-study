@@ -51,6 +51,7 @@ React のクライアント側 SPA が Supabase Auth、PostgREST、RPC を直接
 
 - Vite の `base` と Router の `basename` を常に同期し、GitHub Pages のサブパス配信を保つ
 - 色と共通部品の見た目は CSS トークン／共通 class に集約する
+- 正誤の色は全画面で統一する: 正解は赤（`--c-correct` / `--c-correct-panel`）、不正解は青（`--c-incorrect` / `--c-incorrect-panel`、誤答位置・苦手は `--c-wrong`）。エラー・危険操作の `--c-warn` を正誤表示に使わない
 - キーボード focus、44px 相当の操作領域、ライト／ダーク両テーマのコントラストを維持する
 - 既存ワイヤーフレームとレスポンシブの広幅／狭幅パターンに合わせる
 

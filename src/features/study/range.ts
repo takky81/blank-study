@@ -56,7 +56,7 @@ export function viewOfBlank(docId: string, context: ViewContext): BlankView {
     return { display: 'text', text: `〈${tag}〉`, color: 'gray' };
   }
 
-  // 判定後は伏せ字を戻す。不正解のとき、答えた語が入る位置を橙で示す（列5・列6・列7・列15）
+  // 判定後は伏せ字を戻す。不正解のとき、答えた語が入る位置を不正解色（青系）で示す（列5・列6・列7・列15）
   const matched =
     context.correct === false &&
     context.input !== undefined &&

@@ -22,15 +22,20 @@
   --c-edge: #7a8da5; /* 副ボタンの枠線 */
   --c-link: #14559c;
 
-  --c-warn: #b42318; /* 不正解・危険な操作 */
+  --c-warn: #b42318; /* エラー・危険な操作 */
   --c-warn-panel: #fef3f2;
+  /* 正誤の色は全体で統一する: 正解は赤、不正解は青 */
+  --c-correct: #c62828;
+  --c-correct-panel: #fdecec;
+  --c-incorrect: #1d4ed8;
+  --c-incorrect-panel: #e8efff;
   --c-blank: #bfdbfe; /* 出題中の空欄 */
   --c-blank-edge: #3f76b8;
   --c-kw: #dbeafe; /* 記述のハイライト */
   --c-mask: #ccd6e3; /* 伏せた語 */
   --c-mask-edge: #7a8da5;
-  --c-wrong: #f3c4b6; /* 答えた語が入る位置・苦手 */
-  --c-wrong-edge: #b42318;
+  --c-wrong: #c7d2fe; /* 答えた語が入る位置・苦手（不正解の系統色） */
+  --c-wrong-edge: #4338ca;
   --c-untouched: #dde4ed; /* 未出題 */
 }
 
@@ -50,13 +55,17 @@
 
   --c-warn: #ff9478;
   --c-warn-panel: #3a1c16;
+  --c-correct: #ff8a80;
+  --c-correct-panel: #3a1a1c;
+  --c-incorrect: #8cb4ff;
+  --c-incorrect-panel: #16264a;
   --c-blank: #2c4f7c;
   --c-blank-edge: #7fb0e8;
   --c-kw: #223a5c;
   --c-mask: #2b3a4c;
   --c-mask-edge: #5d7288;
-  --c-wrong: #7d3323;
-  --c-wrong-edge: #f3a68f;
+  --c-wrong: #3a3f86;
+  --c-wrong-edge: #a5b4fc;
   --c-untouched: #293747;
 }
 
@@ -77,6 +86,10 @@
   --color-link: var(--c-link);
   --color-warn: var(--c-warn);
   --color-warn-panel: var(--c-warn-panel);
+  --color-correct: var(--c-correct);
+  --color-correct-panel: var(--c-correct-panel);
+  --color-incorrect: var(--c-incorrect);
+  --color-incorrect-panel: var(--c-incorrect-panel);
   --color-blank: var(--c-blank);
   --color-blank-edge: var(--c-blank-edge);
   --color-kw: var(--c-kw);

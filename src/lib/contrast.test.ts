@@ -37,6 +37,11 @@ const TEXT_PAIRS: [string, string][] = [
   ['link', 'panel'],
   ['warn', 'panel'],
   ['warn', 'warn-panel'],
+  // 正誤の表示（正解は赤、不正解は青）
+  ['correct', 'panel'],
+  ['correct', 'correct-panel'],
+  ['incorrect', 'panel'],
+  ['incorrect', 'incorrect-panel'],
   // 主ボタンは地が ink、文字が paper
   ['paper', 'ink'],
   ['paper', 'ink-hover'],
@@ -56,6 +61,8 @@ const EDGE_PAIRS: [string, string][] = [
   ['blank-edge', 'panel'],
   ['mask-edge', 'panel'],
   ['wrong-edge', 'panel'],
+  ['correct', 'panel'],
+  ['incorrect', 'panel'],
 ];
 
 describe('配色のコントラスト比', () => {

@@ -58,7 +58,7 @@ describe('viewOfBlank（決定表「表示範囲内のキーワードの表示�
     });
   });
 
-  it('列5 不正解のとき、入力と一致するキーワードは橙にする', () => {
+  it('列5 不正解のとき、入力と一致するキーワードは不正解色にする', () => {
     expect(
       viewOfBlank('w4d8x1', context({ phase: 'judged', correct: false, input: 'こきゅう' })),
     ).toMatchObject({ color: 'gray' });
@@ -79,13 +79,13 @@ describe('viewOfBlank（決定表「表示範囲内のキーワードの表示�
     ).toEqual({ display: 'text', text: '呼吸', color: 'gray' });
   });
 
-  it('列7 正解のときは橙を使わない', () => {
+  it('列7 正解のときは不正解色を使わない', () => {
     expect(
       viewOfBlank('w4d8x1', context({ phase: 'judged', correct: true, input: '呼吸' })),
     ).toMatchObject({ color: 'gray' });
   });
 
-  it('列15 どのキーワードとも一致しなければ橙は出ない', () => {
+  it('列15 どのキーワードとも一致しなければ不正解色は出ない', () => {
     for (const docId of keywords.keys()) {
       const view = viewOfBlank(
         docId,

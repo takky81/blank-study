@@ -687,21 +687,21 @@ export function StudyPage() {
         <div
           className={
             correct
-              ? 'flex flex-wrap items-center gap-4 rounded-md border-2 border-ink bg-subtle px-5 py-3'
-              : 'flex flex-wrap items-center gap-4 rounded-md border-2 border-warn bg-warn-panel px-5 py-3'
+              ? 'flex flex-wrap items-center gap-4 rounded-md border-2 border-correct bg-correct-panel px-5 py-3'
+              : 'flex flex-wrap items-center gap-4 rounded-md border-2 border-incorrect bg-incorrect-panel px-5 py-3'
           }
         >
           <span
             className={
               correct
-                ? 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink text-[17px]'
-                : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-warn text-[17px] text-warn'
+                ? 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-correct text-[17px] text-correct'
+                : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-incorrect text-[17px] text-incorrect'
             }
             aria-hidden
           >
             {correct ? '○' : '×'}
           </span>
-          <span className={correct ? 'text-[17px]' : 'text-[17px] text-warn'}>
+          <span className={correct ? 'text-[17px] text-correct' : 'text-[17px] text-incorrect'}>
             {correct ? '正解' : '不正解'}
           </span>
           <span className="text-[13px] text-muted">
