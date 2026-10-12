@@ -292,11 +292,13 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   const reasons = page.getByRole('group', { name: '疑義の理由' });
   await reasons.getByRole('checkbox', { name: '問題文が分かりにくい' }).check();
   await reasons.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' }).check();
+  // 理由はチェックごとに保存される
+  await expect.poll(() => flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: null, doubt_reasons: ['defective', 'unclear'], explanation_request_flag: false });
+  // 内容は保存ボタンなしで、入力欄から離れる（次の問題へを押す）と保存される
+  await expect(page.getByRole('button', { name: /保存/ })).toHaveCount(0);
   await page.getByLabel('疑義の内容（任意）').fill('  ニブルの定義が教材と違う  ');
-  await page.getByRole('button', { name: '疑義の内容を保存' }).click();
-  await expect(page.getByText('疑義の内容を保存しました')).toBeVisible();
-  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: 'ニブルの定義が教材と違う', doubt_reasons: ['defective', 'unclear'], explanation_request_flag: false });
   await page.getByRole('button', { name: '次の問題へ' }).click();
+  await expect.poll(() => flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: 'ニブルの定義が教材と違う', doubt_reasons: ['defective', 'unclear'], explanation_request_flag: false });
 
   // Q2: 両方
   await page.getByLabel('解答').fill('ニブル');

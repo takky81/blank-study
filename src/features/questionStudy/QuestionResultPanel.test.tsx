@@ -70,7 +70,7 @@ describe('QuestionResultPanel', () => {
     expect(screen.getByRole('checkbox', { name: '内容に疑義がある' })).toBeChecked();
   });
 
-  it('疑義を確定すると任意の疑義内容を入力して同じ版付き契約で保存できる', async () => {
+  it('疑義の内容は入力欄からフォーカスが外れたときに版付き契約で自動保存し、保存ボタンは出さない', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockResolvedValueOnce(saved({ doubtFlag: true }, 4))
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtNote: '答えが古い' }, 5));
@@ -79,14 +79,25 @@ describe('QuestionResultPanel', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: '内容に疑義がある' }));
     const note = await screen.findByLabelText('疑義の内容（任意）');
     expect(note).toHaveValue('');
+    expect(screen.queryByRole('button', { name: /保存/ })).not.toBeInTheDocument();
     fireEvent.change(note, { target: { value: '  答えが古い  ' } });
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    expect(setFlags).toHaveBeenCalledTimes(1);
+    fireEvent.blur(note);
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: true, doubtReasons: [], doubtNote: '答えが古い' }));
     await waitFor(() => expect(onQuestionUpdated).toHaveBeenLastCalledWith(expect.objectContaining({ version: 5, doubtNote: '答えが古い' })));
-    expect(screen.getByText('疑義の内容を保存しました')).toBeInTheDocument();
+    expect(screen.getByText('疑義の理由・内容を保存しました')).toBeInTheDocument();
   });
 
-  it('既存の疑義内容を初期表示し、空にして保存するとnullを送り、解除で入力欄を隠す', async () => {
+  it('内容を変えずにフォーカスを外しても保存しない', () => {
+    const setFlags = vi.fn<QuestionFlagSetter>();
+    setup(setFlags, { doubtFlag: true, doubtNote: '既存メモ' });
+    const note = screen.getByLabelText('疑義の内容（任意）');
+    fireEvent.change(note, { target: { value: ' 既存メモ ' } });
+    fireEvent.blur(note);
+    expect(setFlags).not.toHaveBeenCalled();
+  });
+
+  it('既存の疑義内容を初期表示し、空にしてフォーカスを外すとnullを送り、解除で入力欄を隠す', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtNote: null }, 4))
       .mockResolvedValueOnce(saved({ doubtFlag: false, doubtNote: null }, 5));
@@ -94,27 +105,26 @@ describe('QuestionResultPanel', () => {
     const note = screen.getByLabelText('疑義の内容（任意）');
     expect(note).toHaveValue('既存メモ');
     fireEvent.change(note, { target: { value: '   ' } });
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    fireEvent.blur(note);
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3, { doubtFlag: true, doubtReasons: [], doubtNote: null }));
+    await waitFor(() => expect(screen.getByText('疑義の理由・内容を保存しました')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('checkbox', { name: '内容に疑義がある' }));
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 4, { doubtFlag: false }));
     await waitFor(() => expect(screen.queryByLabelText('疑義の内容（任意）')).not.toBeInTheDocument());
   });
 
-  it('疑義がある間だけ理由のcheckboxを表示し、既存の理由を初期選択し、内容と一緒に正規順で保存する', async () => {
+  it('疑義の理由はチェックするたびに入力中の内容と一緒に正規順で保存する', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable', 'unclear'], doubtNote: 'メモ' }, 4))
       .mockResolvedValueOnce(saved({ doubtFlag: false, doubtReasons: [], doubtNote: null }, 5));
     const { onQuestionUpdated } = setup(setFlags, { doubtFlag: true, doubtReasons: ['unclear'] });
-    const group = screen.getByRole('group', { name: '疑義の理由' });
-    expect(group).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '疑義の理由' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: '問題文が分かりにくい' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: '誤答が簡単すぎる' })).not.toBeChecked();
-    fireEvent.click(screen.getByRole('checkbox', { name: '問題文から答えが分かる' }));
     fireEvent.change(screen.getByLabelText('疑義の内容（任意）'), { target: { value: 'メモ' } });
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '問題文から答えが分かる' }));
     await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3,
       { doubtFlag: true, doubtReasons: ['answer_guessable', 'unclear'], doubtNote: 'メモ' }));
     await waitFor(() => expect(onQuestionUpdated).toHaveBeenLastCalledWith(
@@ -124,30 +134,50 @@ describe('QuestionResultPanel', () => {
     await waitFor(() => expect(screen.queryByRole('group', { name: '疑義の理由' })).not.toBeInTheDocument());
   });
 
-  it('疑義の理由の保存失敗では選択を保持する', async () => {
-    const setFlags = vi.fn<QuestionFlagSetter>().mockRejectedValueOnce(new Error('network'));
+  it('保存中に続けて変更すると、完了後に最新の内容を新しい版で1回だけ送る', async () => {
+    let release: (value: Awaited<ReturnType<QuestionFlagSetter>>) => void = () => {};
+    const setFlags = vi.fn<QuestionFlagSetter>()
+      .mockReturnValueOnce(new Promise((done) => { release = done; }))
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['low_value', 'unclear'] }, 5));
     setup(setFlags, { doubtFlag: true });
-    const reason = screen.getByRole('checkbox', { name: '問う価値が低い' });
-    fireEvent.click(reason);
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('もう一度');
-    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: '問う価値が低い' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '誤答が簡単すぎる' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '問題文が分かりにくい' }));
+    expect(setFlags).toHaveBeenCalledTimes(1);
+    release(saved({ doubtFlag: true, doubtReasons: ['low_value'] }, 4));
+    await waitFor(() => expect(setFlags).toHaveBeenCalledTimes(2));
+    expect(setFlags).toHaveBeenLastCalledWith('q1', 4,
+      { doubtFlag: true, doubtReasons: ['low_value', 'weak_distractors', 'unclear'], doubtNote: null });
   });
 
-  it('疑義内容の保存失敗では入力を保持して再試行を案内し、競合では再読み込みを促す', async () => {
+  it('疑義の理由の保存失敗では選択を保持し、再保存で同じ内容を送る', async () => {
+    const setFlags = vi.fn<QuestionFlagSetter>()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['low_value'] }, 4));
+    setup(setFlags, { doubtFlag: true });
+    fireEvent.click(screen.getByRole('checkbox', { name: '問う価値が低い' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('もう一度');
+    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: '再保存' }));
+    await waitFor(() => expect(setFlags).toHaveBeenLastCalledWith('q1', 3,
+      { doubtFlag: true, doubtReasons: ['low_value'], doubtNote: null }));
+    await waitFor(() => expect(screen.getByText('疑義の理由・内容を保存しました')).toBeInTheDocument());
+  });
+
+  it('疑義内容の保存失敗では入力を保持し、競合では再読み込みを促して操作を止める', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockRejectedValueOnce(new Error('network'))
       .mockResolvedValueOnce({ kind: 'version-conflict', current: { ...question, version: 9 } });
     setup(setFlags, { doubtFlag: true });
     const note = screen.getByLabelText('疑義の内容（任意）');
     fireEvent.change(note, { target: { value: 'メモ' } });
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    fireEvent.blur(note);
     expect(await screen.findByRole('alert')).toHaveTextContent('もう一度');
     expect(note).toHaveValue('メモ');
     expect(screen.getByText('不正解')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '疑義の内容を保存' }));
+    fireEvent.click(screen.getByRole('button', { name: '再保存' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('再読み込み');
-    expect(screen.getByRole('button', { name: '疑義の内容を保存' })).toBeDisabled();
+    expect(screen.getByLabelText('疑義の内容（任意）')).toBeDisabled();
   });
 
   it('flag失敗では表示を確定前へ戻し、判定結果を保持して再試行を案内する', async () => {

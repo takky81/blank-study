@@ -67,7 +67,8 @@ export function QuestionResultPanel({
   const busy = useRef(false);
   const [noteDraft, setNoteDraft] = useState(initialQuestion.doubtNote ?? '');
   const [reasonsDraft, setReasonsDraft] = useState<readonly DoubtReason[]>(initialQuestion.doubtReasons);
-  const locked = status.kind === 'saving' || status.kind === 'saving-note' || status.kind === 'conflict';
+  // 疑義の内容の自動保存中も入力は続けられるようにし、flag保存中と競合時だけ操作を止める。
+  const locked = status.kind === 'saving' || status.kind === 'conflict';
 
   const displayed = (flag: FlagName) =>
     status.kind === 'saving' && status.flag === flag ? status.value : question[flag];
@@ -79,6 +80,7 @@ export function QuestionResultPanel({
     try {
       const result = await setFlags(question.id, question.version, { [flag]: value });
       if (result.kind === 'saved') {
+        latest.current = result.question;
         setQuestion(result.question);
         if (flag === 'doubtFlag') {
           setNoteDraft(result.question.doubtNote ?? '');
@@ -96,31 +98,45 @@ export function QuestionResultPanel({
     }
   };
 
-  // 疑義の理由と内容は疑義flagと同じ版付き契約で保存する。失敗時は入力を保持する。
-  const saveNote = async () => {
-    if (busy.current || locked || !question.doubtFlag) return;
+  // 疑義の理由と内容は、理由のチェックごと・内容の入力欄からフォーカスが外れたときに自動保存する。
+  // 版付き契約で直列に送り、保存中に来た変更は最新の1件だけを続けて送る。失敗時は入力を保持する。
+  const latest = useRef<ResultQuestion>(initialQuestion);
+  const pending = useRef<{ reasons: readonly DoubtReason[]; note: string } | null>(null);
+  const saveNote = async (reasons: readonly DoubtReason[], note: string) => {
+    if (locked || !latest.current.doubtFlag) return;
+    if (busy.current) {
+      pending.current = { reasons, note };
+      return;
+    }
     busy.current = true;
-    setStatus({ kind: 'saving-note' });
+    let next: { reasons: readonly DoubtReason[]; note: string } | null = { reasons, note };
     try {
-      const doubtNote = noteDraft.trim() === '' ? null : noteDraft.trim();
-      const result = await setFlags(question.id, question.version, {
-        doubtFlag: true, doubtReasons: normalizeDoubtReasons(reasonsDraft), doubtNote,
-      });
-      if (result.kind === 'saved') {
+      while (next) {
+        const target = next;
+        pending.current = null;
+        setStatus({ kind: 'saving-note' });
+        const doubtNote = target.note.trim() === '' ? null : target.note.trim();
+        const result = await setFlags(latest.current.id, latest.current.version, {
+          doubtFlag: true, doubtReasons: normalizeDoubtReasons(target.reasons), doubtNote,
+        });
+        if (result.kind !== 'saved') {
+          setStatus({ kind: 'conflict' });
+          return;
+        }
+        latest.current = result.question;
         setQuestion(result.question);
-        setNoteDraft(result.question.doubtNote ?? '');
-        setReasonsDraft(result.question.doubtReasons);
         onQuestionUpdated(result.question);
-        setStatus({ kind: 'saved', target: 'note' });
-      } else {
-        setStatus({ kind: 'conflict' });
+        next = pending.current;
       }
+      setStatus({ kind: 'saved', target: 'note' });
     } catch {
       setStatus({ kind: 'failed', target: 'note' });
     } finally {
       busy.current = false;
     }
   };
+
+  const noteChanged = () => (noteDraft.trim() === '' ? null : noteDraft.trim()) !== (latest.current.doubtNote ?? null);
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -157,7 +173,7 @@ export function QuestionResultPanel({
         ))}
         <p aria-live="polite" className="text-[13px] text-muted">
           {status.kind === 'saving' || status.kind === 'saving-note' ? '保存しています…'
-            : status.kind === 'saved' ? (status.target === 'note' ? '疑義の内容を保存しました' : 'フラグを保存しました') : ''}
+            : status.kind === 'saved' ? (status.target === 'note' ? '疑義の理由・内容を保存しました' : 'フラグを保存しました') : ''}
         </p>
         {question.doubtFlag && status.kind !== 'saving' && (
           <div className="flex min-w-0 flex-col gap-2 px-1">
@@ -168,9 +184,10 @@ export function QuestionResultPanel({
                   <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink"
                     checked={reasonsDraft.includes(code)} disabled={locked}
                     onChange={(event) => {
-                      const checked = event.target.checked;
-                      setReasonsDraft((current) => normalizeDoubtReasons(
-                        checked ? [...current, code] : current.filter((c) => c !== code)));
+                      const reasons = normalizeDoubtReasons(event.target.checked
+                        ? [...reasonsDraft, code] : reasonsDraft.filter((c) => c !== code));
+                      setReasonsDraft(reasons);
+                      void saveNote(reasons, noteDraft);
                     }} />
                   <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
                 </label>
@@ -180,16 +197,18 @@ export function QuestionResultPanel({
             <textarea id="question-result-doubt-note" rows={3} maxLength={1000}
               className="min-h-11 w-full min-w-0 rounded border px-3 py-2 text-[14px]"
               value={noteDraft} disabled={locked}
-              onChange={(event) => setNoteDraft(event.target.value)} />
-            <div>
-              <button type="button" className="btn-s h-11 px-4" disabled={locked}
-                onClick={() => { void saveNote(); }}>疑義の内容を保存</button>
-            </div>
+              onChange={(event) => setNoteDraft(event.target.value)}
+              onBlur={() => { if (noteChanged()) void saveNote(reasonsDraft, noteDraft); }} />
+            <p className="text-[12px] text-muted">理由はチェックするたびに、内容は入力欄から離れたときに保存します</p>
           </div>
         )}
         {status.kind === 'failed' && (
           <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
-            {status.target === 'note' ? '疑義の内容' : 'フラグ'}を保存できませんでした。もう一度お試しください
+            {status.target === 'note' ? '疑義の理由・内容' : 'フラグ'}を保存できませんでした。もう一度お試しください
+            {status.target === 'note' && (
+              <button type="button" className="btn-s ml-3 h-11 border-warn px-4 text-warn"
+                onClick={() => { void saveNote(reasonsDraft, noteDraft); }}>再保存</button>
+            )}
           </p>
         )}
         {status.kind === 'conflict' && (
