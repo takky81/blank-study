@@ -82,7 +82,7 @@ export function QuestionExchangePage({
   commitImport = commitQuestionExchange,
 }: QuestionExchangePageProps) {
   const [values, setValues] = useState<Record<EligibilityFilterField, string>>({
-    minimumAttempts: '', maximumAccuracy: '', maximumQuestionCount: '',
+    minimumAttempts: '3', maximumAccuracy: '0.6', maximumQuestionCount: '3',
   });
   const [fieldErrors, setFieldErrors] = useState<readonly FieldError[]>([]);
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
