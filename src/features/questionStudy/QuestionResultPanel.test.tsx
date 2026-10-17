@@ -54,12 +54,17 @@ describe('QuestionResultPanel', () => {
 
   it('疑義と解説追加を独立に、続けて同時に設定し、最新versionを使う', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
-      .mockResolvedValueOnce(saved({ doubtFlag: true }, 4))
-      .mockResolvedValueOnce(saved({ doubtFlag: true, explanationRequestFlag: true }, 5));
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable'] }, 4))
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable'], explanationRequestFlag: true }, 5));
     const { onQuestionUpdated } = setup(setFlags);
     fireEvent.click(screen.getByRole('checkbox', { name: '内容に疑義がある' }));
     await waitFor(() => expect(screen.getByRole('checkbox', { name: '内容に疑義がある' })).toBeChecked());
-    expect(setFlags).toHaveBeenLastCalledWith('q1', 3, { doubtFlag: true });
+    expect(setFlags).toHaveBeenLastCalledWith('q1', 3, { doubtFlag: true, doubtReasons: ['answer_guessable'] });
+    // 疑義を付けると「知識がなくても解ける」が初期選択される
+    expect(screen.getByRole('checkbox', { name: '知識がなくても解ける（問題文や選択肢から推測できる）' })).toBeChecked();
+    // 見直しフラグは 解説の追加 → 疑義 の順に並ぶ
+    expect(screen.getAllByRole('checkbox').slice(0, 2).map((c) => c.closest('label')?.textContent))
+      .toEqual(['解説の追加を希望する', '内容に疑義がある']);
     expect(onQuestionUpdated).toHaveBeenLastCalledWith(expect.objectContaining({ version: 4, doubtFlag: true }));
     // 既存解説があっても解説追加を設定できる
     const request = screen.getByRole('checkbox', { name: '解説の追加を希望する' });

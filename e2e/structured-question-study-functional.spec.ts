@@ -287,9 +287,12 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   await expect(saved).toBeVisible();
   await expect(doubt).toBeChecked();
   await expect(request).not.toBeChecked();
-  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: null, doubt_reasons: [], explanation_request_flag: false });
+  expect(await flags(s.q1)).toEqual({ doubt_flag: true, doubt_note: null, doubt_reasons: ['answer_guessable'], explanation_request_flag: false });
   // 疑義の内容（任意）を入力して保存する
   const reasons = page.getByRole('group', { name: '疑義の理由' });
+  // 疑義を付けると「知識がなくても解ける」が初期選択される。外して別の理由を選ぶ
+  await expect(reasons.getByRole('checkbox', { name: '知識がなくても解ける（問題文や選択肢から推測できる）' })).toBeChecked();
+  await reasons.getByRole('checkbox', { name: '知識がなくても解ける（問題文や選択肢から推測できる）' }).uncheck();
   await reasons.getByRole('checkbox', { name: '問題文が分かりにくい' }).check();
   await reasons.getByRole('checkbox', { name: '問題不備（正解・問題文の誤り、正解が一つに決まらない）' }).check();
   // 理由はチェックごとに保存される
@@ -308,7 +311,7 @@ test('結果画面で疑義と解説追加のflagを独立・同時に設定で�
   await request.check();
   await expect(request).toBeChecked();
   await expect(doubt).toBeChecked();
-  await expect.poll(() => flags(s.q2)).toEqual({ doubt_flag: true, doubt_note: null, doubt_reasons: [], explanation_request_flag: true });
+  await expect.poll(() => flags(s.q2)).toEqual({ doubt_flag: true, doubt_note: null, doubt_reasons: ['answer_guessable'], explanation_request_flag: true });
   await page.getByRole('button', { name: '次の問題へ' }).click();
 
   // Q3（解説あり）: 解説追加だけ

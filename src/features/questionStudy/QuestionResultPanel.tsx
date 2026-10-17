@@ -47,9 +47,12 @@ type FlagStatus =
   | { kind: 'conflict' };
 
 const FLAG_LABELS: Record<FlagName, string> = {
-  doubtFlag: '内容に疑義がある',
   explanationRequestFlag: '解説の追加を希望する',
+  doubtFlag: '内容に疑義がある',
 };
+
+/** 疑義を付けたときに初期選択しておく理由。 */
+const DEFAULT_DOUBT_REASONS: readonly DoubtReason[] = ['answer_guessable'];
 
 export function QuestionResultPanel({
   question: initialQuestion,
@@ -78,7 +81,10 @@ export function QuestionResultPanel({
     busy.current = true;
     setStatus({ kind: 'saving', flag, value });
     try {
-      const result = await setFlags(question.id, question.version, { [flag]: value });
+      const patch = flag === 'doubtFlag' && value
+        ? { doubtFlag: true, doubtReasons: DEFAULT_DOUBT_REASONS }
+        : { [flag]: value };
+      const result = await setFlags(question.id, question.version, patch);
       if (result.kind === 'saved') {
         latest.current = result.question;
         setQuestion(result.question);
