@@ -167,6 +167,22 @@ export function QuestionResultPanel({
           <p className="whitespace-pre-wrap break-words">{question.explanation}</p>
         </section>
       )}
+      {unrecorded && unrecorded.message !== null && !unrecorded.retrying && (
+        <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
+          この回答は未記録です。{unrecorded.message}。記録してから次の問題へ進めます
+        </p>
+      )}
+      <div className="flex flex-wrap gap-3">
+        {unrecorded ? (
+          <button type="button" className="btn-p h-12 px-8" onClick={unrecorded.onRetry} disabled={unrecorded.retrying}>
+            {unrecorded.retrying ? '記録しています…' : '記録を再試行'}
+          </button>
+        ) : (
+          <button type="button" className="btn-p h-12 px-8" onClick={onNext}>次の問題へ</button>
+        )}
+        <button type="button" className="btn-s h-11 px-4" onClick={onFinish}
+          disabled={unrecorded?.retrying ?? false}>学習を終える</button>
+      </div>
       <fieldset className="flex min-w-0 flex-col gap-1 rounded border p-3">
         <legend className="px-1 text-[14px]">見直しフラグ</legend>
         {(Object.keys(FLAG_LABELS) as FlagName[]).map((flag) => (
@@ -223,22 +239,6 @@ export function QuestionResultPanel({
           </p>
         )}
       </fieldset>
-      {unrecorded && unrecorded.message !== null && !unrecorded.retrying && (
-        <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[14px] text-warn">
-          この回答は未記録です。{unrecorded.message}。記録してから次の問題へ進めます
-        </p>
-      )}
-      <div className="flex flex-wrap gap-3">
-        {unrecorded ? (
-          <button type="button" className="btn-p h-12 px-8" onClick={unrecorded.onRetry} disabled={unrecorded.retrying}>
-            {unrecorded.retrying ? '記録しています…' : '記録を再試行'}
-          </button>
-        ) : (
-          <button type="button" className="btn-p h-12 px-8" onClick={onNext}>次の問題へ</button>
-        )}
-        <button type="button" className="btn-s h-11 px-4" onClick={onFinish}
-          disabled={unrecorded?.retrying ?? false}>学習を終える</button>
-      </div>
     </div>
   );
 }
