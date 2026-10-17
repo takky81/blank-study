@@ -121,7 +121,7 @@ function golden(s: Seed, filters: QuestionExchangeExportV1['filters'], includeSt
   };
   const targets = includeStats ? [flagTarget, statsTarget] : [flagTarget];
   return {
-    schemaVersion: 1, exchangeId: 'EXCHANGE_ID', exportedAt: 'EXPORTED_AT', filters,
+    schemaVersion: 1, exchangeId: 'EXCHANGE_ID', exportedAt: 'EXPORTED_AT', filters: { ...filters, requireWrong: true },
     targets: [...targets].sort((a, b) => (a.keyword.id < b.keyword.id ? -1 : a.keyword.id > b.keyword.id ? 1 : 0)),
   };
 }

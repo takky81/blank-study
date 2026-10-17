@@ -54,6 +54,7 @@ function rpcArgs(filter: EligibilityFilter) {
     p_minimum_attempts: filter.minimumAttempts,
     p_maximum_accuracy: filter.maximumAccuracy,
     p_maximum_question_count: filter.maximumQuestionCount,
+    ...(filter.requireWrong === undefined ? {} : { p_require_wrong: filter.requireWrong }),
   };
 }
 

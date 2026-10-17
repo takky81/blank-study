@@ -5,9 +5,12 @@ export type EligibilityFilter = {
   minimumAttempts: number;
   maximumAccuracy: number;
   maximumQuestionCount: number;
+  /** 成績条件に「誤答1回以上」を含めるか。省略時はtrue（含める）。 */
+  requireWrong?: boolean;
 };
 
-export type EligibilityFilterField = keyof EligibilityFilter;
+/** 数値入力の閾値。requireWrongは画面のチェックボックスで受け取り、数値検証の対象外。 */
+export type EligibilityFilterField = 'minimumAttempts' | 'maximumAccuracy' | 'maximumQuestionCount';
 
 /** 未入力・非数値を検出するため、画面入力はunknown値として受け取る。 */
 export type EligibilityFilterInput = { readonly [K in EligibilityFilterField]: unknown };

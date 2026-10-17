@@ -52,12 +52,12 @@ export function validateEligibilityFilter(input: EligibilityFilterInput): readon
   ].filter((error): error is FieldError => error !== null);
 }
 
-/** 統計branch: 誤答1以上 AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下。attempts 0は不成立。 */
+/** 統計branch: 誤答1以上（requireWrong=falseなら不問） AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下。attempts 0は不成立。 */
 export function meetsPerformanceCondition(aggregate: KeywordQuestionStudyAggregate, filter: EligibilityFilter): boolean {
   return (
     aggregate.attempts > 0 &&
     aggregate.accuracy !== null &&
-    aggregate.wrong >= 1 &&
+    (filter.requireWrong === false || aggregate.wrong >= 1) &&
     aggregate.attempts >= filter.minimumAttempts &&
     aggregate.accuracy <= filter.maximumAccuracy &&
     aggregate.questionCount <= filter.maximumQuestionCount

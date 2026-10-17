@@ -219,11 +219,20 @@ function checkTargetSemantics(c: Checker, target: QuestionExchangeTargetV1, path
   });
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function validateExport(value: unknown): readonly ExchangeSchemaError[] {
   const c = new Checker();
   if (!c.object(value, '$', ['schemaVersion', 'exchangeId', 'exportedAt', 'filters', 'targets'])) return c.errors;
   checkHeader(c, value);
-  if (c.object(value.filters, '$.filters', ['minimumAttempts', 'maximumAccuracy', 'maximumQuestionCount'])) {
+  const filterKeys = ['minimumAttempts', 'maximumAccuracy', 'maximumQuestionCount'];
+  if (isPlainObject(value.filters) && Object.prototype.hasOwnProperty.call(value.filters, 'requireWrong')) filterKeys.push('requireWrong');
+  if (c.object(value.filters, '$.filters', filterKeys)) {
+    if (filterKeys.includes('requireWrong') && typeof value.filters.requireWrong !== 'boolean') {
+      c.fail('$.filters.requireWrong', 'booleanである必要があります。');
+    }
     c.integer(value.filters.minimumAttempts, '$.filters.minimumAttempts', 0);
     c.ratio(value.filters.maximumAccuracy, '$.filters.maximumAccuracy');
     c.integer(value.filters.maximumQuestionCount, '$.filters.maximumQuestionCount', 0);
