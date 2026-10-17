@@ -44,6 +44,20 @@ const KIND_LABELS = { create: '新規', update: '更新', conflict: '競合', er
 const messageOf = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const toNumber = (raw: string): unknown => (raw.trim() === '' ? undefined : Number(raw));
 
+/** 問題文・模範解答・選択肢（順不同）が同じなら、解説だけの変更とみなす。 */
+export function isExplanationOnlyChange(before: QuestionContentDraft, after: QuestionContentDraft): boolean {
+  const sorted = (choices: readonly string[]) => [...choices].sort();
+  const [a, b] = [sorted(before.choices), sorted(after.choices)];
+  return before.questionText === after.questionText && before.modelAnswer === after.modelAnswer
+    && a.length === b.length && a.every((c, i) => c === b[i]);
+}
+
+/** 解説だけを変える更新は履歴を引き継ぐ設問として初期選択する。 */
+function defaultKeepHistoryIds(preview: ImportPreview): ReadonlySet<string> {
+  return new Set(preview.items.flatMap((i) =>
+    i.kind === 'update' && isExplanationOnlyChange(i.before, i.after) ? [i.before.id] : []));
+}
+
 function DraftView({ draft }: { draft: QuestionContentDraft }) {
   return <dl className="grid min-w-0 gap-1 text-[13px] [overflow-wrap:anywhere]">
     <dt className="text-muted">設問文</dt><dd>{draft.questionText}</dd>
@@ -145,7 +159,9 @@ export function QuestionExchangePage({
       setPreview(null);
       setKeepHistoryIds(new Set());
       try {
-        setPreview(await previewImport(file));
+        const next = await previewImport(file);
+        setKeepHistoryIds(defaultKeepHistoryIds(next));
+        setPreview(next);
         setImportState({ kind: 'idle' });
       } catch (e) {
         setImportState({ kind: 'preview-error', message: messageOf(e) });
@@ -243,7 +259,7 @@ export function QuestionExchangePage({
         {!preview.canCommit && <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn">
           競合またはエラーがあるため取り込めません。返却ファイルを修正するか、最新の内容で再出力してください。</p>}
         {counts.some((c) => c.kind === 'update' && c.count > 0) && <p className="text-[13px] text-ink-soft [overflow-wrap:anywhere]">
-          更新する設問の学習履歴（出題回数・正答数・復習予定）は取込時にリセットします。引き継ぐ設問だけチェックしてください。</p>}
+          更新する設問の学習履歴（出題回数・正答数・復習予定）は取込時にリセットします。解説だけを変える設問は初期状態で引き継ぎます。必要に応じてチェックを変更してください。</p>}
         <ol className="flex min-w-0 flex-col gap-3">
           {preview.items.map((item, index) => <li key={index} className="flex min-w-0 flex-col gap-2 rounded border-2 border-line p-3">
             <h3 className="text-[13px] font-bold">{KIND_LABELS[item.kind]}</h3><PreviewItemView item={item}

@@ -9,7 +9,7 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }));
 import type { StructuredQuestion } from '@/features/questions/types';
 import type { EligibilityExportResult } from './api';
 import type { ImportPreview } from './preview';
-import { QuestionExchangePage, type QuestionExchangePageProps } from './QuestionExchangePage';
+import { isExplanationOnlyChange, QuestionExchangePage, type QuestionExchangePageProps } from './QuestionExchangePage';
 import type { QuestionExchangeExportV1 } from './types';
 
 const filters = { minimumAttempts: 3, maximumAccuracy: 0.6, maximumQuestionCount: 5 };
@@ -189,6 +189,29 @@ describe('QuestionExchangePage 取込preview', () => {
     await waitFor(() => expect(commitImport).toHaveBeenCalledTimes(1));
     const updateItem = okPreview.items.find((i) => i.kind === 'update');
     expect(commitImport).toHaveBeenCalledWith(okPreview, [updateItem?.kind === 'update' ? updateItem.before.id : '']);
+  });
+
+  it('解説だけを変える更新は履歴を引き継ぐ設問として初期選択し、外せばリセット対象にできる', async () => {
+    const explained = { questionText: current.questionText, modelAnswer: current.modelAnswer, choices: current.choices, explanation: '追加した解説' };
+    const preview: ImportPreview = { canCommit: true, items: [{ kind: 'update', operationIndex: 0, keywordId: 'k1', before: current, after: explained }] };
+    const commitImport = vi.fn().mockResolvedValue({ created: 0, updated: 1, doubtFlagsCleared: 0, explanationRequestFlagsCleared: 0, historyReset: 0 });
+    setup({ previewImport: vi.fn().mockResolvedValue(preview), commitImport });
+    chooseFile();
+    fireEvent.click(screen.getByRole('button', { name: 'previewを作成' }));
+    const keep = await screen.findByRole('checkbox', { name: /学習履歴を引き継ぐ/ });
+    expect(keep).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: '取込を確定' }));
+    await waitFor(() => expect(commitImport).toHaveBeenCalledWith(preview, ['q1']));
+  });
+
+  it('isExplanationOnlyChangeは問題文・模範解答・選択肢（順不同）が同じときだけtrue', () => {
+    const base = { questionText: '問', modelAnswer: '答', choices: ['ア', 'イ'], explanation: null };
+    expect(isExplanationOnlyChange(base, { ...base, explanation: '解説' })).toBe(true);
+    expect(isExplanationOnlyChange(base, { ...base, choices: ['イ', 'ア'] })).toBe(true);
+    expect(isExplanationOnlyChange(base, { ...base, questionText: '問2' })).toBe(false);
+    expect(isExplanationOnlyChange(base, { ...base, modelAnswer: '答2' })).toBe(false);
+    expect(isExplanationOnlyChange(base, { ...base, choices: ['ア', 'ウ'] })).toBe(false);
+    expect(isExplanationOnlyChange(base, { ...base, choices: ['ア'] })).toBe(false);
   });
 
   it('commit失敗時はpreviewを保持してalertを示す', async () => {
