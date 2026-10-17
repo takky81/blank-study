@@ -267,12 +267,20 @@ describe('commitQuestionExchange', () => {
 
   it('canCommitのvalidated envelopeだけをimport RPCへ渡し、件数を画面型へ写像する', async () => {
     rpcImpl = () => Promise.resolve({
-      data: { createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0 }, error: null,
+      data: { createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0, historyResetCount: 1 }, error: null,
     });
     await expect(commitQuestionExchange(committable)).resolves.toEqual({
-      created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0,
+      created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0, historyReset: 1,
     });
-    expect(rpcCalls).toEqual([['import_question_exchange', { p_payload: source }]]);
+    expect(rpcCalls).toEqual([['import_question_exchange', { p_payload: { ...source, keepHistoryQuestionIds: [] } }]]);
+  });
+
+  it('履歴を引き継ぐ設問IDをpayloadに含める', async () => {
+    rpcImpl = () => Promise.resolve({
+      data: { createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0, historyResetCount: 0 }, error: null,
+    });
+    await commitQuestionExchange(committable, [Q1]);
+    expect(rpcCalls).toEqual([['import_question_exchange', { p_payload: { ...source, keepHistoryQuestionIds: [Q1] } }]]);
   });
 
   it.each([

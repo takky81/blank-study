@@ -146,7 +146,7 @@ describe('QuestionExchangePage 取込preview', () => {
   });
 
   it('commitが注入されcanCommitなら確定でき、二重送信せず件数を表示する', async () => {
-    const d = deferred<{ created: number; updated: number; doubtFlagsCleared: number; explanationRequestFlagsCleared: number }>();
+    const d = deferred<{ created: number; updated: number; doubtFlagsCleared: number; explanationRequestFlagsCleared: number; historyReset: number }>();
     const commitImport = vi.fn().mockReturnValue(d.promise);
     setup({ commitImport });
     chooseFile();
@@ -156,12 +156,29 @@ describe('QuestionExchangePage 取込preview', () => {
     fireEvent.click(button);
     fireEvent.click(button);
     expect(commitImport).toHaveBeenCalledTimes(1);
-    expect(commitImport).toHaveBeenCalledWith(okPreview);
-    d.resolve({ created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0 });
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('追加 1件、更新 1件、疑義解除 1件、解説依頼解除 0件'));
+    expect(commitImport).toHaveBeenCalledWith(okPreview, []);
+    d.resolve({ created: 1, updated: 1, doubtFlagsCleared: 1, explanationRequestFlagsCleared: 0, historyReset: 1 });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('追加 1件、更新 1件、疑義解除 1件、解説依頼解除 0件、履歴リセット 1件'));
     expect(screen.getByRole('status')).toHaveTextContent('最新の状態を再読込');
     expect(screen.queryByRole('region', { name: '取込preview' })).not.toBeInTheDocument();
     expect(screen.queryByText('選択中: return.json')).not.toBeInTheDocument();
+  });
+
+  it('更新設問の履歴は既定でリセットし、チェックした設問だけ引き継ぐIDとして渡す', async () => {
+    const commitImport = vi.fn().mockResolvedValue({ created: 1, updated: 1, doubtFlagsCleared: 0, explanationRequestFlagsCleared: 0, historyReset: 0 });
+    setup({ commitImport });
+    chooseFile();
+    fireEvent.click(screen.getByRole('button', { name: 'previewを作成' }));
+    const region = await screen.findByRole('region', { name: '取込preview' });
+    expect(within(region).getByText(/学習履歴.*リセットします/)).toBeInTheDocument();
+    const keep = within(region).getByRole('checkbox', { name: /学習履歴を引き継ぐ/ });
+    expect(within(region).getAllByRole('checkbox')).toHaveLength(1);
+    expect(keep).not.toBeChecked();
+    fireEvent.click(keep);
+    fireEvent.click(within(region).getByRole('button', { name: '取込を確定' }));
+    await waitFor(() => expect(commitImport).toHaveBeenCalledTimes(1));
+    const updateItem = okPreview.items.find((i) => i.kind === 'update');
+    expect(commitImport).toHaveBeenCalledWith(okPreview, [updateItem?.kind === 'update' ? updateItem.before.id : '']);
   });
 
   it('commit失敗時はpreviewを保持してalertを示す', async () => {

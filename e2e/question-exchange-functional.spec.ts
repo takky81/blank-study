@@ -279,6 +279,7 @@ test.describe('QuestionExchangeFunctionalE2E', () => {
     page.on('download', () => { downloads += 1; });
     page.on('request', (r) => { if (r.url().includes('get_question_exchange_candidates')) rpcCalls += 1; });
 
+    await fillFilter(page, { attempts: '', accuracy: '', count: '' });
     await page.getByRole('button', { name: '対象を出力' }).click();
     await expect(page.getByText('最低出題回数を数値で入力してください。')).toBeVisible();
     await expect(page.getByText('最大正答率を数値で入力してください。')).toBeVisible();

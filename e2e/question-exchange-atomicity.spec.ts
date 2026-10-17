@@ -131,7 +131,7 @@ test.describe('QuestionExchangeAtomicityConformance', () => {
       // 同じpayloadから失敗要因だけを除くと成功し、先行operationが実際に有効だったことを示す。
       const ok = await user.rpc('import_question_exchange', payload(operations.slice(0, 3)));
       expect(ok.error).toBeNull();
-      expect(ok.data).toEqual({ createdCount: 1, updatedCount: 2, clearedDoubtCount: 1, clearedExplanationRequestCount: 2 });
+      expect(ok.data).toEqual({ createdCount: 1, updatedCount: 2, clearedDoubtCount: 1, clearedExplanationRequestCount: 2, historyResetCount: 0 });
     });
   }
 });

@@ -129,4 +129,6 @@ export type QuestionExchangeCommitResult = {
   updated: number;
   doubtFlagsCleared: number;
   explanationRequestFlagsCleared: number;
+  /** 学習履歴をリセットした設問数（履歴が無かった設問は数えない）。 */
+  historyReset: number;
 };

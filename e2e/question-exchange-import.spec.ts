@@ -99,13 +99,39 @@ test.describe('AtomicImportRPCValidation', () => {
       },
     ], { ownerId: otherId }));
     expect(result.error).toBeNull();
-    expect(result.data).toEqual({ createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0 });
+    expect(result.data).toEqual({ createdCount: 1, updatedCount: 1, clearedDoubtCount: 1, clearedExplanationRequestCount: 0, historyResetCount: 0 });
 
     const rows = await dbSnapshot([ownerId, otherId]);
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.owner_id === ownerId && r.question_text === '取込後の問い')).toBe(true);
     const updated = rows.find((r) => r.id === q.id);
     expect(updated).toMatchObject({ version: q.version + 1, doubt_flag: false, doubt_note: null, doubt_reasons: [], explanation_request_flag: true });
+  });
+
+  test('更新した設問の学習履歴は原則リセットし、keepHistoryQuestionIdsの設問だけ引き継ぐ', async () => {
+    const reset = await seedQuestion(ownerId, materialId, keywordId, { sort_order: 0 });
+    const kept = await seedQuestion(ownerId, materialId, keywordId, { sort_order: 1 });
+    const stats = (id: string) => ({
+      question_id: id, owner_id: ownerId, asked_count: 4, correct_count: 3, consecutive_correct: 2,
+      interval_days: 6, ease_factor: 2.7, due_at: '2026-11-01T00:00:00Z',
+    });
+    expect((await adminClient().from('structured_question_stats').insert([stats(reset.id), stats(kept.id)])).error).toBeNull();
+    const update = (q: { id: string; version: number }) => ({
+      kind: 'update', keywordId, questionId: q.id, expectedVersion: q.version, question: content,
+      sourceRequestedFlags: [], resolvedFlags: [],
+    });
+
+    const invalid = await user.rpc('import_question_exchange', payload([update(reset)], { keepHistoryQuestionIds: [kept.id] }));
+    expect(invalid.error?.code).toBe('22023');
+
+    const result = await user.rpc('import_question_exchange', payload([update(reset), update(kept)], { keepHistoryQuestionIds: [kept.id] }));
+    expect(result.error).toBeNull();
+    expect(result.data).toMatchObject({ updatedCount: 2, historyResetCount: 1 });
+    const rows = await adminClient().from('structured_question_stats').select('*').in('question_id', [reset.id, kept.id]);
+    const byId = new Map((rows.data ?? []).map((r) => [r.question_id, r]));
+    expect(byId.get(reset.id)).toMatchObject({ asked_count: 0, correct_count: 0, consecutive_correct: 0, interval_days: 0, due_at: null });
+    expect(Number(byId.get(reset.id)?.ease_factor)).toBe(2.5);
+    expect(byId.get(kept.id)).toMatchObject({ asked_count: 4, correct_count: 3, consecutive_correct: 2, interval_days: 6 });
   });
 
   const invalidCases: { name: string; build: (ctx: Ctx) => Op }[] = [
@@ -242,7 +268,7 @@ test.describe('AtomicImportRPCMutation', () => {
       update(unresolved, ['doubt', 'explanation-request'], []),
     ]));
     expect(result.error).toBeNull();
-    expect(result.data).toEqual({ createdCount: 2, updatedCount: 3, clearedDoubtCount: 1, clearedExplanationRequestCount: 2 });
+    expect(result.data).toEqual({ createdCount: 2, updatedCount: 3, clearedDoubtCount: 1, clearedExplanationRequestCount: 2, historyResetCount: 0 });
 
     const rows = await dbSnapshot([ownerId]);
     expect(rows).toHaveLength(6);

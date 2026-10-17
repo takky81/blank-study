@@ -276,27 +276,33 @@ function commitError(error: RpcError): Error {
 
 function mapCommitResult(data: unknown): QuestionExchangeCommitResult {
   if (!isRecord(data)) throw new Error(`${COMMIT_CONTEXT}: 取込結果の形式が不正です`);
-  const { createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount } = data;
-  if (!isCount(createdCount) || !isCount(updatedCount) || !isCount(clearedDoubtCount) || !isCount(clearedExplanationRequestCount)) {
+  const { createdCount, updatedCount, clearedDoubtCount, clearedExplanationRequestCount, historyResetCount } = data;
+  if (!isCount(createdCount) || !isCount(updatedCount) || !isCount(clearedDoubtCount) || !isCount(clearedExplanationRequestCount)
+    || !isCount(historyResetCount)) {
     throw new Error(`${COMMIT_CONTEXT}: 取込結果の形式が不正です`);
   }
   return {
     created: createdCount, updated: updatedCount,
     doubtFlagsCleared: clearedDoubtCount, explanationRequestFlagsCleared: clearedExplanationRequestCount,
+    historyReset: historyResetCount,
   };
 }
 
 /**
  * canCommit=trueかつ検証済みenvelopeを持つpreviewだけを`import_question_exchange`へ渡す。
  * RPCは全operationを再検証し、stale/参照/内容errorでは何も保存しない。
+ * 更新する設問の学習履歴は原則リセットし、`keepHistoryQuestionIds`で指定した設問だけ引き継ぐ。
  */
-export async function commitQuestionExchange(preview: CommittableImportPreview): Promise<QuestionExchangeCommitResult> {
+export async function commitQuestionExchange(
+  preview: CommittableImportPreview,
+  keepHistoryQuestionIds: readonly string[] = [],
+): Promise<QuestionExchangeCommitResult> {
   if (!preview.canCommit || preview.source === undefined) {
     throw new Error(`${COMMIT_CONTEXT}: 確定可能なpreviewではありません`);
   }
   let response: { data: unknown; error: RpcError | null };
   try {
-    response = await supabase.rpc('import_question_exchange', { p_payload: preview.source });
+    response = await supabase.rpc('import_question_exchange', { p_payload: { ...preview.source, keepHistoryQuestionIds } });
   } catch (cause) {
     throw contextError(COMMIT_CONTEXT, cause);
   }

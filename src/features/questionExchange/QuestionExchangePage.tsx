@@ -14,8 +14,8 @@ export type QuestionExchangePageProps = {
   exportEligible?: (filter: EligibilityFilter) => Promise<EligibilityExportResult>;
   download?: (result: EligibilityExportResult) => ExchangeDownloadResult;
   previewImport?: (file: Blob) => Promise<ImportPreview>;
-  /** 既定は`import_question_exchange` gateway。previewImportが返したpreviewをそのまま渡す。 */
-  commitImport?: (preview: ImportPreview) => Promise<QuestionExchangeCommitResult>;
+  /** 既定は`import_question_exchange` gateway。previewImportが返したpreviewと、履歴を引き継ぐ設問IDを渡す。 */
+  commitImport?: (preview: ImportPreview, keepHistoryQuestionIds: readonly string[]) => Promise<QuestionExchangeCommitResult>;
 };
 
 type ExportState =
@@ -53,7 +53,9 @@ function DraftView({ draft }: { draft: QuestionContentDraft }) {
   </dl>;
 }
 
-function PreviewItemView({ item }: { item: PreviewItem }) {
+type KeepHistoryControl = { checked: boolean; disabled: boolean; onChange: (checked: boolean) => void };
+
+function PreviewItemView({ item, keepHistory }: { item: PreviewItem; keepHistory?: KeepHistoryControl }) {
   const position = item.operationIndex === null ? 'ファイル全体' : `操作 ${item.operationIndex + 1}`;
   switch (item.kind) {
     case 'create':
@@ -63,7 +65,12 @@ function PreviewItemView({ item }: { item: PreviewItem }) {
         <div className="flex min-w-0 flex-wrap gap-3">
           <div className="min-w-0 grow basis-60"><h4 className="text-[13px] font-bold">変更前</h4><DraftView draft={item.before} /></div>
           <div className="min-w-0 grow basis-60"><h4 className="text-[13px] font-bold">変更後</h4><DraftView draft={item.after} /></div>
-        </div></>;
+        </div>
+        {keepHistory && <label className="flex min-h-11 items-center gap-3 text-[13px]">
+          <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink" checked={keepHistory.checked}
+            disabled={keepHistory.disabled} onChange={(e) => keepHistory.onChange(e.target.checked)} />
+          学習履歴を引き継ぐ（未選択ならリセット）
+        </label>}</>;
     case 'conflict':
       return <><p className="text-[13px] text-warn">{position}・設問 {item.current.id} は現在の版 {item.current.version} に更新されています。</p>
         <div className="flex min-w-0 flex-wrap gap-3">
@@ -89,6 +96,8 @@ export function QuestionExchangePage({
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [importState, setImportState] = useState<ImportState>({ kind: 'idle' });
+  // 更新する設問の学習履歴は原則リセットし、ここで選んだ設問IDだけ引き継ぐ。
+  const [keepHistoryIds, setKeepHistoryIds] = useState<ReadonlySet<string>>(new Set());
   const exportGuard = useRef(createSubmitGuard());
   const importGuard = useRef(createSubmitGuard());
   const inputRefs = useRef<Partial<Record<EligibilityFilterField, HTMLInputElement | null>>>({});
@@ -133,6 +142,7 @@ export function QuestionExchangePage({
     void importGuard.current.run(async () => {
       setImportState({ kind: 'previewing' });
       setPreview(null);
+      setKeepHistoryIds(new Set());
       try {
         setPreview(await previewImport(file));
         setImportState({ kind: 'idle' });
@@ -145,11 +155,13 @@ export function QuestionExchangePage({
   const runCommit = () => {
     if (preview === null || !preview.canCommit) return;
     const target = preview;
+    const keep = target.items.flatMap((i) => (i.kind === 'update' && keepHistoryIds.has(i.before.id) ? [i.before.id] : []));
     void importGuard.current.run(async () => {
       setImportState({ kind: 'committing' });
       try {
-        const result = await commitImport(target);
+        const result = await commitImport(target, keep);
         setPreview(null);
+        setKeepHistoryIds(new Set());
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         setImportState({ kind: 'committed', result });
@@ -216,7 +228,7 @@ export function QuestionExchangePage({
         <span className="min-w-0 grow [overflow-wrap:anywhere]">{importState.message}。ファイルを確認して再試行してください。</span>
         <button type="button" onClick={runPreview} className="btn-s border-warn text-warn">previewを再試行</button></div>}
       {importState.kind === 'committed' && <p role="status" className="text-[13px]">
-        取込を確定しました: 追加 {importState.result.created}件、更新 {importState.result.updated}件、疑義解除 {importState.result.doubtFlagsCleared}件、解説依頼解除 {importState.result.explanationRequestFlagsCleared}件。previewを破棄しました。最新の状態を再読込するには、対象を再出力するか返却ファイルを選び直してください。</p>}
+        取込を確定しました: 追加 {importState.result.created}件、更新 {importState.result.updated}件、疑義解除 {importState.result.doubtFlagsCleared}件、解説依頼解除 {importState.result.explanationRequestFlagsCleared}件、履歴リセット {importState.result.historyReset}件。previewを破棄しました。最新の状態を再読込するには、対象を再出力するか返却ファイルを選び直してください。</p>}
 
       {preview && counts && <section aria-label="取込preview" className="flex min-w-0 flex-col gap-3">
         <ul className="flex min-w-0 flex-wrap gap-2" aria-label="区分別件数">
@@ -224,9 +236,19 @@ export function QuestionExchangePage({
         </ul>
         {!preview.canCommit && <p role="alert" className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn">
           競合またはエラーがあるため取り込めません。返却ファイルを修正するか、最新の内容で再出力してください。</p>}
+        {counts.some((c) => c.kind === 'update' && c.count > 0) && <p className="text-[13px] text-ink-soft [overflow-wrap:anywhere]">
+          更新する設問の学習履歴（出題回数・正答数・復習予定）は取込時にリセットします。引き継ぐ設問だけチェックしてください。</p>}
         <ol className="flex min-w-0 flex-col gap-3">
           {preview.items.map((item, index) => <li key={index} className="flex min-w-0 flex-col gap-2 rounded border-2 border-line p-3">
-            <h3 className="text-[13px] font-bold">{KIND_LABELS[item.kind]}</h3><PreviewItemView item={item} /></li>)}
+            <h3 className="text-[13px] font-bold">{KIND_LABELS[item.kind]}</h3><PreviewItemView item={item}
+              keepHistory={item.kind === 'update' ? {
+                checked: keepHistoryIds.has(item.before.id), disabled: busyImport,
+                onChange: (checked) => setKeepHistoryIds((prev) => {
+                  const next = new Set(prev);
+                  if (checked) next.add(item.before.id); else next.delete(item.before.id);
+                  return next;
+                }),
+              } : undefined} /></li>)}
         </ol>
         {importState.kind === 'committing' && <p role="status" aria-live="polite" className="text-[13px] text-muted">取込中…</p>}
         {importState.kind === 'commit-error' && <div role="alert" ref={importErrorRef} tabIndex={-1} className="rounded border-2 border-warn bg-warn-panel p-3 text-[13px] text-warn [overflow-wrap:anywhere]">
