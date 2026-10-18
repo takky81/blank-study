@@ -401,11 +401,11 @@ export function StructuredQuestionStudyPage({
             <div role="group" aria-label="選択肢" aria-busy={recording} className={`grid gap-2 ${narrow ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {current.choices.map((choice, index) => (
                 <button key={`${index}-${choice.value}`} type="button"
-                  className="btn-s flex min-h-11 min-w-0 items-center justify-start px-3 py-2 text-left text-[14px]"
+                  className="btn-s flex h-auto min-h-11 min-w-0 items-center justify-start px-3 py-2 text-left text-[14px] whitespace-normal"
                   aria-pressed={selected === index} disabled={recording}
                   onClick={() => { if (!recording) submit(session, current, index); }}>
                   {!narrow && choiceKey(choice, index) !== null && <KeyHint label={choiceKey(choice, index) as string} />}
-                  <span className="min-w-0 break-words">{choice.value}</span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{choice.value}</span>
                 </button>
               ))}
             </div>

@@ -114,6 +114,14 @@ describe('StructuredQuestionStudyPage', () => {
     expect(record.mock.calls[0]?.[0]).toMatchObject({ answer: '化学反応' });
   });
 
+  it('長い選択肢でもカードからはみ出さないよう折り返す', async () => {
+    setup([candidate(base)]);
+    await start('選択式');
+    const button = screen.getByRole('button', { name: '化学反応' });
+    expect(button).toHaveClass('whitespace-normal', 'h-auto', 'min-w-0');
+    expect(button.querySelector('span:last-child')).toHaveClass('[overflow-wrap:anywhere]');
+  });
+
   it('PC版の0キーはわからないとして記録する', async () => {
     const { record } = setup([candidate(base)]);
     await start('選択式');
