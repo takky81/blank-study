@@ -95,6 +95,8 @@ test('範囲選択から自動形式で正解・不正解・わからないを�
   await expect(verdict(page, '正解')).toBeVisible();
   await expect(page.getByRole('heading', { name: '解説' })).toBeVisible();
   await expect(page.getByText('情報量の最小単位')).toBeVisible();
+  // 正誤の下に 分野 / キーワード を1行で表示する
+  await expect(page.getByLabel('キーワードの所在')).toHaveText('基本情報 / テクノロジ系 / 基礎理論 / ビット');
   await page.getByRole('button', { name: '次の問題へ' }).click();
 
   // Q2: 選択肢なし → 記述式。不正解。

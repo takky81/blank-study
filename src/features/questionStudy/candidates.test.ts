@@ -145,6 +145,23 @@ describe('projectQuestionCandidates', () => {
     expect(projectQuestionCandidates(scope, hierarchy, questions, stats)).toEqual([]);
   });
 
+  it('結果表示用の所在を 科目 / 教材 / 親章 / 代表章 / キーワード の順で組み立てる', () => {
+    const titled: CatalogHierarchy = {
+      subjects: [{ id: 's', sortOrder: 0, title: '応用情報' }],
+      materials: [{ id: 'm', subjectId: 's', sortOrder: 0, title: 'テクノロジ系' }],
+      chapters: [
+        { id: 'parent', materialId: 'm', sortOrder: 0, title: '基礎理論', parentId: null, body: '' },
+        { id: 'child', materialId: 'm', sortOrder: 1, title: '情報の表現', parentId: 'parent', body: '{{id=abc123}}' },
+      ],
+      keywords: [{ id: 'k', materialId: 'm', docId: 'abc123', isActive: true, chapterId: 'child', answers: ['ニブル', '4ビット'] }],
+    };
+    const q = { ...question('q', 'k', 0), materialId: 'm' };
+    expect(projectQuestionCandidates({ kind: 'material', id: 'm' }, titled, [q], [])[0]?.breadcrumb)
+      .toEqual(['応用情報', 'テクノロジ系', '基礎理論', '情報の表現', 'ニブル']);
+    expect(projectQuestionCandidates({ kind: 'keyword', id: 'k' }, titled, [q], [])[0]?.breadcrumb)
+      .toEqual(['応用情報', 'テクノロジ系', '基礎理論', '情報の表現', 'ニブル']);
+  });
+
   it('入力配列を変更しない', () => {
     const before = questions.map(({ id }) => id);
     projectQuestionCandidates({ kind: 'material', id: 'material-a' }, hierarchy, questions, stats);

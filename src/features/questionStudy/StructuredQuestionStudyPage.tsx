@@ -411,6 +411,7 @@ export function StructuredQuestionStudyPage({
         </form>
       ) : (
         <QuestionResultPanel key={question.id} question={question} answer={view.input.answer} isCorrect={view.isCorrect}
+          breadcrumb={current.candidate.breadcrumb}
           unrecorded={view.record.kind === 'recorded' ? undefined : {
             message: view.record.kind === 'failed' ? view.record.message : null,
             retrying: view.record.kind === 'recording',

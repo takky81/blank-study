@@ -33,10 +33,14 @@ type StatsRow = {
   updated_at: string;
 };
 
-type SubjectRow = { id: string; sort_order: number };
-type MaterialRow = { id: string; subject_id: string; sort_order: number };
-type ChapterDbRow = { id: string; material_id: string; parent_id: string | null; sort_order: number; body: string | null };
-type KeywordDbRow = { id: string; material_id: string; doc_id: string; is_active: boolean };
+type SubjectRow = { id: string; sort_order: number; name: string };
+type MaterialRow = { id: string; subject_id: string; sort_order: number; name: string };
+type ChapterDbRow = {
+  id: string; material_id: string; parent_id: string | null; sort_order: number; body: string | null; title: string;
+};
+type KeywordDbRow = {
+  id: string; material_id: string; chapter_id: string | null; doc_id: string; is_active: boolean; answers: string[];
+};
 
 function readError(context: string, cause: unknown): Error {
   const message = cause instanceof Error ? cause.message
@@ -151,28 +155,29 @@ async function loadHierarchy(scope: QuestionStudyScope): Promise<CatalogHierarch
   const materialIds = materialRows.map((material) => material.id);
 
   const [subjects, chapters, keywords] = await Promise.all([
-    readPaged<SubjectRow>('subjects', 'id, sort_order', ['sort_order', 'id'], ['id', subjectIds]),
-    readPaged<ChapterDbRow>('chapters', 'id, material_id, parent_id, sort_order, body',
+    readPaged<SubjectRow>('subjects', 'id, sort_order, name', ['sort_order', 'id'], ['id', subjectIds]),
+    readPaged<ChapterDbRow>('chapters', 'id, material_id, parent_id, sort_order, body, title',
       ['material_id', 'sort_order', 'id'], ['material_id', materialIds]),
-    readPaged<KeywordDbRow>('keywords', 'id, material_id, doc_id, is_active',
+    readPaged<KeywordDbRow>('keywords', 'id, material_id, chapter_id, doc_id, is_active, answers',
       ['material_id', 'doc_id', 'id'], ['material_id', materialIds]),
   ]);
   if (subjects.length === 0) return null;
 
   return {
-    subjects: subjects.map((subject) => ({ id: subject.id, sortOrder: subject.sort_order })),
+    subjects: subjects.map((subject) => ({ id: subject.id, sortOrder: subject.sort_order, title: subject.name })),
     materials: materialRows.map((material) => ({
-      id: material.id, subjectId: material.subject_id, sortOrder: material.sort_order,
+      id: material.id, subjectId: material.subject_id, sortOrder: material.sort_order, title: material.name,
     })),
     chapters: preOrderChapters(chapters),
     keywords: keywords.map((keyword) => ({
       id: keyword.id, materialId: keyword.material_id, docId: keyword.doc_id, isActive: keyword.is_active,
+      chapterId: keyword.chapter_id, answers: keyword.answers,
     })),
   };
 }
 
 async function resolveMaterials(scope: QuestionStudyScope): Promise<MaterialRow[] | null> {
-  const columns = 'id, subject_id, sort_order';
+  const columns = 'id, subject_id, sort_order, name';
   const order = ['sort_order', 'id'];
   if (scope.kind === 'subject') {
     return readPaged<MaterialRow>('materials', columns, order, null, ['subject_id', scope.id]);
@@ -223,14 +228,17 @@ function preOrderChapters(rows: readonly ChapterDbRow[]): CatalogHierarchy['chap
   }
   const result: CatalogHierarchy['chapters'][number][] = [];
   for (const [materialId, list] of byMaterial) {
-    const bodies = new Map(list.map((row) => [row.id, row.body ?? '']));
+    const rowsById = new Map(list.map((row) => [row.id, row]));
     const tree = buildTree(list.map((row) => ({
       id: row.id, parentId: row.parent_id, title: '', sortOrder: row.sort_order,
     })));
     let index = 0;
     const visit = (nodes: readonly ChapterNode[]) => {
       for (const node of nodes) {
-        result.push({ id: node.id, materialId, sortOrder: index, body: bodies.get(node.id) ?? '' });
+        const row = rowsById.get(node.id);
+        result.push({
+          id: node.id, materialId, sortOrder: index, body: row?.body ?? '', title: row?.title, parentId: row?.parent_id ?? null,
+        });
         index += 1;
         visit(node.children);
       }

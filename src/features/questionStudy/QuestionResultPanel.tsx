@@ -33,6 +33,8 @@ export type QuestionResultPanelProps = {
   /** flag更新が保存されたときの最新設問（新しい版）。 */
   onQuestionUpdated: (question: StructuredQuestionConsumerView) => void;
   setFlags?: QuestionFlagSetter;
+  /** 所在の表示: 科目 / 教材 / 章 / キーワード（最後の要素をキーワードとして太字にする）。 */
+  breadcrumb?: readonly string[];
   /** 回答が未記録のとき。警告と明示再試行を出し、次問へは進ませない。 */
   unrecorded?: { message: string | null; retrying: boolean; onRetry: () => void };
 };
@@ -63,6 +65,7 @@ export function QuestionResultPanel({
   onQuestionUpdated,
   setFlags = flagMutationContract.setQuestionFlags,
   unrecorded,
+  breadcrumb = [],
 }: QuestionResultPanelProps) {
   // flag保存で得た最新版をここで保持し、続くflag更新に使う。
   const [question, setQuestion] = useState<ResultQuestion>(initialQuestion);
@@ -154,6 +157,12 @@ export function QuestionResultPanel({
             ? 'border-correct' : 'border-incorrect'}`}>{isCorrect ? '○' : '×'}</span>
           <span>{isCorrect ? '正解' : '不正解'}</span>
         </p>
+        {breadcrumb.length > 0 && (
+          <p aria-label="キーワードの所在" className="min-w-0 text-[13px] text-muted [overflow-wrap:anywhere]">
+            {breadcrumb.slice(0, -1).map((part, i) => <span key={i}>{part} / </span>)}
+            <strong className="font-bold text-ink">{breadcrumb[breadcrumb.length - 1]}</strong>
+          </p>
+        )}
         <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
           <dt className="text-muted">あなたの解答</dt>
           <dd className="min-w-0 whitespace-pre-wrap break-words">{answer === '' ? 'わからない' : answer}</dd>

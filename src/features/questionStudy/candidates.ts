@@ -8,11 +8,13 @@ export type QuestionStudyScope =
   | Readonly<{ kind: 'keyword'; id: string }>;
 
 export type CatalogHierarchy = Readonly<{
-  subjects: readonly Readonly<{ id: string; sortOrder: number }>[];
-  materials: readonly Readonly<{ id: string; subjectId: string; sortOrder: number }>[];
+  subjects: readonly Readonly<{ id: string; sortOrder: number; title?: string }>[];
+  materials: readonly Readonly<{ id: string; subjectId: string; sortOrder: number; title?: string }>[];
   chapters: readonly Readonly<{
     id: string;
     materialId: string;
+    title?: string;
+    parentId?: string | null;
     /** Catalog adapter が階層を安定した pre-order に展開した順序。 */
     sortOrder: number;
     body: string;
@@ -22,6 +24,10 @@ export type CatalogHierarchy = Readonly<{
     materialId: string;
     docId: string;
     isActive: boolean;
+    /** keywordに紐づく章。本文出現を使わないkeyword範囲で所在表示に使う。 */
+    chapterId?: string | null;
+    /** 正解表記。先頭を表示名に使う。 */
+    answers?: readonly string[];
   }>[];
 }>;
 
@@ -45,9 +51,12 @@ export type QuestionStudyCandidate = Readonly<{
   bodyOccurrenceIndex: number | null;
   keywordOrder: number;
   questionOrder: number;
+  /** 結果表示用の所在: 科目 / 教材 / 章（親から） / キーワード。名前が不明な階層は省く。 */
+  breadcrumb?: readonly string[];
 }>;
 
 type RepresentativeOccurrence = Readonly<{
+  chapterId: string;
   subjectOrder: number;
   materialOrder: number;
   chapterOrder: number;
@@ -86,6 +95,7 @@ export function projectQuestionCandidates(
       const keyword = activeKeywordsByDocumentId.get(`${chapter.materialId}:${docId}`);
       if (keyword === undefined) return;
       const occurrence: RepresentativeOccurrence = {
+        chapterId: chapter.id,
         subjectOrder: subject.sortOrder,
         materialOrder: material.sortOrder,
         chapterOrder: chapter.sortOrder,
@@ -108,11 +118,12 @@ export function projectQuestionCandidates(
       return true;
     })
     .map((question): QuestionStudyCandidate => {
-      const occurrence = representativeByKeywordId.get(question.keywordId) as RepresentativeOccurrence;
+      const { chapterId, ...occurrence } = representativeByKeywordId.get(question.keywordId) as RepresentativeOccurrence;
       return {
         question,
         stats: statsByQuestionId.get(question.id) ?? null,
         ...occurrence,
+        breadcrumb: buildBreadcrumb(hierarchy, question.keywordId, chapterId),
         keywordOrder: occurrence.bodyOccurrenceIndex,
         questionOrder: question.sortOrder,
       };
@@ -154,9 +165,29 @@ function projectKeywordCandidates(
       bodyOccurrenceIndex: null,
       keywordOrder: 0,
       questionOrder: question.sortOrder,
+      breadcrumb: buildBreadcrumb(hierarchy, keywordId, keyword.chapterId ?? null),
     }))
     .sort((left, right) => compareNumbers(left.questionOrder, right.questionOrder)
       || left.question.id.localeCompare(right.question.id));
+}
+
+/** 科目 / 教材 / 章（親から順） / キーワードの名前を並べる。名前の無い階層は省く。 */
+function buildBreadcrumb(hierarchy: CatalogHierarchy, keywordId: string, chapterId: string | null): readonly string[] {
+  const keyword = hierarchy.keywords.find((item) => item.id === keywordId);
+  const material = hierarchy.materials.find((item) => item.id === keyword?.materialId);
+  const subject = hierarchy.subjects.find((item) => item.id === material?.subjectId);
+  const chaptersById = new Map(hierarchy.chapters.map((chapter) => [chapter.id, chapter]));
+  const chain: string[] = [];
+  const visited = new Set<string>();
+  for (let id = chapterId; id !== null && id !== undefined && !visited.has(id);) {
+    visited.add(id);
+    const chapter = chaptersById.get(id);
+    if (chapter === undefined) break;
+    if (chapter.title) chain.unshift(chapter.title);
+    id = chapter.parentId ?? null;
+  }
+  return [subject?.title, material?.title, ...chain, keyword?.answers?.[0]]
+    .filter((part): part is string => typeof part === 'string' && part.trim() !== '');
 }
 
 function chaptersInScope(

@@ -52,6 +52,14 @@ describe('QuestionResultPanel', () => {
     expect(screen.getByText('わからない')).toBeInTheDocument();
   });
 
+  it('所在を 分野 / キーワード の1行で表示し、キーワードを太字にする', () => {
+    render(<QuestionResultPanel question={question} answer="x" isCorrect breadcrumb={['応用情報', 'テクノロジ系', 'ニブル']}
+      onNext={vi.fn()} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={vi.fn()} />);
+    const line = screen.getByLabelText('キーワードの所在');
+    expect(line).toHaveTextContent('応用情報 / テクノロジ系 / ニブル');
+    expect(line.querySelector('strong')).toHaveTextContent(/^ニブル$/);
+  });
+
   it('疑義と解説追加を独立に、続けて同時に設定し、最新versionを使う', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable'] }, 4))
