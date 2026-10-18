@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { flagMutationContract } from '@/features/questions/api';
 import { DOUBT_REASONS, normalizeDoubtReasons, type DoubtReason } from '@/features/questions/doubtReasons';
+import { isShortcutTarget, KeyHint } from './shortcuts';
 import type {
   FlagMutationContract,
   StructuredQuestionConsumerView,
@@ -35,6 +36,8 @@ export type QuestionResultPanelProps = {
   setFlags?: QuestionFlagSetter;
   /** 所在の表示: 科目 / 教材 / 章 / キーワード（最後の要素をキーワードとして太字にする）。 */
   breadcrumb?: readonly string[];
+  /** PC版のショートカット（Enter=次の問題へ、数字=見直しフラグ）とキー名表示を有効にする。 */
+  shortcuts?: boolean;
   /** 回答が未記録のとき。警告と明示再試行を出し、次問へは進ませない。 */
   unrecorded?: { message: string | null; retrying: boolean; onRetry: () => void };
 };
@@ -66,6 +69,7 @@ export function QuestionResultPanel({
   setFlags = flagMutationContract.setQuestionFlags,
   unrecorded,
   breadcrumb = [],
+  shortcuts = false,
 }: QuestionResultPanelProps) {
   // flag保存で得た最新版をここで保持し、続くflag更新に使う。
   const [question, setQuestion] = useState<ResultQuestion>(initialQuestion);
@@ -145,6 +149,29 @@ export function QuestionResultPanel({
     }
   };
 
+  // 見直しフラグは表示順に1から番号を振る。
+  const flagKeys = (Object.keys(FLAG_LABELS) as FlagName[]).map((flag, index) => ({ flag, key: String(index + 1) }));
+  const shortcut = useRef<(event: KeyboardEvent) => void>(() => {});
+  shortcut.current = (event) => {
+    if (!isShortcutTarget(event)) return;
+    if (event.key === 'Enter') {
+      if (unrecorded) return;
+      event.preventDefault();
+      onNext();
+      return;
+    }
+    const hit = flagKeys.find((f) => f.key === event.key);
+    if (!hit || locked) return;
+    event.preventDefault();
+    void toggle(hit.flag, !displayed(hit.flag));
+  };
+  useEffect(() => {
+    if (!shortcuts) return;
+    const onKeyDown = (event: KeyboardEvent) => shortcut.current(event);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [shortcuts]);
+
   const noteChanged = () => (noteDraft.trim() === '' ? null : noteDraft.trim()) !== (latest.current.doubtNote ?? null);
 
   return (
@@ -187,19 +214,19 @@ export function QuestionResultPanel({
             {unrecorded.retrying ? '記録しています…' : '記録を再試行'}
           </button>
         ) : (
-          <button type="button" className="btn-p h-12 px-8" onClick={onNext}>次の問題へ</button>
+          <button type="button" className="btn-p h-12 px-8" onClick={onNext}>{shortcuts && <KeyHint label="Enter" />}次の問題へ</button>
         )}
         <button type="button" className="btn-s h-11 px-4" onClick={onFinish}
           disabled={unrecorded?.retrying ?? false}>学習を終える</button>
       </div>
       <fieldset className="flex min-w-0 flex-col gap-1 rounded border p-3">
         <legend className="px-1 text-[14px]">見直しフラグ</legend>
-        {(Object.keys(FLAG_LABELS) as FlagName[]).map((flag) => (
+        {flagKeys.map(({ flag, key }) => (
           <label key={flag} className="flex min-h-11 items-center gap-3 px-1 text-[14px]">
             <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink"
               checked={displayed(flag)} disabled={locked}
               onChange={(event) => { void toggle(flag, event.target.checked); }} />
-            {FLAG_LABELS[flag]}
+            <span>{shortcuts && <KeyHint label={key} />}{FLAG_LABELS[flag]}</span>
           </label>
         ))}
         <p aria-live="polite" className="text-[13px] text-muted">

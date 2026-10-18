@@ -60,6 +60,42 @@ describe('QuestionResultPanel', () => {
     expect(line.querySelector('strong')).toHaveTextContent(/^ニブル$/);
   });
 
+  it('shortcuts有効時はキー名を表示し、Enterで次の問題へ・数字で見直しフラグを切り替える', async () => {
+    const setFlags = vi.fn<QuestionFlagSetter>().mockResolvedValueOnce(saved({ explanationRequestFlag: true }, 4));
+    const onNext = vi.fn();
+    render(<QuestionResultPanel question={question} answer="x" isCorrect={false} shortcuts
+      onNext={onNext} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={setFlags} />);
+    expect(screen.getByRole('button', { name: '次の問題へ' })).toHaveTextContent('[Enter] 次の問題へ');
+    expect(screen.getByRole('button', { name: '学習を終える' })).not.toHaveTextContent('[');
+    expect(screen.getByText('解説の追加を希望する').closest('label')).toHaveTextContent('[1] 解説の追加を希望する');
+    expect(screen.getByText('内容に疑義がある').closest('label')).toHaveTextContent('[2] 内容に疑義がある');
+    fireEvent.keyDown(window, { key: '1' });
+    await waitFor(() => expect(setFlags).toHaveBeenCalledWith('q1', 3, { explanationRequestFlag: true }));
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('shortcuts無効（スマホ版）ではキー名を出さずキーにも反応しない', () => {
+    const onNext = vi.fn();
+    render(<QuestionResultPanel question={question} answer="x" isCorrect={false}
+      onNext={onNext} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={vi.fn()} />);
+    expect(screen.getByRole('button', { name: '次の問題へ' })).toHaveTextContent(/^次の問題へ$/);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('疑義の内容を入力中は数字やEnterをショートカットとして扱わない', () => {
+    const setFlags = vi.fn<QuestionFlagSetter>();
+    const onNext = vi.fn();
+    render(<QuestionResultPanel question={{ ...question, doubtFlag: true }} answer="x" isCorrect={false} shortcuts
+      onNext={onNext} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={setFlags} />);
+    const note = screen.getByLabelText('疑義の内容（任意）');
+    fireEvent.keyDown(note, { key: '1' });
+    fireEvent.keyDown(note, { key: 'Enter' });
+    expect(setFlags).not.toHaveBeenCalled();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
   it('疑義と解説追加を独立に、続けて同時に設定し、最新versionを使う', async () => {
     const setFlags = vi.fn<QuestionFlagSetter>()
       .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['answer_guessable'] }, 4))

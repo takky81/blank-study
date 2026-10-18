@@ -95,11 +95,31 @@ describe('StructuredQuestionStudyPage', () => {
       setup([candidate(base)], undefined, () => r);
       await start('選択式');
       const group = screen.getByRole('group', { name: '選択肢' });
-      return within(group).getAllByRole('button').map((button) => button.textContent);
+      return within(group).getAllByRole('button').map((button) => button.textContent?.replace(/^\[\w+\] /, ''));
     };
     // Fisher–Yates: r=0 は毎回先頭と交換、r≒1 は交換なし。
     expect(await labelsWith(0)).toEqual(['物理現象', '生物', '天体', '化学反応', 'わからない']);
     expect(await labelsWith(0.999)).toEqual(['化学反応', '物理現象', '生物', '天体', 'わからない']);
+  });
+
+  it('PC版では選択肢に[1]〜と[0]わからないを表示し、数字キーで解答を確定する', async () => {
+    const { record } = setup([candidate(base)], undefined, () => 0.999);
+    await start('選択式');
+    const buttons = within(screen.getByRole('group', { name: '選択肢' })).getAllByRole('button');
+    expect(buttons.map((b) => b.textContent)).toEqual(['[1] 化学反応', '[2] 物理現象', '[3] 生物', '[4] 天体', '[0] わからない']);
+    // 読み上げ名にはキー名を含めない
+    expect(screen.getByRole('button', { name: '化学反応' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: '1' });
+    await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+    expect(record.mock.calls[0]?.[0]).toMatchObject({ answer: '化学反応' });
+  });
+
+  it('PC版の0キーはわからないとして記録する', async () => {
+    const { record } = setup([candidate(base)]);
+    await start('選択式');
+    fireEvent.keyDown(window, { key: '0' });
+    await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+    expect(record.mock.calls[0]?.[0]).toMatchObject({ answer: '' });
   });
 
   it('わからないは空の回答として記録され不正解になる', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { createSubmitGuard } from '@/lib/submitGuard';
 import { useNarrow } from '@/lib/useNarrow';
@@ -14,6 +14,7 @@ import {
 import { listQuestionsByKeyword } from '@/features/questions/api';
 import type { StructuredQuestion, StructuredQuestionConsumerView } from '@/features/questions/types';
 import { QuestionResultPanel, type QuestionFlagSetter } from './QuestionResultPanel';
+import { isShortcutTarget, KeyHint } from './shortcuts';
 import type { QuestionStudyCandidate, QuestionStudyScope, QuestionStudyStats } from './candidates';
 import {
   buildQuestionChoiceOptions,
@@ -150,6 +151,15 @@ export function StructuredQuestionStudyPage({
   const [written, setWritten] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
   const guard = useMemo(() => createSubmitGuard(), []);
+  // PC版のショートカット。描画ごとに最新の処理へ差し替え、listenerは1つだけ登録する。
+  const shortcut = useRef<(event: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    if (narrow) return;
+    const onKeyDown = (event: KeyboardEvent) => shortcut.current(event);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [narrow]);
+  shortcut.current = () => {};
 
   useEffect(() => {
     if (!scope) return;
@@ -349,7 +359,18 @@ export function StructuredQuestionStudyPage({
 
   const { session, current } = view;
   const { question } = current.candidate;
+  // PC版だけ選択肢にキーを割り当てる: 回答候補は1から順に、「わからない」は0。
+  const choiceKey = (choice: ChoiceItem, index: number) => (choice.unknown ? '0' : index < 9 ? String(index + 1) : null);
   const recording = view.kind === 'answering' && view.busy;
+  if (view.kind === 'answering' && current.mode === 'choice' && !recording) {
+    shortcut.current = (event) => {
+      if (!isShortcutTarget(event)) return;
+      const index = current.choices.findIndex((choice, i) => choiceKey(choice, i) === event.key);
+      if (index < 0) return;
+      event.preventDefault();
+      submit(session, current, index);
+    };
+  }
   const canSubmit = !recording && (current.mode === 'choice' ? selected !== null : canSubmitWrittenAnswer(written));
   // この問題の専用成績。結果画面では記録後のstats（sessionへ反映済み）を表示する。
   const questionStats = session.candidates.find((c) => c.question.id === question.id)?.stats ?? current.candidate.stats;
@@ -383,6 +404,7 @@ export function StructuredQuestionStudyPage({
                   className="btn-s flex min-h-11 min-w-0 items-center justify-start px-3 py-2 text-left text-[14px]"
                   aria-pressed={selected === index} disabled={recording}
                   onClick={() => { if (!recording) submit(session, current, index); }}>
+                  {!narrow && choiceKey(choice, index) !== null && <KeyHint label={choiceKey(choice, index) as string} />}
                   <span className="min-w-0 break-words">{choice.value}</span>
                 </button>
               ))}
@@ -411,7 +433,7 @@ export function StructuredQuestionStudyPage({
         </form>
       ) : (
         <QuestionResultPanel key={question.id} question={question} answer={view.input.answer} isCorrect={view.isCorrect}
-          breadcrumb={current.candidate.breadcrumb}
+          breadcrumb={current.candidate.breadcrumb} shortcuts={!narrow}
           unrecorded={view.record.kind === 'recorded' ? undefined : {
             message: view.record.kind === 'failed' ? view.record.message : null,
             retrying: view.record.kind === 'recording',
