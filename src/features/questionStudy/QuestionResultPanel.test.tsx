@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 // 環境変数のないCIでも読み込めるよう、Supabaseクライアントは差し替える（データ関数は各テストで注入する）。
@@ -73,6 +73,29 @@ describe('QuestionResultPanel', () => {
     await waitFor(() => expect(setFlags).toHaveBeenCalledWith('q1', 3, { explanationRequestFlag: true }));
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('疑義の理由は見直しフラグに続く3〜6の連番で表示し、数字キーで切り替えて保存する', async () => {
+    const setFlags = vi.fn<QuestionFlagSetter>()
+      .mockResolvedValueOnce(saved({ doubtFlag: true, doubtReasons: ['low_value'] }, 4));
+    render(<QuestionResultPanel question={{ ...question, doubtFlag: true }} answer="x" isCorrect={false} shortcuts
+      onNext={vi.fn()} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={setFlags} />);
+    const group = screen.getByRole('group', { name: '疑義の理由' });
+    expect(within(group).getAllByRole('checkbox').map((c) => c.closest('label')?.textContent?.slice(0, 3)))
+      .toEqual(['[3]', '[4]', '[5]', '[6]']);
+    // 読み上げ名は変えない
+    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: '4' });
+    expect(screen.getByRole('checkbox', { name: '問う価値が低い' })).toBeChecked();
+    await waitFor(() => expect(setFlags).toHaveBeenCalledWith('q1', 3, { doubtFlag: true, doubtReasons: ['low_value'], doubtNote: null }));
+  });
+
+  it('疑義がないときは理由のキー（3〜6）に反応しない', () => {
+    const setFlags = vi.fn<QuestionFlagSetter>();
+    render(<QuestionResultPanel question={question} answer="x" isCorrect={false} shortcuts
+      onNext={vi.fn()} onFinish={vi.fn()} onQuestionUpdated={vi.fn()} setFlags={setFlags} />);
+    fireEvent.keyDown(window, { key: '3' });
+    expect(setFlags).not.toHaveBeenCalled();
   });
 
   it('shortcuts無効（スマホ版）ではキー名を出さずキーにも反応しない', () => {

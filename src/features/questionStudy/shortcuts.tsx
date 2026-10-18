@@ -15,5 +15,5 @@ export function isShortcutTarget(event: KeyboardEvent): boolean {
 
 /** ラベル前のキー名（`[1] `）。読み上げ名を変えないよう支援技術からは隠す。 */
 export function KeyHint({ label }: { label: string }) {
-  return <span aria-hidden="true" className="shrink-0 font-mono text-muted">[{label}] </span>;
+  return <span aria-hidden="true" className="mr-1.5 shrink-0 font-mono text-muted">[{label}] </span>;
 }

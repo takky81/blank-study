@@ -149,8 +149,15 @@ export function QuestionResultPanel({
     }
   };
 
-  // 見直しフラグは表示順に1から番号を振る。
+  // 見直しフラグは表示順に1から番号を振り、疑義の理由はその続きの連番にする。
   const flagKeys = (Object.keys(FLAG_LABELS) as FlagName[]).map((flag, index) => ({ flag, key: String(index + 1) }));
+  const reasonKeys = DOUBT_REASONS.map(({ code }, index) => ({ code, key: String(flagKeys.length + index + 1) }));
+  const reasonsVisible = question.doubtFlag && status.kind !== 'saving';
+  const toggleReason = (code: DoubtReason, checked: boolean) => {
+    const reasons = normalizeDoubtReasons(checked ? [...reasonsDraft, code] : reasonsDraft.filter((c) => c !== code));
+    setReasonsDraft(reasons);
+    void saveNote(reasons, noteDraft);
+  };
   const shortcut = useRef<(event: KeyboardEvent) => void>(() => {});
   shortcut.current = (event) => {
     if (!isShortcutTarget(event)) return;
@@ -160,10 +167,18 @@ export function QuestionResultPanel({
       onNext();
       return;
     }
+    if (locked) return;
     const hit = flagKeys.find((f) => f.key === event.key);
-    if (!hit || locked) return;
-    event.preventDefault();
-    void toggle(hit.flag, !displayed(hit.flag));
+    if (hit) {
+      event.preventDefault();
+      void toggle(hit.flag, !displayed(hit.flag));
+      return;
+    }
+    const reason = reasonsVisible ? reasonKeys.find((r) => r.key === event.key) : undefined;
+    if (reason) {
+      event.preventDefault();
+      toggleReason(reason.code, !reasonsDraft.includes(reason.code));
+    }
   };
   useEffect(() => {
     if (!shortcuts) return;
@@ -233,21 +248,18 @@ export function QuestionResultPanel({
           {status.kind === 'saving' || status.kind === 'saving-note' ? '保存しています…'
             : status.kind === 'saved' ? (status.target === 'note' ? '疑義の理由・内容を保存しました' : 'フラグを保存しました') : ''}
         </p>
-        {question.doubtFlag && status.kind !== 'saving' && (
+        {reasonsVisible && (
           <div className="flex min-w-0 flex-col gap-2 px-1">
             <fieldset className="flex min-w-0 flex-col">
               <legend className="text-[14px]">疑義の理由</legend>
-              {DOUBT_REASONS.map(({ code, label }) => (
+              {DOUBT_REASONS.map(({ code, label }, index) => (
                 <label key={code} className="flex min-h-11 min-w-0 items-center gap-3 text-[14px]">
                   <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink"
                     checked={reasonsDraft.includes(code)} disabled={locked}
-                    onChange={(event) => {
-                      const reasons = normalizeDoubtReasons(event.target.checked
-                        ? [...reasonsDraft, code] : reasonsDraft.filter((c) => c !== code));
-                      setReasonsDraft(reasons);
-                      void saveNote(reasons, noteDraft);
-                    }} />
-                  <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
+                    onChange={(event) => toggleReason(code, event.target.checked)} />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
+                    {shortcuts && <KeyHint label={reasonKeys[index]?.key ?? ''} />}{label}
+                  </span>
                 </label>
               ))}
             </fieldset>
