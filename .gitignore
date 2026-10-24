@@ -40,3 +40,6 @@ desktop.ini
 
 # 教材
 /materials/
+
+# Python
+__pycache__/
