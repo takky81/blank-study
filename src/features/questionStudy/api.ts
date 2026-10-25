@@ -17,7 +17,7 @@ import type { ResolvedQuestionMode } from './question';
 import { aggregateKeywordQuestionStudy, type KeywordQuestionStudyAggregate } from './statsContract';
 
 /** `in` フィルタ1回に渡すID数。URL長と行数上限の両方に収まるよう小さめに取る。 */
-const ID_CHUNK_SIZE = 200;
+export const ID_CHUNK_SIZE = 200;
 
 const STATS_COLUMNS =
   'question_id, asked_count, correct_count, consecutive_correct, interval_days, ease_factor, due_at, updated_at';

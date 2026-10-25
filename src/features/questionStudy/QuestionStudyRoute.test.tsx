@@ -4,11 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const pageSpy = vi.fn();
 vi.mock('./StructuredQuestionStudyPage', () => ({
-  StructuredQuestionStudyPage: (props: { initialScope: unknown; onExit: () => void }) => {
+  StructuredQuestionStudyPage: (props: {
+    initialScope: unknown; initialSubjectId?: string | null; onExit: () => void;
+    onOpenDistribution?: (subjectId: string) => void;
+  }) => {
     pageSpy(props);
     return <div data-testid="study-page">
       <output data-testid="scope">{JSON.stringify(props.initialScope)}</output>
+      <output data-testid="subject">{String(props.initialSubjectId)}</output>
       <button type="button" onClick={props.onExit}>終了</button>
+      <button type="button" onClick={() => props.onOpenDistribution?.('44444444-4444-4444-8444-444444444444')}>分布</button>
     </div>;
   },
 }));
@@ -60,6 +65,19 @@ describe('QuestionStudyRoute adapter contract', () => {
     expect(JSON.parse(screen.getByTestId('scope').textContent!)).toEqual({ kind, id: UUID });
   });
 
+  it('subjectIdで範囲選択の科目を復元する', () => {
+    renderAt(`/question-study?subjectId=${UUID.toUpperCase()}`);
+    expect(screen.getByTestId('scope').textContent).toBe('null');
+    expect(screen.getByTestId('subject').textContent).toBe(UUID);
+  });
+
+  it('成績分布を開くと科目の分布routeへ遷移する', () => {
+    renderAt('/question-study');
+    fireEvent.click(screen.getByRole('button', { name: '分布' }));
+    expect(screen.getByTestId('location').textContent)
+      .toBe('/question-study/distribution?subjectId=44444444-4444-4444-8444-444444444444');
+  });
+
   it('正常終了では検証済みreturnToへ戻る', () => {
     renderAt(`/question-study?scope=material&scopeId=${UUID}&returnTo=/materials/${UUID}/edit`);
     fireEvent.click(screen.getByRole('button', { name: '終了' }));
@@ -79,6 +97,8 @@ describe('QuestionStudyRoute adapter contract', () => {
     ['不正UUID', '/question-study?scope=chapter&scopeId=not-a-uuid'],
     ['許可外returnTo', `/question-study?scope=keyword&scopeId=${UUID}&returnTo=https://evil.example`],
     ['重複scope', `/question-study?scope=keyword&scope=chapter&scopeId=${UUID}`],
+    ['不正subjectId', '/question-study?subjectId=abc'],
+    ['scopeとsubjectIdの併用', `/question-study?scope=subject&scopeId=${UUID}&subjectId=${UUID}`],
   ])('%sでは学習pageを描画せずerrorと/questions復帰を表示する', (_label, entry) => {
     renderAt(entry);
     expect(pageSpy).not.toHaveBeenCalled();

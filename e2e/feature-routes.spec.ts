@@ -37,8 +37,20 @@ async function expectLocalError(page: Page, url: string, message: string, back: 
 }
 
 test.describe('構造化設問 feature route の統合', () => {
+  test('成績分布をURLで直接開き、再読み込み後も同じ科目を表示し、導線は増えない', async ({ signedIn: page }) => {
+    const { subjectId } = await seed();
+    await page.goto(`/question-study/distribution?subjectId=${subjectId}`);
+    await expect(page.getByRole('heading', { name: /成績分布/ })).toContainText('基本情報');
+    await page.reload();
+    await expect(page.getByRole('heading', { name: /成績分布/ })).toContainText('基本情報');
+    await expect(page.getByRole('link', { name: '成績分布' })).toHaveCount(0);
+  });
+
   test('未認証で各routeを直接開くと既存のログイン画面になる', async ({ page }) => {
-    for (const url of ['/questions', '/question-study?scope=subject&scopeId=' + UNKNOWN_UUID, '/question-exchange']) {
+    for (const url of [
+      '/questions', '/question-study?scope=subject&scopeId=' + UNKNOWN_UUID, '/question-exchange',
+      '/question-study/distribution?subjectId=' + UNKNOWN_UUID,
+    ]) {
       await page.goto(url);
       await expect(page.getByLabel('メールアドレス')).toBeVisible();
       await expect(page.getByRole('button', { name: 'ログイン' })).toBeVisible();

@@ -146,3 +146,9 @@
   - _Boundary: FeatureRouteRegistry, AppShell_
   - _Depends: 6.1; downstream `structured-question-bank` task 4.1, `structured-question-study` task 5.1, `question-generation-exchange` task 3.4_
   - _Requirements: 9.2〜9.6, 9.8〜9.11_
+- [x] 6.3 構造化設問の成績分布routeをAppShellへ登録する
+  - `QUESTION_DISTRIBUTION_ROUTE_DESCRIPTOR`（`questions.study.distribution`／`/question-study/distribution`、navigationなし）をregistryへ追加し、wide／narrowの導線が増えないことを確認する。
+  - `src/app/featureRoutes.test.tsx`でdescriptorのimportと登録順、route ID・pathの重複なしが通り、URL直開き・再読込・未認証時のlogin flowで分布画面に到達できる。
+  - _Boundary: FeatureRouteRegistry, AppShell_
+  - _Depends: 6.2; downstream `structured-question-study` task 7.4_
+  - _Requirements: 9.1, 9.3, 9.6, 9.7, 9.10_

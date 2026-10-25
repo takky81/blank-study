@@ -89,6 +89,40 @@ describe('StructuredQuestionStudyPage', () => {
     expect(load).toHaveBeenCalledWith({ kind: 'chapter', id: 'c1' });
   });
 
+  it('科目を選んでいる間だけ成績分布ボタンが有効で、選択中の科目を渡す', async () => {
+    const scopeOptions = {
+      listSubjects: vi.fn().mockResolvedValue([{ id: 's1', label: '生物' }]),
+      listMaterials: vi.fn().mockResolvedValue([{ id: 'm1', label: '教科書' }]),
+      listChapters: vi.fn().mockResolvedValue([]),
+      listKeywords: vi.fn().mockResolvedValue([]),
+    };
+    const open = vi.fn();
+    render(<StructuredQuestionStudyPage initialScope={null} onExit={vi.fn()} loadCandidates={vi.fn()}
+      recordAnswer={vi.fn()} scopeOptions={scopeOptions} onOpenDistribution={open} />);
+    const button = screen.getByRole('button', { name: '成績分布' });
+    expect(button).toBeDisabled();
+    fireEvent.change(await screen.findByLabelText('科目'), { target: { value: 's1' } });
+    fireEvent.change(await screen.findByLabelText('教材'), { target: { value: 'm1' } });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(open).toHaveBeenCalledWith('s1');
+  });
+
+  it('initialSubjectIdで範囲選択の科目を復元し、教材候補を読み込む', async () => {
+    const scopeOptions = {
+      listSubjects: vi.fn().mockResolvedValue([{ id: 's1', label: '生物' }, { id: 's2', label: '化学' }]),
+      listMaterials: vi.fn().mockResolvedValue([{ id: 'm1', label: '教科書' }]),
+      listChapters: vi.fn().mockResolvedValue([]),
+      listKeywords: vi.fn().mockResolvedValue([]),
+    };
+    render(<StructuredQuestionStudyPage initialScope={null} initialSubjectId="s2" onExit={vi.fn()}
+      loadCandidates={vi.fn()} recordAnswer={vi.fn()} scopeOptions={scopeOptions} onOpenDistribution={vi.fn()} />);
+    await waitFor(() => expect(screen.getByLabelText('科目')).toHaveValue('s2'));
+    expect(scopeOptions.listMaterials).toHaveBeenCalledWith('s2');
+    expect(await screen.findByLabelText('教材')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '成績分布' })).toBeEnabled();
+  });
+
   it('回答候補は乱数でシャッフルされ、模範解答の位置が固定されず、わからないは末尾に分かれる', async () => {
     const labelsWith = async (r: number) => {
       cleanup();

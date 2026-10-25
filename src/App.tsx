@@ -19,6 +19,7 @@ import {
 } from '@/app/featureRoutes';
 import { QUESTION_BANK_ROUTE_DESCRIPTOR } from '@/features/questions/QuestionBankRoute';
 import { QUESTION_STUDY_ROUTE_DESCRIPTOR } from '@/features/questionStudy/QuestionStudyRoute';
+import { QUESTION_DISTRIBUTION_ROUTE_DESCRIPTOR } from '@/features/questionStudy/QuestionDistributionRoute';
 import { QUESTION_EXCHANGE_ROUTE_DESCRIPTOR } from '@/features/questionExchange/QuestionExchangeRoute';
 
 // feature-local adapter の登録先。App が唯一の consumer になることで、
@@ -27,6 +28,7 @@ const featureRouteDescriptors: readonly FeatureRouteDescriptor[] = [
   QUESTION_BANK_ROUTE_DESCRIPTOR,
   QUESTION_STUDY_ROUTE_DESCRIPTOR,
   QUESTION_EXCHANGE_ROUTE_DESCRIPTOR,
+  QUESTION_DISTRIBUTION_ROUTE_DESCRIPTOR,
 ];
 const featureRoutes = composeFeatureRoutes(featureRouteDescriptors);
 const featureNavigation = composeFeatureNavigation(featureRoutes);

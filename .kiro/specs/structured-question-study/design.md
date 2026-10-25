@@ -11,12 +11,15 @@ Reactのfeature pageがセッション状態を統合し、question-study APIが
 - 既存学習規則に沿う3形式、完全一致判定、即時結果を提供する
 - question専用履歴・統計・SRSを原子的に記録する
 - 結果画面から設問バンクの2種類のflag契約を利用する
+- 科目単位で、設問ごと／キーワードごとの正答率・出題回数の分布をヒストグラムで表示する
 
 ### 非目標
 - 設問マスタ、version、flag mutationの再定義
 - 穴埋め履歴・統計との合算、既存study画面の変更
 - AI採点、類似判定、別解登録、AIファイル交換
 - learning-insightsへの表示追加
+- ヒストグラム階級から該当設問・キーワード一覧への展開、教材・章・キーワード単位の分布
+- 分布用のDB集計RPC、新規migration、chart library導入
 
 ## 境界コミットメント
 
@@ -26,6 +29,7 @@ Reactのfeature pageがセッション状態を統合し、question-study APIが
 - question向けの形式adapter、採点adapter、SRS adapter
 - `record_structured_question_answer`の原子的業務契約と回帰
 - `StructuredQuestionStudyPage`とfeature固有API・純粋ロジック
+- 科目単位の成績分布（`histogram.ts`の階級化規則、分布API、`QuestionDistributionPage`、`QuestionDistributionRoute`）
 
 ### 境界外
 - `structured_questions`の内容、選択肢、解説、version、active、flagの所有
@@ -47,6 +51,8 @@ Reactのfeature pageがセッション状態を統合し、question-study APIが
 - stats/logsの列または意味変更時はexchangeの抽出を再検証する
 - 公開RPC、grant、RLS変更時はidentityのRpcSecurityMatrixを再実行する
 - 階層・章本文出現・ページング順序変更時はcatalogと本仕様の候補回帰を再実行する
+- `aggregateKeywordQuestionStudy`の意味変更時は分布のキーワード集計とexchangeの抽出を同時に再検証する
+- 分布routeのpath・parameter変更時はapp-shellのroute registry回帰を再実行する
 
 ## アーキテクチャ
 
@@ -72,6 +78,12 @@ graph TB
   RPC --> Stats[(structured_question_stats)]
   Result --> Flags[QuestionBankFlagContract]
   Stats --> Exchange[question-generation-exchange]
+  Page -->|科目選択時のボタン| DistRoute[QuestionDistributionRouteAdapter]
+  DistRoute --> DistPage[QuestionDistributionPage]
+  DistPage --> DistApi[QuestionDistributionApi]
+  DistPage --> Histogram[QuestionHistogramPolicy]
+  DistApi --> Stats
+  DistApi --> StatsContract[aggregateKeywordQuestionStudy]
 ```
 
 - 選択パターン: feature-first + read projection + question単位transaction aggregate
@@ -100,7 +112,16 @@ src/features/questionStudy/
 ├── session.test.ts                  # 順序、直近回避、終了の単体回帰
 ├── api.ts                           # read model、RPC gateway、row mapping
 ├── QuestionResultPanel.tsx          # 結果、解説、flag adapter
-└── StructuredQuestionStudyPage.tsx  # setupからdoneまでの統合
+├── histogram.ts                     # 新規: 正答率13階級・出題回数階級の純粋規則
+├── histogram.test.ts                # 新規: 階級境界、件数合計、空入力の単体回帰
+├── distributionApi.ts               # 新規: 科目の有効設問とstatsの全件読取、設問／keyword単位への射影
+├── distributionApi.test.ts          # 新規: 射影・除外・not-foundの単体回帰
+├── QuestionHistogram.tsx            # 新規: 横棒ヒストグラム1枚（階級名・件数を文字で併記）
+├── QuestionDistributionPage.tsx     # 新規: 集計単位切替、loading／empty／error、戻る操作
+├── QuestionDistributionPage.test.tsx # 新規: 切替、状態表示、a11y名の回帰
+├── QuestionDistributionRoute.tsx    # 新規: `/question-study/distribution` route adapter
+├── QuestionDistributionRoute.test.tsx # 新規: subjectId検証と復帰導線
+└── StructuredQuestionStudyPage.tsx  # setupからdoneまでの統合（変更: 科目選択時の分布ボタン）
 src/features/questionStudy/QuestionStudyRoute.tsx # feature固有route adapter
 supabase/migrations/
 └── 20261011010000_create_structured_question_study.sql
@@ -126,6 +147,11 @@ e2e/
 | QuestionResultPanel | `src/features/questionStudy/QuestionResultPanel.tsx` |
 | StructuredQuestionStudyPage | `src/features/questionStudy/StructuredQuestionStudyPage.tsx` |
 | QuestionStudyRouteAdapter | `src/features/questionStudy/QuestionStudyRoute.tsx` |
+| QuestionHistogramPolicy | `src/features/questionStudy/histogram.ts` |
+| QuestionDistributionApi | `src/features/questionStudy/distributionApi.ts` |
+| QuestionHistogram | `src/features/questionStudy/QuestionHistogram.tsx` |
+| QuestionDistributionPage | `src/features/questionStudy/QuestionDistributionPage.tsx` |
+| QuestionDistributionRouteAdapter | `src/features/questionStudy/QuestionDistributionRoute.tsx` |
 | QuestionStudyConformance | `supabase/tests/database/structured_question_study.test.sql`、`e2e/structured-question-study.spec.ts` |
 
 ## システムフロー
@@ -167,6 +193,14 @@ sequenceDiagram
 | 7.1, 7.2, 7.3, 7.4, 7.5 | QuestionResultPanel、FlagMutationContract |
 | 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9 | RLS、Paged contracts、Page、RpcSecurityMatrix、Conformance |
 | 8.10, 8.11, 8.12 | QuestionStudyRouteAdapter、固定descriptor、scope・復帰parameter契約 |
+| 9.1, 9.2 | StructuredQuestionStudyPage（範囲選択の分布ボタン） |
+| 9.3, 9.15 | QuestionDistributionApi（科目の有効設問・statsの全件paged読取、穴埋め統計非参照） |
+| 9.4, 9.10 | QuestionDistributionPage（集計単位state、科目維持） |
+| 9.5, 9.6 | QuestionDistributionApi、`aggregateKeywordQuestionStudy` |
+| 9.7, 9.8, 9.9 | QuestionHistogramPolicy、QuestionHistogram |
+| 9.11, 9.12, 9.13, 9.14 | QuestionDistributionPage、QuestionDistributionApi |
+| 9.16, 9.19 | QuestionDistributionRouteAdapter、app-shell route registry |
+| 9.17, 9.18 | QuestionHistogram、QuestionDistributionPage |
 
 ## コンポーネントとインターフェース
 
@@ -180,6 +214,11 @@ sequenceDiagram
 | StructuredQuestionStudyPage | UI | setupからdoneまでの状態統合 | 1.6〜4.6, 6.3〜6.4, 8.4〜8.7 | policies/API P0 | State |
 | QuestionResultPanel | UI | 結果、解説、flag更新 | 4.4〜4.6, 7.1〜7.5 | Bank flags P0 | State |
 | QuestionStudyRouteAdapter | Integration | feature-local学習pageと階層文脈metadataをapp-shell descriptorへ適合する | 8.10〜8.12 | AppShell route contract P0 | API |
+| QuestionHistogramPolicy | Domain | 正答率13階級・出題回数階級への純粋な振分け | 9.7〜9.9 | なし | Service |
+| QuestionDistributionApi | Data | 科目の可視性確認、有効設問とstatsの全件取得、設問／keyword単位の点列化 | 9.3, 9.5, 9.6, 9.14, 9.15 | Supabase、statsContract P0 | API |
+| QuestionHistogram | UI | 1つの分布を横棒と数値で表示 | 9.9, 9.17, 9.18 | なし | State |
+| QuestionDistributionPage | UI | 集計単位切替、状態表示、戻る | 9.4, 9.10〜9.13, 9.16〜9.18 | API、Policy P0 | State |
+| QuestionDistributionRouteAdapter | Integration | subjectId検証と分布pageのdescriptor提供 | 9.14, 9.16, 9.19 | AppShell route contract P0 | API |
 
 ### Domain contract
 
@@ -245,6 +284,39 @@ function listKeywordQuestionStudyAggregates(): Promise<KeywordQuestionStudyAggre
 - RPCはサーバー側でowner、active、versionを再確認し、clientの`isCorrect`を信頼せず保存済みmodel answerとの共通正規化で再判定する。
 - `answeredAt`は表示用入力とし、監査時刻はDBで確定する。
 
+### Distribution contract (Requirement 9)
+
+```typescript
+type DistributionUnit = 'question' | 'keyword';
+/** 1件の集計対象。askedCount=0 は未出題。 */
+type DistributionPoint = { askedCount: number; correctCount: number };
+type HistogramBin = { label: string; count: number };
+type SubjectDistributionSource =
+  | { kind: 'found'; subjectName: string;
+      byQuestion: readonly DistributionPoint[]; byKeyword: readonly DistributionPoint[] }
+  | { kind: 'not-found' };
+
+/** 未出題, 0%, 0%超10%未満, 10%以上20%未満 … 90%以上100%未満, 100% の13階級。 */
+function binAccuracy(points: readonly DistributionPoint[]): readonly HistogramBin[];
+/** 0回〜max(askedCount)回の1回刻み。空入力は空配列。 */
+function binAskedCount(points: readonly DistributionPoint[]): readonly HistogramBin[];
+function loadSubjectDistribution(subjectId: string): Promise<SubjectDistributionSource>;
+```
+
+- 正答率の振分けは `askedCount === 0 → 未出題`、`correctCount === 0 → 0%`、`correctCount === askedCount → 100%`、それ以外は `k = floor(correctCount*10 / askedCount)`（整数演算、0〜9）番目の10%階級とする。整数比較にして浮動小数誤差で境界がずれないようにする。
+- 出題回数の階級は0回を含み、存在しない回数の階級も0件で出す（9.8）。各関数の件数合計は入力件数と一致させる（9.9）。
+- `loadSubjectDistribution`は、科目行が読めなければ`not-found`を返す（9.14。RLSにより他人の科目も不在扱い）。教材→有効設問（`is_active = true`）→statsを既存の`fetchAll`と`ID_CHUNK_SIZE`分割で全件読む（9.15）。設問単位は設問1件＝1点で、statsなしは`askedCount 0`。キーワード単位は`aggregateKeywordQuestionStudy`の結果1件＝1点とし（`attempts`→`askedCount`、`correct`→`correctCount`）、Requirement 5.8／5.9の意味を共有する。穴埋めの`keyword_stats`／`answer_logs`は読まない（9.3）。
+- 1回の読取で両単位を作り、集計単位の切替では再読込しない（9.10）。
+
+### Distribution UI / route
+
+- `StructuredQuestionStudyPage`の範囲選択で、科目が選ばれている間だけ「成績分布」ボタンを有効にし、`/question-study/distribution?subjectId=<uuid>`へ遷移する（9.1, 9.2）。教材・章・キーワードまで絞っていても、対象は選択中の科目とする。
+- 分布route descriptorは `{ id: 'questions.study.distribution', path: '/question-study/distribution', requiresAuth: true }` とし、`navigation`を持たない（9.19）。`subjectId`が欠落・複数・不正UUIDなら集計せず、範囲選択への復帰導線を表示する。
+- 戻る操作は `/question-study?subjectId=<subjectId>` へ遷移する。`QuestionStudyRoute`は`subjectId`（UUID、`scope`との併用不可）を`initialSubjectId`として渡し、範囲選択は科目一覧に含まれる場合だけその科目を選んだ状態で始める（9.16）。`scope=subject`だと範囲選択を飛ばして設定画面になるため使わない。
+- 集計単位はradio group（「設問ごと」「キーワードごと」、初期は設問ごと）とする（9.4, 9.18）。
+- `QuestionHistogram`は外部chart libraryを使わず、階級ごとに「階級名・横棒・件数」を1行で並べる。1行が1階級なので、13階級でも最大出題回数が大きくても縦に伸びるだけで、狭い画面で横スクロールを起こさない（9.17）。棒の長さは最大件数に対する比率とし、件数は常に文字で併記して色に依存しない。見出しに総件数を表示し、全体を`role="list"`、各行を`aria-label="<階級名> <件数>件"`で識別させる（9.9, 9.18）。棒はクリック不可とする。
+- loading（`aria-busy`と進行表示）、empty（有効設問0件）、error（「成績分布を読み込めませんでした」＋再試行）を区別する（9.11〜9.13）。
+
 ## データモデル
 
 ```mermaid
@@ -301,11 +373,16 @@ erDiagram
 - 同一keywordを複数章の異なる本文位置へ出し、最小tupleの代表位置、keyword直接scopeの`(sortOrder,id)`、1,001件での全件・安定順・重複なしを検証する（2.7, 8.3）。
 - 有効設問だけのkeyword集計でsum、差分、比率、active count、statsなし、attempts 0、無効／削除除外を検証する（5.7〜5.9）。
 
+- `histogram.ts`: 未出題／0%／ちょうど10%・90%／1/3・2/3／99/100／100%の境界、0回を含む連番と欠番0件、件数合計＝入力件数、空入力を検証する（9.7〜9.9）。
+- `distributionApi`: 無効設問の除外、statsなしの未出題化、keyword単位が`aggregateKeywordQuestionStudy`と一致すること、科目不在で`not-found`を検証する（9.3, 9.5, 9.6, 9.14）。
+- 1,001設問fixtureで分布の総件数が全件と一致することをDB統合テストで検証する（9.15）。
+
 ### E2E / UI
 - 各範囲、3形式、正解／不正解／わからない、解説、次問、完了／中断を検証する。
 - 記録失敗の判定保持・明示再試行・1件だけの確定、設問version conflictを検証する。
 - 2種類のflagを独立／同時に設定し、既存解説ありでも追加flagを設定できることを検証する。
 - 狭幅、キーボード、label、live status、loading／empty／errorを検証する。
+- 分布: 科目選択時のみボタンが有効、単位切替で両ヒストグラムが更新され科目が維持される、loading／empty／error／不正subjectId、戻る操作で科目選択が復元される、390px幅で横スクロールなしを検証する（9.1, 9.2, 9.4, 9.10〜9.14, 9.16〜9.19）。
 
 ### Quality Gates
 - `npm run typecheck`、`npm test`、`npm run spec:coverage`、`npm run build`を実行する。
@@ -338,3 +415,4 @@ flowchart LR
 - `20261011000000_create_structured_questions.sql`適用後に新規migrationを適用する。
 - 新規テーブルのためbackfillはない。失敗時はAPI/UI接続前に停止する。
 - 既存穴埋めmigrationは変更しない。
+- 成績分布（Requirement 9）は既存テーブルの読取だけで実現し、新規migrationを追加しない。

@@ -56,7 +56,9 @@ export function QuestionStudyRoute() {
   return <StructuredQuestionStudyPage
     key={location.search}
     initialScope={parsed.scope}
+    initialSubjectId={parsed.subjectId}
     onExit={() => navigate(parsed.returnTo)}
+    onOpenDistribution={(subjectId) => navigate(`/question-study/distribution?subjectId=${subjectId}`)}
   />;
 }
 
@@ -66,12 +68,15 @@ function single(query: URLSearchParams, name: string): string | undefined | null
   return values[0];
 }
 
-function parseRouteSearch(search: string): { scope: QuestionStudyScope | null; returnTo: string } | null {
+type ParsedRouteSearch = { scope: QuestionStudyScope | null; subjectId: string | null; returnTo: string };
+
+function parseRouteSearch(search: string): ParsedRouteSearch | null {
   const query = new URLSearchParams(search);
   const kind = single(query, 'scope');
   const id = single(query, 'scopeId');
   const rawReturnTo = single(query, 'returnTo');
-  if (kind === null || id === null || rawReturnTo === null) return null;
+  const rawSubjectId = single(query, 'subjectId');
+  if (kind === null || id === null || rawReturnTo === null || rawSubjectId === null) return null;
 
   let scope: QuestionStudyScope | null = null;
   const hasKind = kind !== undefined && kind !== '';
@@ -83,9 +88,16 @@ function parseRouteSearch(search: string): { scope: QuestionStudyScope | null; r
     scope = { kind: kind as QuestionStudyScope['kind'], id: id.toLowerCase() };
   }
 
+  // subjectId は範囲選択で科目を選んだ状態から始める指定（成績分布からの戻り）。scopeとは併用しない。
+  let subjectId: string | null = null;
+  if (rawSubjectId !== undefined && rawSubjectId !== '') {
+    if (scope !== null || !UUID_PATTERN.test(rawSubjectId)) return null;
+    subjectId = rawSubjectId.toLowerCase();
+  }
+
   const returnTo = resolveReturnTo(rawReturnTo);
   if (returnTo === null) return null;
-  return { scope, returnTo };
+  return { scope, subjectId, returnTo };
 }
 
 function resolveReturnTo(value: string | undefined): string | null {

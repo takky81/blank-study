@@ -37,6 +37,10 @@ import {
 export type StructuredQuestionStudyPageProps = {
   initialScope: QuestionStudyScope | null;
   onExit: () => void;
+  /** 範囲選択で最初から選んでおく科目（成績分布から戻ったとき）。 */
+  initialSubjectId?: string | null;
+  /** 範囲選択で科目を選んでいる間に、その科目の成績分布を開く。 */
+  onOpenDistribution?: (subjectId: string) => void;
   loadCandidates?: (scope: QuestionStudyScope) => Promise<readonly QuestionStudyCandidate[]>;
   recordAnswer?: (input: RecordQuestionAnswerInput) => Promise<RecordQuestionAnswerResult>;
   scopeOptions?: QuestionScopeOptionsLoader;
@@ -134,6 +138,8 @@ function shuffle<T>(items: readonly T[], random: () => number): T[] {
 export function StructuredQuestionStudyPage({
   initialScope,
   onExit,
+  initialSubjectId = null,
+  onOpenDistribution,
   loadCandidates = loadQuestionStudyCandidates,
   recordAnswer = recordQuestionAnswer,
   scopeOptions = questionScopeOptionsLoader,
@@ -300,7 +306,8 @@ export function StructuredQuestionStudyPage({
   const backButton = <button type="button" className="btn-s h-11 px-4" onClick={onExit}>戻る</button>;
 
   if (!scope) {
-    return shell(<ScopePicker loader={scopeOptions} onSelect={setScope} onExit={onExit} />);
+    return shell(<ScopePicker loader={scopeOptions} onSelect={setScope} onExit={onExit}
+      initialSubjectId={initialSubjectId} onOpenDistribution={onOpenDistribution} />);
   }
   if (view.kind === 'loading') return <p role="status" aria-busy="true" className="p-10 text-[13px] text-muted">読み込んでいます…</p>;
   if (view.kind === 'error') {
@@ -449,10 +456,12 @@ export function StructuredQuestionStudyPage({
 type Level = 'subject' | 'material' | 'chapter' | 'keyword';
 
 /** 科目→教材→章／キーワードの順に絞る範囲選択。選んだ最も深い階層を範囲にする。 */
-function ScopePicker({ loader, onSelect, onExit }: {
+function ScopePicker({ loader, onSelect, onExit, initialSubjectId, onOpenDistribution }: {
   loader: QuestionScopeOptionsLoader;
   onSelect: (scope: QuestionStudyScope) => void;
   onExit: () => void;
+  initialSubjectId: string | null;
+  onOpenDistribution?: (subjectId: string) => void;
 }) {
   const [options, setOptions] = useState<Record<Level, readonly QuestionScopeOption[] | null>>({
     subject: null, material: null, chapter: null, keyword: null,
@@ -470,7 +479,15 @@ function ScopePicker({ loader, onSelect, onExit }: {
   useEffect(() => {
     let active = true;
     loader.listSubjects().then(
-      (list) => { if (active) setOptions((prev) => ({ ...prev, subject: list })); },
+      (list) => {
+        if (!active) return;
+        setOptions((prev) => ({ ...prev, subject: list }));
+        // 一覧にある科目だけを復元する。見えない科目は未選択のままにする。
+        if (initialSubjectId && list.some((option) => option.id === initialSubjectId)) {
+          setPicked({ subject: initialSubjectId, material: '', chapter: '', keyword: '' });
+          load('material', loader.listMaterials(initialSubjectId));
+        }
+      },
       () => { if (active) setError('出題範囲の候補を読み込めませんでした'); },
     );
     return () => { active = false; };
@@ -528,6 +545,10 @@ function ScopePicker({ loader, onSelect, onExit }: {
       <div className="flex flex-wrap gap-3">
         <button type="button" className="btn-p h-12 px-8" disabled={!scope}
           onClick={() => { if (scope) onSelect(scope); }}>この範囲で設定する</button>
+        {onOpenDistribution && (
+          <button type="button" className="btn-s h-11 px-4" disabled={!picked.subject}
+            onClick={() => { if (picked.subject) onOpenDistribution(picked.subject); }}>成績分布</button>
+        )}
         <button type="button" className="btn-s h-11 px-4" onClick={onExit}>戻る</button>
       </div>
     </>

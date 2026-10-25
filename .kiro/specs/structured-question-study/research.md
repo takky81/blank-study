@@ -56,6 +56,13 @@
 ### Decision: 新規依存を追加しない
 - React、Supabase、PostgreSQL、既存純粋規則で実現できる。外部SRS／採点ライブラリは不要である。
 
+### Decision: 成績分布はクライアント側で全件集計する（Requirement 9, 2026-10-25）
+- 調査: `listKeywordQuestionStudyAggregates`と`aggregateKeywordQuestionStudy`（`statsContract.ts`）が、有効設問とstatsを`fetchAll`で全件読み、keyword単位統計を作る既存契約になっている。exchangeも同じ関数を使う。
+- 判断: 分布は科目単位で同じ読取方式を使い、DB集計RPCやmigrationは追加しない。keyword単位は既存関数を再利用し、5.8／5.9と意味を共有する。
+- 却下: 分布専用のSQL RPC（集計は速いが、RPC権限matrix・migration・keyword集計の二重定義が増える）。chart library導入（1種類の横棒で足り、依存とバンドルが増える）。
+- 表示: 縦棒は13階級や大きな最大出題回数で狭幅に収まらないため、1階級1行の横棒リストとし、件数を文字で併記する。
+- route: navigationを持たない`questions.study.distribution`を追加し、戻りは`/question-study?subjectId=`で範囲選択の科目を事前選択する（`scope=subject`は設定画面へ直行するため、実装時に変更）。最終登録はapp-shell所有。
+
 ## Risks & Mitigations
 - 穴埋め成績との混入 — 別テーブル、別API、負の回帰テストで防ぐ。
 - 古い設問への記録 — expected versionとactive確認をRPC内で行う。
@@ -63,6 +70,8 @@
 - 記録途中失敗 — DB test transaction内の一時triggerによる段階別失敗注入でrollbackを確認する。
 
 ## References
+- `src/features/questionStudy/statsContract.ts` — keyword単位集計の既存契約
+- `src/app/featureRoutes.ts` — `navigation`を省略できるroute descriptor
 - `.kiro/specs/structured-question-bank/design.md` — 設問読取、version、flag契約
 - `.kiro/specs/adaptive-study-session/design.md` — 形式、判定、SRS基礎規則
 - `.kiro/steering/contracts.md` — ページング、RPC、所有境界

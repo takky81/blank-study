@@ -151,6 +151,8 @@ describe('feature route import boundary', () => {
     expect(source).toContain("from '@/features/questions/QuestionBankRoute'");
     expect(source).toContain("from '@/features/questionStudy/QuestionStudyRoute'");
     expect(source).toContain("from '@/features/questionExchange/QuestionExchangeRoute'");
+    expect(source).toMatch(/QUESTION_EXCHANGE_ROUTE_DESCRIPTOR,\s*QUESTION_DISTRIBUTION_ROUTE_DESCRIPTOR,\s*\]/);
+    expect(source).toContain("from '@/features/questionStudy/QuestionDistributionRoute'");
     // AppShellは業務型を解釈しない
     expect(source).not.toMatch(/keywordId|scopeId|QuestionStudyScope|QuestionExchangeHierarchy/);
   });
