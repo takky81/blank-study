@@ -52,8 +52,14 @@ export function validateEligibilityFilter(input: EligibilityFilterInput): readon
   ].filter((error): error is FieldError => error !== null);
 }
 
-/** 統計branch: 誤答1以上（requireWrong=falseなら不問） AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下。attempts 0は不成立。 */
+/**
+ * 統計branch: 誤答1以上（requireWrong=falseなら不問） AND 出題回数下限以上 AND 正答率上限以下 AND 設問数上限以下。
+ * attempts 0は不成立。ただしincludeUnasked=trueなら、attempts 0は設問数上限以下だけで成立する。
+ */
 export function meetsPerformanceCondition(aggregate: KeywordQuestionStudyAggregate, filter: EligibilityFilter): boolean {
+  if (aggregate.attempts === 0) {
+    return filter.includeUnasked === true && aggregate.questionCount <= filter.maximumQuestionCount;
+  }
   return (
     aggregate.attempts > 0 &&
     aggregate.accuracy !== null &&

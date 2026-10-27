@@ -12,7 +12,7 @@ import { PUBLIC_RPC_CATALOG_SQL, RPC_SECURITY_MATRIX } from './rpc-security-matr
 const CANDIDATES_RPC = 'get_question_exchange_candidates';
 const IMPORT_RPC = 'import_question_exchange';
 const PUBLIC_SIGNATURES = {
-  [CANDIDATES_RPC]: 'public.get_question_exchange_candidates(numeric,numeric,numeric,boolean)',
+  [CANDIDATES_RPC]: 'public.get_question_exchange_candidates(numeric,numeric,numeric,boolean,boolean)',
   [IMPORT_RPC]: 'public.import_question_exchange(jsonb)',
 } as const;
 const PRIMITIVE_NAME = 'apply_structured_question_content';

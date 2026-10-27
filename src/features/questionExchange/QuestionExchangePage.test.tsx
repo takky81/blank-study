@@ -83,8 +83,18 @@ describe('QuestionExchangePage 出力', () => {
     fillFilters();
     fireEvent.click(screen.getByRole('button', { name: '対象を出力' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('question-exchange-1.json'));
-    expect(p.exportEligible).toHaveBeenCalledWith({ ...filters, requireWrong: true });
+    expect(p.exportEligible).toHaveBeenCalledWith({ ...filters, requireWrong: true, includeUnasked: false });
     expect(p.download).toHaveBeenCalledWith({ kind: 'export', value: exportValue });
+  });
+
+  it('未出題を含める条件は既定で無効、チェックするとincludeUnasked=trueで抽出する', async () => {
+    const p = setup();
+    fillFilters();
+    const toggle = screen.getByRole('checkbox', { name: /未出題の用語も含める/ });
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: '対象を出力' }));
+    await waitFor(() => expect(p.exportEligible).toHaveBeenCalledWith({ ...filters, requireWrong: true, includeUnasked: true }));
   });
 
   it('誤答1回以上の条件は既定で有効、外すとrequireWrong=falseで抽出する', async () => {
@@ -94,7 +104,7 @@ describe('QuestionExchangePage 出力', () => {
     expect(toggle).toBeChecked();
     fireEvent.click(toggle);
     fireEvent.click(screen.getByRole('button', { name: '対象を出力' }));
-    await waitFor(() => expect(p.exportEligible).toHaveBeenCalledWith({ ...filters, requireWrong: false }));
+    await waitFor(() => expect(p.exportEligible).toHaveBeenCalledWith({ ...filters, requireWrong: false, includeUnasked: false }));
   });
 
   it('対象0件ではdownloadせず対象なしを示す', async () => {

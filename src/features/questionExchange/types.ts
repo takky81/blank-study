@@ -7,6 +7,8 @@ export type EligibilityFilter = {
   maximumQuestionCount: number;
   /** 成績条件に「誤答1回以上」を含めるか。省略時はtrue（含める）。 */
   requireWrong?: boolean;
+  /** 出題回数0（未出題）の用語も成績条件の対象にするか。省略時はfalse。 */
+  includeUnasked?: boolean;
 };
 
 /** 数値入力の閾値。requireWrongは画面のチェックボックスで受け取り、数値検証の対象外。 */

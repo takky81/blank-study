@@ -106,6 +106,7 @@ export function QuestionExchangePage({
     minimumAttempts: '3', maximumAccuracy: '0.6', maximumQuestionCount: '3',
   });
   const [requireWrong, setRequireWrong] = useState(true);
+  const [includeUnasked, setIncludeUnasked] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<readonly FieldError[]>([]);
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
   const [file, setFile] = useState<File | null>(null);
@@ -140,7 +141,7 @@ export function QuestionExchangePage({
     void exportGuard.current.run(async () => {
       setExportState({ kind: 'loading' });
       try {
-        const result = await exportEligible({ ...(input as EligibilityFilter), requireWrong });
+        const result = await exportEligible({ ...(input as EligibilityFilter), requireWrong, includeUnasked });
         if (result.kind === 'empty') { setExportState({ kind: 'empty' }); return; }
         const downloaded = download(result);
         setExportState(downloaded.kind === 'downloaded' ? downloaded : { kind: 'empty' });
@@ -221,6 +222,12 @@ export function QuestionExchangePage({
           <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink" checked={requireWrong}
             onChange={(e) => setRequireWrong(e.target.checked)} />
           <span className="min-w-0 [overflow-wrap:anywhere]">誤答が1回以上ある用語に限る（外すと全問正解の用語も成績条件の対象にする）</span>
+        </label>
+
+        <label className="flex min-h-11 min-w-0 items-center gap-3 text-[13px]">
+          <input type="checkbox" className="h-4.5 w-4.5 shrink-0 accent-ink" checked={includeUnasked}
+            onChange={(e) => setIncludeUnasked(e.target.checked)} />
+          <span className="min-w-0 [overflow-wrap:anywhere]">未出題の用語も含める（出題回数0の用語を、設問数の上限以下なら成績条件の対象にする）</span>
         </label>
         <div className="flex flex-wrap items-center gap-3">
           <button type="submit" className="btn-p" aria-busy={exportState.kind === 'loading'}>対象を出力</button>

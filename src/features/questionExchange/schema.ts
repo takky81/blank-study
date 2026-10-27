@@ -228,10 +228,14 @@ function validateExport(value: unknown): readonly ExchangeSchemaError[] {
   if (!c.object(value, '$', ['schemaVersion', 'exchangeId', 'exportedAt', 'filters', 'targets'])) return c.errors;
   checkHeader(c, value);
   const filterKeys = ['minimumAttempts', 'maximumAccuracy', 'maximumQuestionCount'];
-  if (isPlainObject(value.filters) && Object.prototype.hasOwnProperty.call(value.filters, 'requireWrong')) filterKeys.push('requireWrong');
+  for (const key of ['requireWrong', 'includeUnasked']) {
+    if (isPlainObject(value.filters) && Object.prototype.hasOwnProperty.call(value.filters, key)) filterKeys.push(key);
+  }
   if (c.object(value.filters, '$.filters', filterKeys)) {
-    if (filterKeys.includes('requireWrong') && typeof value.filters.requireWrong !== 'boolean') {
-      c.fail('$.filters.requireWrong', 'booleanである必要があります。');
+    for (const key of ['requireWrong', 'includeUnasked'] as const) {
+      if (filterKeys.includes(key) && typeof value.filters[key] !== 'boolean') {
+        c.fail(`$.filters.${key}`, 'booleanである必要があります。');
+      }
     }
     c.integer(value.filters.minimumAttempts, '$.filters.minimumAttempts', 0);
     c.ratio(value.filters.maximumAccuracy, '$.filters.maximumAccuracy');

@@ -53,6 +53,24 @@
       "expected": []
     },
     {
+      "name": "未出題を含めると出題回数0の用語も設問数上限以下なら統計理由で対象にする",
+      "filter": { "minimumAttempts": 2, "maximumAccuracy": 0.5, "maximumQuestionCount": 1, "includeUnasked": true },
+      "questions": [
+        { "id": "q1", "keywordId": "k1", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q2", "keywordId": "k2", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false },
+        { "id": "q3", "keywordId": "k2", "isActive": true, "doubtFlag": false, "explanationRequestFlag": false }
+      ],
+      "stats": [],
+      "expected": [
+        {
+          "keywordId": "k1",
+          "metrics": { "attempts": 0, "correct": 0, "wrong": 0, "accuracy": null, "questionCount": 1 },
+          "reasons": ["performance-and-count"],
+          "flaggedQuestions": []
+        }
+      ]
+    },
+    {
       "name": "誤答1回以上を任意にすると誤答0（全問正解）でも統計理由で対象にする",
       "filter": { "minimumAttempts": 1, "maximumAccuracy": 1, "maximumQuestionCount": 3, "requireWrong": false },
       "questions": [

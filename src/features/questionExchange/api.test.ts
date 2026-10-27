@@ -159,7 +159,7 @@ describe('exportEligibleQuestions', () => {
   it('filterをRPC入力へ変換し、owner対象だけのschema v1 envelopeを返す', async () => {
     const result = await exportEligibleQuestions(filter, deps);
     expect(rpcCalls).toEqual([['get_question_exchange_candidates', {
-      p_minimum_attempts: 3, p_maximum_accuracy: 0.5, p_maximum_question_count: 2, p_require_wrong: true,
+      p_minimum_attempts: 3, p_maximum_accuracy: 0.5, p_maximum_question_count: 2, p_require_wrong: true, p_include_unasked: false,
     }]]);
     expect(result.kind).toBe('export');
     if (result.kind !== 'export') return;

@@ -172,6 +172,7 @@ export async function exportEligibleQuestions(
       p_maximum_accuracy: filter.maximumAccuracy,
       p_maximum_question_count: filter.maximumQuestionCount,
       p_require_wrong: filter.requireWrong ?? true,
+      p_include_unasked: filter.includeUnasked ?? false,
     });
     if (response.error) throw response.error;
     targets = mapEligibilityRpcResult(response.data);
